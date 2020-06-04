@@ -1,0 +1,12 @@
+[package]
+name = "widgets"
+version = "0.1.0"
+authors = ["wolfiestyle <slayerbeast@gmail.com>"]
+edition = "2018"
+
+[features]
+default = []
+
+[dependencies]
+num-traits = "0.2.11"
+glium = { version = "0.27.0", optional = true }

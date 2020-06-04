@@ -1,0 +1,10 @@
+[package]
+name = "testapp"
+version = "0.1.0"
+authors = ["wolfiestyle <slayerbeast@gmail.com>"]
+edition = "2018"
+build = false
+
+[dependencies]
+widgets = { path = "../widgets", features = ["glium"] }
+glium = "0.27.0"
