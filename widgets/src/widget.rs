@@ -1,6 +1,7 @@
 use crate::draw::{DrawContext, DrawQueue};
 use crate::event::{Event, EventResult};
 use crate::geometry::{Pointi, Rect, Size};
+use crate::visitor::Visitor;
 
 mod id;
 pub use id::WidgetId;
@@ -35,6 +36,12 @@ pub trait Widget {
 
     /// Pushes an event through the widget tree.
     fn push_event(&mut self, event: &Event) -> EventResult;
+
+    /// Accept a visitor in forward mode (parent, then child).
+    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error>;
+
+    /// Accept a visitor in reverse mode (child, then parent).
+    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error>;
 }
 
 impl Widget for () {
@@ -65,6 +72,16 @@ impl Widget for () {
     #[inline]
     fn push_event(&mut self, _event: &Event) -> EventResult {
         crate::event::EVENT_PASS
+    }
+
+    #[inline]
+    fn accept<V: Visitor>(&self, _visitor: &mut V) -> Result<(), V::Error> {
+        Ok(())
+    }
+
+    #[inline]
+    fn accept_rev<V: Visitor>(&self, _visitor: &mut V) -> Result<(), V::Error> {
+        Ok(())
     }
 }
 
@@ -106,6 +123,13 @@ impl<T: Widget> Widget for Option<T> {
     fn push_event(&mut self, event: &Event) -> EventResult {
         self.as_mut().map_or(crate::event::EVENT_PASS, |w| w.push_event(event))
     }
+
+    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
+        self.as_ref().map_or(Ok(()), |widget| widget.accept(visitor))
+    }
+
+    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
+        self.as_ref().map_or(Ok(()), |widget| widget.accept_rev(visitor))
     }
 }
 

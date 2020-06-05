@@ -1,6 +1,7 @@
 use widgets::draw::{Color, DrawContext};
 use widgets::event::{self, EvData, Event, EventResult};
 use widgets::geometry::{Pointi, Rect, Size};
+use widgets::visitor::Visitor;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
 
 mod backend;
@@ -51,6 +52,18 @@ impl<T: Widget> Widget for TestWidget<T> {
             }
             _ => self.child.push_event(event),
         }
+    }
+
+    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
+        visitor.visit(self)?;
+        self.child.accept(visitor)?;
+        self.child2.accept(visitor)
+    }
+
+    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
+        self.child.accept_rev(visitor)?;
+        self.child2.accept_rev(visitor)?;
+        visitor.visit(self)
     }
 }
 
