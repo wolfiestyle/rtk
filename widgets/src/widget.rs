@@ -33,17 +33,26 @@ pub trait Widget {
 }
 
 impl Widget for () {
+    #[inline]
     fn get_position(&self) -> Pointi {
         Default::default()
     }
 
+    #[inline]
     fn get_size(&self) -> Size {
         Default::default()
     }
 
+    #[inline]
     fn set_position(&mut self, _position: Pointi) {}
+
+    #[inline]
     fn update_size(&mut self, _parent_rect: Rect) {}
+
+    #[inline]
     fn draw(&self, _dc: DrawContext) {}
+
+    #[inline]
     fn push_event(&mut self, _event: &Event) -> EventResult {
         crate::event::EVENT_PASS
     }
@@ -81,11 +90,8 @@ impl<T: Widget> Widget for Option<T> {
     }
 
     fn push_event(&mut self, event: &Event) -> EventResult {
-        if let Some(widget) = self {
-            widget.push_event(event)
-        } else {
-            crate::event::EVENT_PASS
-        }
+        self.as_mut().map_or(crate::event::EVENT_PASS, |w| w.push_event(event))
+    }
     }
 }
 

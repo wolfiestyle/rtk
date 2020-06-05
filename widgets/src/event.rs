@@ -21,6 +21,7 @@ pub struct Event {
 
 impl Event {
     /// Creates a new event context using the specified data.
+    #[inline]
     pub fn new(data: EvData, pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
         Event {
             timestamp: Instant::now(),
@@ -33,6 +34,7 @@ impl Event {
     }
 
     /// Creates a new event using the same context.
+    #[inline]
     pub fn with_data(&self, data: EvData) -> Self {
         Event {
             timestamp: self.timestamp,
@@ -105,8 +107,8 @@ pub enum MouseButton {
 }
 
 impl MouseButton {
-    #[inline]
     /// Gets the button number.
+    #[inline]
     pub fn number(self) -> u8 {
         match self {
             MouseButton::Left => 1,
@@ -117,6 +119,7 @@ impl MouseButton {
     }
 
     /// Gets the bitmask for this button.
+    #[inline]
     fn mask(self) -> u64 {
         match self {
             MouseButton::Left => 1,

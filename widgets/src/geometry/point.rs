@@ -52,7 +52,7 @@ impl<T> Point<T> {
         if let Some(p) = self.cast::<i32>() {
             p.x >= rect.x() && p.x <= rect.end_x() && p.y >= rect.y() && p.y <= rect.end_y()
         } else {
-            return false;
+            false
         }
     }
 
