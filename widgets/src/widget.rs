@@ -2,11 +2,16 @@ use crate::draw::{DrawContext, DrawQueue};
 use crate::event::{Event, EventResult};
 use crate::geometry::{Pointi, Rect, Size};
 
+mod id;
+pub use id::WidgetId;
 mod window;
 pub use window::*;
 
 /// Defines an object that can be drawn and viewed inside a window.
 pub trait Widget {
+    /// Gets the widget id.
+    fn get_id(&self) -> WidgetId;
+
     /// Gets the current position.
     fn get_position(&self) -> Pointi;
 
@@ -34,6 +39,11 @@ pub trait Widget {
 
 impl Widget for () {
     #[inline]
+    fn get_id(&self) -> WidgetId {
+        WidgetId::ZERO
+    }
+
+    #[inline]
     fn get_position(&self) -> Pointi {
         Default::default()
     }
@@ -59,6 +69,10 @@ impl Widget for () {
 }
 
 impl<T: Widget> Widget for Option<T> {
+    fn get_id(&self) -> WidgetId {
+        self.as_ref().map_or(WidgetId::ZERO, Widget::get_id)
+    }
+
     fn get_position(&self) -> Pointi {
         self.as_ref().map(Widget::get_position).unwrap_or_default()
     }

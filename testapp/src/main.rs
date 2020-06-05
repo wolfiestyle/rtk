@@ -1,7 +1,7 @@
 use widgets::draw::{Color, DrawContext};
 use widgets::event::{self, EvData, Event, EventResult};
 use widgets::geometry::{Pointi, Rect, Size};
-use widgets::widget::{TopLevel, Widget, Window};
+use widgets::widget::{TopLevel, Widget, WidgetId, Window};
 
 mod backend;
 use backend::GliumWindow;
@@ -11,10 +11,15 @@ struct TestWidget<T> {
     bounds: Rect,
     color: Color,
     label: &'static str,
+    id: WidgetId,
     child: T,
 }
 
 impl<T: Widget> Widget for TestWidget<T> {
+    fn get_id(&self) -> WidgetId {
+        self.id
+    }
+
     fn get_position(&self) -> Pointi {
         self.bounds.pos
     }
@@ -41,7 +46,7 @@ impl<T: Widget> Widget for TestWidget<T> {
 
         match event.data {
             EvData::PointerInside(inside) => {
-                println!("TestWidget({}) inside={:?}", self.label, inside);
+                println!("TestWidget({}, {:?}) inside={}", self.label, self.id, inside);
                 event::EVENT_CONSUMED
             }
             _ => self.child.push_event(event),
@@ -55,18 +60,21 @@ fn main() {
 
     let event_loop = EventLoop::new();
 
-    let widget = TestWidget {
+    let widget = TestWidget { // 1
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::red(0.25),
         label: "red",
-        child: TestWidget {
+        id: WidgetId::new(),
+        child: TestWidget { // 2
             bounds: Rect::new([50, 20], [210, 120]),
             color: Color::BLUE,
             label: "blue",
-            child: TestWidget {
+            id: WidgetId::new(),
+            child: TestWidget { // 3
                 bounds: Rect::new([70, 100], [70, 50]),
                 color: Color::green(0.5),
                 label: "green",
+                id: WidgetId::new(),
                 child: (),
             },
         },
