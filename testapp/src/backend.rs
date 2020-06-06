@@ -6,9 +6,9 @@ use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
 use widgets::draw::{DrawCommand, DrawQueue, Primitive};
-use widgets::event::{AxisValue, ButtonState, EvData, EvState, Event, EventResult, ModState};
+use widgets::event::{AxisValue, ButtonState, EvData, EvState, Event, ModState};
 use widgets::geometry::Pointd;
-use widgets::widget::{TopLevel, WindowAttributes};
+use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 
 mod event;
 pub use event::translate_event;
@@ -140,7 +140,7 @@ impl<T: TopLevel> GliumWindow<T> {
         self.display.gl_window().window().request_redraw();
     }
 
-    pub fn push_event(&mut self, event: WindowEvent) -> EventResult {
+    pub fn push_event(&mut self, event: WindowEvent) -> Option<WidgetId> {
         if let WindowEvent::ModifiersChanged(mod_state) = event {
             self.mod_state = ModState {
                 shift: mod_state.shift(),
@@ -150,7 +150,7 @@ impl<T: TopLevel> GliumWindow<T> {
             };
         }
 
-        if let Some(event) = translate_event(event) {
+        translate_event(event).and_then(|event| {
             match event {
                 EvData::MouseMoved(AxisValue::Position(pos)) => {
                     self.last_pos = pos;
@@ -179,8 +179,6 @@ impl<T: TopLevel> GliumWindow<T> {
             }
             self.window
                 .push_event(Event::new(event, self.last_pos, self.button_state, self.mod_state))
-        } else {
-            widgets::event::EVENT_PASS
-        }
+        })
     }
 }

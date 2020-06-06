@@ -165,9 +165,9 @@ impl Rect {
     }
 
     #[inline]
-    pub fn offset(self, dx: i32, dy: i32) -> Self {
+    pub fn offset(self, p: Pointi) -> Self {
         Rect {
-            pos: self.pos.offset(dx, dy),
+            pos: self.pos.offset(p.x, p.y),
             size: self.size,
         }
     }

@@ -1,7 +1,7 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
-use crate::event::{self, AxisValue, EvData, Event, EventResult};
+use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Pointi, Size};
-use crate::widget::{TopLevel, Widget};
+use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
 
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
@@ -94,69 +94,9 @@ impl<T: Widget> TopLevel for Window<T> {
         dc.draw_child(&self.child);
     }
 
-    fn push_event(&mut self, event: Event) -> EventResult {
-        // `bounds.pos` is relative to child's parent
-        let bounds = self.child.get_bounds();
-        // `pos` is relative to this object
-        let pos = event.pointer_pos;
-        // event.pointer_pos is now adjusted to child coordinates
-        let event = Event {
-            pointer_pos: event.pointer_pos - bounds.pos.cast().unwrap_or_default(),
-            ..event
-        };
-
-        //TODO: keyboard focus
-        match event.data {
-            EvData::Keyboard { .. } => self.child.push_event(&event),
-            EvData::Character(_) => self.child.push_event(&event),
-            EvData::MouseMoved(AxisValue::Position(_)) => {
-                if pos.inside(bounds) {
-                    if !self.was_inside {
-                        self.was_inside = true;
-                        self.child.push_event(&event.with_data(EvData::PointerInside(true)))?;
-                    }
-                    self.child
-                        .push_event(&event.with_data(EvData::MouseMoved(AxisValue::Position(event.pointer_pos))))
-                } else {
-                    if self.was_inside {
-                        self.was_inside = false;
-                        self.child.push_event(&event.with_data(EvData::PointerInside(false)))
-                    } else {
-                        event::EVENT_PASS
-                    }
-                }
-            }
-            EvData::MouseMoved(_) => {
-                if pos.inside(bounds) {
-                    self.child.push_event(&event)
-                } else {
-                    event::EVENT_PASS
-                }
-            }
-            EvData::MouseButton { .. } => {
-                if pos.inside(bounds) {
-                    self.child.push_event(&event)
-                } else {
-                    event::EVENT_PASS
-                }
-            }
-            EvData::PointerInside(_) => {
-                if self.was_inside {
-                    self.was_inside = false;
-                    self.child.push_event(&event)
-                } else {
-                    event::EVENT_PASS
-                }
-            }
-            EvData::FileDropped(_) => {
-                if pos.inside(bounds) {
-                    self.child.push_event(&event)
-                } else {
-                    event::EVENT_PASS
-                }
-            }
-            _ => event::EVENT_PASS,
-        }
+    fn push_event(&mut self, event: Event) -> Option<WidgetId> {
+        let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
+        self.child.accept_rev(&mut EventDispatcher::new(event), child_vp).err()
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {

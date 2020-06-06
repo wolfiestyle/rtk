@@ -1,5 +1,5 @@
 use widgets::draw::{Color, DrawContext};
-use widgets::event::{self, EvData, Event, EventResult};
+use widgets::event::{EvData, EvState, Event, EventResult, MouseButton};
 use widgets::geometry::{Pointi, Rect, Size};
 use widgets::visitor::Visitor;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
@@ -8,15 +8,16 @@ mod backend;
 use backend::GliumWindow;
 
 #[derive(Debug)]
-struct TestWidget<T> {
+struct TestWidget<T, U> {
     bounds: Rect,
     color: Color,
     label: &'static str,
     id: WidgetId,
     child: T,
+    child2: U,
 }
 
-impl<T: Widget> Widget for TestWidget<T> {
+impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     fn get_id(&self) -> WidgetId {
         self.id
     }
@@ -40,30 +41,38 @@ impl<T: Widget> Widget for TestWidget<T> {
     fn draw(&self, mut dc: DrawContext) {
         dc.draw_rect([0, 0], self.bounds.size, self.color, None);
         dc.draw_child(&self.child);
+        dc.draw_child(&self.child2);
     }
 
-    fn push_event(&mut self, event: &Event) -> EventResult {
-        //println!("TestWidget: {:#?}", event);
+    fn handle_event(&mut self, event: &Event) -> EventResult {
+        //println!("TestWidget({:?}): {:?}", self.label, event);
 
         match event.data {
-            EvData::PointerInside(inside) => {
-                println!("TestWidget({}, {:?}) inside={}", self.label, self.id, inside);
-                event::EVENT_CONSUMED
+            EvData::MouseButton {
+                state: EvState::Pressed,
+                button: MouseButton::Left,
+            } => {
+                println!(
+                    "TestWidget({}, {:?}) clicked! (pos={:?})",
+                    self.label, self.id, event.pointer_pos
+                );
+                EventResult::Consumed
             }
-            _ => self.child.push_event(event),
+            _ => EventResult::Pass,
         }
     }
 
-    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
-        visitor.visit(self)?;
-        self.child.accept(visitor)?;
-        self.child2.accept(visitor)
+    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        visitor.visit(self, &ctx)?;
+        self.child.accept(visitor, visitor.new_context(&self.child, &ctx))?;
+        self.child2.accept(visitor, visitor.new_context(&self.child2, &ctx))
     }
 
-    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
-        self.child.accept_rev(visitor)?;
-        self.child2.accept_rev(visitor)?;
-        visitor.visit(self)
+    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        self.child.accept_rev(visitor, visitor.new_context(&self.child, &ctx))?;
+        self.child2
+            .accept_rev(visitor, visitor.new_context(&self.child2, &ctx))?;
+        visitor.visit(self, &ctx)
     }
 }
 
@@ -73,31 +82,45 @@ fn main() {
 
     let event_loop = EventLoop::new();
 
-    let widget = TestWidget { // 1
+    let widget = TestWidget {
+        // 1
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::red(0.25),
         label: "red",
         id: WidgetId::new(),
-        child: TestWidget { // 2
+        child: TestWidget {
+            // 2
             bounds: Rect::new([50, 20], [210, 120]),
             color: Color::BLUE,
             label: "blue",
             id: WidgetId::new(),
-            child: TestWidget { // 3
+            child: TestWidget {
+                // 3
                 bounds: Rect::new([70, 100], [70, 50]),
                 color: Color::green(0.5),
                 label: "green",
                 id: WidgetId::new(),
                 child: (),
+                child2: (),
             },
+            child2: (),
+        },
+        child2: TestWidget {
+            // 4
+            bounds: Rect::new([70, 160], [120, 100]),
+            color: Color::YELLOW,
+            label: "yellow",
+            id: WidgetId::new(),
+            child: (),
+            child2: (),
         },
     };
+
     let mut window = Window::new(widget);
     window.set_title("awoo");
     //window.set_background([0.1, 0.1, 0.1]);
     window.attr.background = None;
     window.update();
-    println!("{:?}", window);
 
     let mut gl_win = GliumWindow::new(window, &event_loop);
 
@@ -114,7 +137,7 @@ fn main() {
                     _ => (),
                 }
 
-                if let Err(_) = gl_win.push_event(event) {
+                if let Some(_) = gl_win.push_event(event) {
                     gl_win.redraw();
                 }
             }

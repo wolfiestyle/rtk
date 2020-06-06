@@ -2,6 +2,9 @@ use crate::geometry::{Pointd, Pointi, Size};
 use std::path::PathBuf;
 use std::time::Instant;
 
+mod dispatcher;
+pub(crate) use dispatcher::EventDispatcher;
+
 /// Input events that come from the backend.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Event {
@@ -260,15 +263,16 @@ pub enum Key {
     Unk,
 }
 
-//FIXME: i don't like this stuff below, there must be a better way
+/// The result of processing an input event.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct EvResultPass;
+pub enum EventResult {
+    Pass,
+    Consumed,
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct EvResultConsumed;
-
-/// Workaround for operator ? short circuit evaluation.
-pub type EventResult = Result<EvResultPass, EvResultConsumed>;
-
-pub const EVENT_PASS: EventResult = Ok(EvResultPass);
-pub const EVENT_CONSUMED: EventResult = Err(EvResultConsumed);
+impl Default for EventResult {
+    #[inline]
+    fn default() -> Self {
+        EventResult::Pass
+    }
+}

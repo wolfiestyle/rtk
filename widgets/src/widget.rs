@@ -34,14 +34,14 @@ pub trait Widget {
     //TODO: invalidate mechanics to avoid overdraw
     fn draw(&self, dc: DrawContext);
 
-    /// Pushes an event through the widget tree.
-    fn push_event(&mut self, event: &Event) -> EventResult;
+    /// Handles an event sent to this widget.
+    fn handle_event(&mut self, event: &Event) -> EventResult;
 
     /// Accept a visitor in forward mode (parent, then child).
-    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error>;
+    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error>;
 
     /// Accept a visitor in reverse mode (child, then parent).
-    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error>;
+    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error>;
 }
 
 impl Widget for () {
@@ -70,17 +70,17 @@ impl Widget for () {
     fn draw(&self, _dc: DrawContext) {}
 
     #[inline]
-    fn push_event(&mut self, _event: &Event) -> EventResult {
-        crate::event::EVENT_PASS
+    fn handle_event(&mut self, _event: &Event) -> EventResult {
+        EventResult::Pass
     }
 
     #[inline]
-    fn accept<V: Visitor>(&self, _visitor: &mut V) -> Result<(), V::Error> {
+    fn accept<V: Visitor>(&mut self, _visitor: &mut V, _ctx: V::Context) -> Result<(), V::Error> {
         Ok(())
     }
 
     #[inline]
-    fn accept_rev<V: Visitor>(&self, _visitor: &mut V) -> Result<(), V::Error> {
+    fn accept_rev<V: Visitor>(&mut self, _visitor: &mut V, _ctx: V::Context) -> Result<(), V::Error> {
         Ok(())
     }
 }
@@ -120,16 +120,16 @@ impl<T: Widget> Widget for Option<T> {
         }
     }
 
-    fn push_event(&mut self, event: &Event) -> EventResult {
-        self.as_mut().map_or(crate::event::EVENT_PASS, |w| w.push_event(event))
+    fn handle_event(&mut self, event: &Event) -> EventResult {
+        self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event))
     }
 
-    fn accept<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
-        self.as_ref().map_or(Ok(()), |widget| widget.accept(visitor))
+    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        self.as_mut().map_or(Ok(()), |widget| widget.accept(visitor, ctx))
     }
 
-    fn accept_rev<V: Visitor>(&self, visitor: &mut V) -> Result<(), V::Error> {
-        self.as_ref().map_or(Ok(()), |widget| widget.accept_rev(visitor))
+    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        self.as_mut().map_or(Ok(()), |widget| widget.accept_rev(visitor, ctx))
     }
 }
 
@@ -147,7 +147,7 @@ pub trait TopLevel {
 
     fn draw(&self, dq: &mut DrawQueue);
 
-    fn push_event(&mut self, event: Event) -> EventResult;
+    fn push_event(&mut self, event: Event) -> Option<WidgetId>;
 
     fn get_window_attributes(&self) -> &WindowAttributes;
 }
