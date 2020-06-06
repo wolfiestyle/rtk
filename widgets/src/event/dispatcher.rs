@@ -5,14 +5,10 @@ use crate::widget::{Widget, WidgetId};
 
 #[derive(Debug)]
 pub struct EventDispatcher {
-    event: Event,
+    pub event: Event,
 }
 
 impl EventDispatcher {
-    pub fn new(event: Event) -> Self {
-        EventDispatcher { event }
-    }
-
     fn dispatch<W: Widget + ?Sized>(&self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.event.abs_pos;
 

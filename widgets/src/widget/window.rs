@@ -96,7 +96,7 @@ impl<T: Widget> TopLevel for Window<T> {
 
     fn push_event(&mut self, event: Event) -> Option<WidgetId> {
         let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
-        self.child.accept_rev(&mut EventDispatcher::new(event), child_vp).err()
+        self.child.accept_rev(&mut EventDispatcher{ event }, child_vp).err()
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {
