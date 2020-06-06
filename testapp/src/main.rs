@@ -130,11 +130,8 @@ fn main() {
 
         match event {
             Event::WindowEvent { event, .. } => {
-                match event {
-                    WindowEvent::CloseRequested => {
-                        *cf = ControlFlow::Exit;
-                    }
-                    _ => (),
+                if let WindowEvent::CloseRequested = event {
+                    *cf = ControlFlow::Exit;
                 }
 
                 if let Some(_) = gl_win.push_event(event) {

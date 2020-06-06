@@ -47,7 +47,7 @@ pub trait Widget {
 impl Widget for () {
     #[inline]
     fn get_id(&self) -> WidgetId {
-        WidgetId::ZERO
+        Default::default()
     }
 
     #[inline]
@@ -87,7 +87,7 @@ impl Widget for () {
 
 impl<T: Widget> Widget for Option<T> {
     fn get_id(&self) -> WidgetId {
-        self.as_ref().map_or(WidgetId::ZERO, Widget::get_id)
+        self.as_ref().map_or_else(Default::default, Widget::get_id)
     }
 
     fn get_position(&self) -> Pointi {

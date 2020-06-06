@@ -25,10 +25,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a child widget.
     pub fn draw_child<W: Widget>(&mut self, child: &W) {
-        let child_vp = Rect {
-            pos: self.viewport.pos + child.get_position(),
-            size: child.get_size(),
-        };
+        let child_vp = child.get_bounds().offset(self.viewport.pos);
         if let Some(viewport) = child_vp.clip_inside(self.viewport) {
             let dc = DrawContext::new(self.queue, viewport);
             child.draw(dc);

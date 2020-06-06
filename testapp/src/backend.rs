@@ -11,7 +11,7 @@ use widgets::geometry::Pointd;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 
 mod event;
-pub use event::translate_event;
+use event::translate_event;
 
 pub struct GliumWindow<T> {
     display: glium::Display,
