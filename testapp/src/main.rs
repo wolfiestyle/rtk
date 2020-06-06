@@ -1,7 +1,7 @@
 use widgets::draw::{Color, DrawContext};
 use widgets::event::{EvData, EvState, Event, EventResult, MouseButton};
 use widgets::geometry::{Pointi, Rect, Size};
-use widgets::visitor::Visitor;
+use widgets::implement_visitable;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
 
 mod backend;
@@ -61,20 +61,9 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
             _ => EventResult::Pass,
         }
     }
-
-    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
-        visitor.visit(self, &ctx)?;
-        self.child.accept(visitor, visitor.new_context(&self.child, &ctx))?;
-        self.child2.accept(visitor, visitor.new_context(&self.child2, &ctx))
-    }
-
-    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
-        self.child.accept_rev(visitor, visitor.new_context(&self.child, &ctx))?;
-        self.child2
-            .accept_rev(visitor, visitor.new_context(&self.child2, &ctx))?;
-        visitor.visit(self, &ctx)
-    }
 }
+
+implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
 
 fn main() {
     use glium::glutin::event::{Event, WindowEvent};
