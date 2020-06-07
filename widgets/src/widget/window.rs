@@ -10,8 +10,7 @@ pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
 pub struct Window<T> {
     /// The window attributes.
     pub attr: WindowAttributes,
-    /// If the pointer is currently inside/outside.
-    was_inside: bool,
+    last_inside: Option<WidgetId>,
     /// Window content.
     pub child: T,
 }
@@ -21,7 +20,7 @@ impl<T> Window<T> {
     pub fn new(child: T) -> Self {
         Window {
             attr: Default::default(),
-            was_inside: false,
+            last_inside: Default::default(),
             child,
         }
     }
@@ -96,7 +95,17 @@ impl<T: Widget> TopLevel for Window<T> {
 
     fn push_event(&mut self, event: Event) -> Option<WidgetId> {
         let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
-        self.child.accept_rev(&mut EventDispatcher{ event }, child_vp).err()
+        let mut dispatcher = EventDispatcher {
+            event,
+            last_inside: self.last_inside,
+            inside: None,
+        };
+        let ret = self.child.accept_rev(&mut dispatcher, child_vp).err();
+        if self.last_inside != dispatcher.inside {
+            println!("inside changed: new={:?} last={:?}", dispatcher.inside, self.last_inside);
+            self.last_inside = dispatcher.inside;
+        }
+        ret
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {

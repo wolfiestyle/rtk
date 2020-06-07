@@ -123,7 +123,8 @@ fn main() {
                     *cf = ControlFlow::Exit;
                 }
 
-                if let Some(_) = gl_win.push_event(event) {
+                if let Some(id) = gl_win.push_event(event) {
+                    println!("recv by {:?}", id);
                     gl_win.redraw();
                 }
             }

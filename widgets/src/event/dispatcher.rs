@@ -6,6 +6,8 @@ use crate::widget::{Widget, WidgetId};
 #[derive(Debug)]
 pub struct EventDispatcher {
     pub event: Event,
+    pub last_inside: Option<WidgetId>,
+    pub inside: Option<WidgetId>,
 }
 
 impl EventDispatcher {
@@ -17,7 +19,11 @@ impl EventDispatcher {
             EvData::Keyboard { .. } => widget.handle_event(&self.event),
             EvData::Character(_) => widget.handle_event(&self.event),
             EvData::MouseMoved(AxisValue::Position(_)) => {
+                let my_id = Some(widget.get_id());
                 if pos.inside(abs_bounds) {
+                    if self.inside.is_none() {
+                        self.inside = my_id;
+                    }
                     /*if !self.was_inside {
                         self.was_inside = true;
                         widget.handle_event(&self.event.with_data(EvData::PointerInside(true)))?;
