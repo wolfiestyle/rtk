@@ -1,10 +1,10 @@
 use glium::glutin::dpi::{PhysicalPosition, PhysicalSize};
 use glium::glutin::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
-use widgets::event::{AxisValue, EvData, EvState, Key, KeySide};
+use widgets::event::{AxisValue, EvState, Event, Key, KeySide};
 use widgets::geometry::{Point, Size};
 
-pub fn translate_event(event: WindowEvent) -> Option<EvData> {
-    use widgets::event::EvData::*;
+pub fn translate_event(event: WindowEvent) -> Option<Event> {
+    use widgets::event::Event::*;
 
     Some(match event {
         WindowEvent::Resized(PhysicalSize { width: w, height: h }) => Resized(Size { w, h }),

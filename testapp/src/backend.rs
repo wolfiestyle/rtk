@@ -6,7 +6,7 @@ use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
 use widgets::draw::{DrawCommand, DrawQueue, Primitive};
-use widgets::event::{AxisValue, ButtonState, EvData, EvState, Event, ModState};
+use widgets::event::{AxisValue, ButtonState, EvState, Event, EventContext, ModState};
 use widgets::geometry::Pointd;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 
@@ -152,33 +152,35 @@ impl<T: TopLevel> GliumWindow<T> {
 
         translate_event(event).and_then(|event| {
             match event {
-                EvData::MouseMoved(AxisValue::Position(pos)) => {
+                Event::MouseMoved(AxisValue::Position(pos)) => {
                     self.last_pos = pos;
                 }
-                EvData::MouseButton {
+                Event::MouseButton {
                     state: EvState::Pressed,
                     button,
                 } => {
                     self.button_state.set(button);
                 }
-                EvData::MouseButton {
+                Event::MouseButton {
                     state: EvState::Released,
                     button,
                 } => {
                     self.button_state.unset(button);
                 }
-                EvData::Resized(size) => {
+                Event::Resized(size) => {
                     self.cur_attr.set_size(size);
                     self.window.set_size(size);
                 }
-                EvData::Moved(pos) => {
+                Event::Moved(pos) => {
                     self.cur_attr.set_position(pos);
                     self.window.set_position(pos);
                 }
                 _ => (),
             }
-            self.window
-                .push_event(Event::new(event, self.last_pos, self.button_state, self.mod_state))
+            self.window.push_event(
+                event,
+                EventContext::new(self.last_pos, self.button_state, self.mod_state),
+            )
         })
     }
 }

@@ -1,4 +1,4 @@
-use crate::event::{AxisValue, EvData, Event, EventResult};
+use crate::event::{AxisValue, Event, EventContext, EventResult};
 use crate::geometry::Rect;
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
@@ -6,19 +6,20 @@ use crate::widget::{Widget, WidgetId};
 #[derive(Debug)]
 pub struct EventDispatcher {
     pub event: Event,
+    pub ctx: EventContext,
     pub last_inside: Option<WidgetId>,
     pub inside: Option<WidgetId>,
 }
 
 impl EventDispatcher {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
-        let pos = self.event.abs_pos;
+        let pos = self.ctx.abs_pos;
 
         //TODO: keyboard focus, proper inside/outside
-        match self.event.data {
-            EvData::Keyboard { .. } => widget.handle_event(&self.event),
-            EvData::Character(_) => widget.handle_event(&self.event),
-            EvData::MouseMoved(AxisValue::Position(_)) => {
+        match self.event {
+            Event::Keyboard { .. } => widget.handle_event(&self.event, self.ctx),
+            Event::Character(_) => widget.handle_event(&self.event, self.ctx),
+            Event::MouseMoved(AxisValue::Position(_)) => {
                 let my_id = Some(widget.get_id());
                 if pos.inside(abs_bounds) {
                     if self.inside.is_none() {
@@ -26,38 +27,34 @@ impl EventDispatcher {
                     }
                     /*if !self.was_inside {
                         self.was_inside = true;
-                        widget.handle_event(&self.event.with_data(EvData::PointerInside(true)))?;
+                        widget.handle_event(&self.event.with_data(Event::PointerInside(true)))?;
                     }*/
-                    widget.handle_event(
-                        &self
-                            .event
-                            .with_data(EvData::MouseMoved(AxisValue::Position(self.event.pointer_pos))),
-                    )
+                    widget.handle_event(&Event::MouseMoved(AxisValue::Position(self.ctx.pointer_pos)), self.ctx)
                 } else {
                     /*if self.was_inside {
                         self.was_inside = false;
-                        widget.handle_event(&self.event.with_data(EvData::PointerInside(false)))
+                        widget.handle_event(&self.event.with_data(Event::PointerInside(false)))
                     } else {
                         Ok(())
                     }*/
                     EventResult::Pass
                 }
             }
-            EvData::MouseMoved(_) => {
+            Event::MouseMoved(_) => {
                 if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event)
+                    widget.handle_event(&self.event, self.ctx)
                 } else {
                     EventResult::Pass
                 }
             }
-            EvData::MouseButton { .. } => {
+            Event::MouseButton { .. } => {
                 if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event)
+                    widget.handle_event(&self.event, self.ctx)
                 } else {
                     EventResult::Pass
                 }
             }
-            /*EvData::PointerInside(_) => {
+            /*Event::PointerInside(_) => {
                 if self.was_inside {
                     self.was_inside = false;
                     widget.handle_event(&self.event)
@@ -65,9 +62,9 @@ impl EventDispatcher {
                     EventResult::Pass
                 }
             }*/
-            EvData::FileDropped(_) => {
+            Event::FileDropped(_) => {
                 if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event)
+                    widget.handle_event(&self.event, self.ctx)
                 } else {
                     EventResult::Pass
                 }

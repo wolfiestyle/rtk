@@ -1,5 +1,5 @@
 use widgets::draw::{Color, DrawContext};
-use widgets::event::{EvData, EvState, Event, EventResult, MouseButton};
+use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::{Pointi, Rect, Size};
 use widgets::implement_visitable;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
@@ -44,17 +44,17 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         dc.draw_child(&self.child2);
     }
 
-    fn handle_event(&mut self, event: &Event) -> EventResult {
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("TestWidget({:?}): {:?}", self.label, event);
 
-        match event.data {
-            EvData::MouseButton {
+        match event {
+            Event::MouseButton {
                 state: EvState::Pressed,
                 button: MouseButton::Left,
             } => {
                 println!(
                     "TestWidget({}, {:?}) clicked! (pos={:?})",
-                    self.label, self.id, event.pointer_pos
+                    self.label, self.id, ctx.pointer_pos
                 );
                 EventResult::Consumed
             }

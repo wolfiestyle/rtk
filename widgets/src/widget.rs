@@ -1,5 +1,5 @@
 use crate::draw::{DrawContext, DrawQueue};
-use crate::event::{Event, EventResult};
+use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Pointi, Rect, Size};
 use crate::visitor::Visitable;
 
@@ -35,7 +35,7 @@ pub trait Widget: Visitable {
     fn draw(&self, dc: DrawContext);
 
     /// Handles an event sent to this widget.
-    fn handle_event(&mut self, event: &Event) -> EventResult;
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult;
 }
 
 impl Widget for () {
@@ -64,7 +64,7 @@ impl Widget for () {
     fn draw(&self, _dc: DrawContext) {}
 
     #[inline]
-    fn handle_event(&mut self, _event: &Event) -> EventResult {
+    fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
 }
@@ -104,8 +104,8 @@ impl<T: Widget> Widget for Option<T> {
         }
     }
 
-    fn handle_event(&mut self, event: &Event) -> EventResult {
-        self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event))
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
+        self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event, ctx))
     }
 }
 
@@ -123,7 +123,7 @@ pub trait TopLevel {
 
     fn draw(&self, dq: &mut DrawQueue);
 
-    fn push_event(&mut self, event: Event) -> Option<WidgetId>;
+    fn push_event(&mut self, event: Event, ctx: EventContext) -> Option<WidgetId>;
 
     fn get_window_attributes(&self) -> &WindowAttributes;
 }

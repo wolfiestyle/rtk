@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
-use crate::event::{Event, EventDispatcher};
+use crate::event::{Event, EventContext, EventDispatcher};
 use crate::geometry::{Pointi, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
@@ -93,10 +93,11 @@ impl<T: Widget> TopLevel for Window<T> {
         dc.draw_child(&self.child);
     }
 
-    fn push_event(&mut self, event: Event) -> Option<WidgetId> {
+    fn push_event(&mut self, event: Event, ctx: EventContext) -> Option<WidgetId> {
         let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
         let mut dispatcher = EventDispatcher {
             event,
+            ctx,
             last_inside: self.last_inside,
             inside: None,
         };

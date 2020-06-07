@@ -5,9 +5,9 @@ use std::time::Instant;
 mod dispatcher;
 pub(crate) use dispatcher::EventDispatcher;
 
-/// Input events that come from the backend.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Event {
+/// Current state associated with an event.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EventContext {
     /// Instant when the event was received.
     pub timestamp: Instant,
     /// Last known cursor position, relative to the widget.
@@ -18,34 +18,18 @@ pub struct Event {
     pub button_state: ButtonState,
     /// Current keyboard modifier state.
     pub mod_state: ModState,
-    /// Event detail.
-    pub data: EvData,
 }
 
-impl Event {
+impl EventContext {
     /// Creates a new event context using the specified data.
     #[inline]
-    pub fn new(data: EvData, pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
-        Event {
+    pub fn new(pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
+        Self {
             timestamp: Instant::now(),
             pointer_pos,
             abs_pos: pointer_pos,
             button_state,
             mod_state,
-            data,
-        }
-    }
-
-    /// Creates a new event using the same context.
-    #[inline]
-    pub fn with_data(&self, data: EvData) -> Self {
-        Event {
-            timestamp: self.timestamp,
-            pointer_pos: self.pointer_pos,
-            abs_pos: self.abs_pos,
-            button_state: self.button_state,
-            mod_state: self.mod_state,
-            data,
         }
     }
 }
@@ -53,9 +37,9 @@ impl Event {
 /// Raw key id from hardware.
 pub type ScanCode = u32;
 
-/// Event input data.
+/// Input events that come from the backend.
 #[derive(Debug, Clone, PartialEq)]
-pub enum EvData {
+pub enum Event {
     /// Raw keyboard input.
     Keyboard {
         state: EvState,
