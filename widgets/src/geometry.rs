@@ -6,8 +6,6 @@ mod rect;
 pub use rect::Rect;
 mod border;
 pub use border::Border;
-mod size_request;
-pub use size_request::SizeRequest;
 
 pub type Pointi = Point<i32>;
 pub type Pointl = Point<i64>;
