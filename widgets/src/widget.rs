@@ -1,10 +1,12 @@
-use crate::draw::{DrawContext, DrawQueue};
+use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Pointi, Rect, Size};
 use crate::visitor::Visitable;
 
 mod id;
 pub use id::WidgetId;
+mod toplevel;
+pub use toplevel::TopLevel;
 mod window;
 pub use window::*;
 
@@ -107,23 +109,4 @@ impl<T: Widget> Widget for Option<T> {
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event, ctx))
     }
-}
-
-/// Defines an object that can be a top level window.
-pub trait TopLevel {
-    fn get_position(&self) -> Pointi;
-
-    fn set_position(&mut self, position: Pointi);
-
-    fn get_size(&self) -> Size;
-
-    fn set_size(&mut self, size: Size);
-
-    fn update(&mut self);
-
-    fn draw(&self, dq: &mut DrawQueue);
-
-    fn push_event(&mut self, event: Event, ctx: EventContext) -> Option<WidgetId>;
-
-    fn get_window_attributes(&self) -> &WindowAttributes;
 }
