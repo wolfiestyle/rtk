@@ -5,35 +5,6 @@ use std::time::Instant;
 mod dispatcher;
 pub(crate) use dispatcher::EventDispatcher;
 
-/// Current state associated with an event.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct EventContext {
-    /// Instant when the event was received.
-    pub timestamp: Instant,
-    /// Last known cursor position, relative to the widget.
-    pub pointer_pos: Pointd,
-    /// Last known cursor position, relative to the window.
-    pub abs_pos: Pointd,
-    /// Current mouse button state.
-    pub button_state: ButtonState,
-    /// Current keyboard modifier state.
-    pub mod_state: ModState,
-}
-
-impl EventContext {
-    /// Creates a new event context using the specified data.
-    #[inline]
-    pub fn new(pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
-        Self {
-            timestamp: Instant::now(),
-            pointer_pos,
-            abs_pos: pointer_pos,
-            button_state,
-            mod_state,
-        }
-    }
-}
-
 /// Raw key id from hardware.
 pub type ScanCode = u32;
 
@@ -68,6 +39,35 @@ pub enum Event {
     Created,
     /// Window has been destroyed.
     Destroyed,
+}
+
+/// Current state associated with an event.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EventContext {
+    /// Instant when the event was received.
+    pub timestamp: Instant,
+    /// Last known cursor position, relative to the widget.
+    pub pointer_pos: Pointd,
+    /// Last known cursor position, relative to the window.
+    pub abs_pos: Pointd,
+    /// Current mouse button state.
+    pub button_state: ButtonState,
+    /// Current keyboard modifier state.
+    pub mod_state: ModState,
+}
+
+impl EventContext {
+    /// Creates a new event context using the specified data.
+    #[inline]
+    pub fn new(pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
+        Self {
+            timestamp: Instant::now(),
+            pointer_pos,
+            abs_pos: pointer_pos,
+            button_state,
+            mod_state,
+        }
+    }
 }
 
 /// State of keys or mouse buttons.
