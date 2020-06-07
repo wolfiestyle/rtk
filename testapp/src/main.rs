@@ -58,6 +58,10 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
                 );
                 EventResult::Consumed
             }
+            Event::PointerInside(inside) => {
+                println!("TestWidget({}, {:?}) inside={}", self.label, self.id, inside);
+                EventResult::Consumed
+            }
             _ => EventResult::Pass,
         }
     }

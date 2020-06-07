@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
-use crate::event::{Event, EventContext, EventDispatcher};
+use crate::event::{AxisValue, Event, EventContext, EventDispatcher, InsideCheck};
 use crate::geometry::{Pointi, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
@@ -95,18 +95,34 @@ impl<T: Widget> TopLevel for Window<T> {
 
     fn push_event(&mut self, event: Event, ctx: EventContext) -> Option<WidgetId> {
         let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
+
+        let (inside, outside) = match event {
+            Event::MouseMoved(AxisValue::Position(pos)) => {
+                let inside = self.child.accept_rev(&mut InsideCheck { pos }, child_vp).err();
+                if inside != self.last_inside {
+                    let outside = self.last_inside;
+                    self.last_inside = inside;
+                    (inside, outside)
+                } else {
+                    (None, None)
+                }
+            }
+            Event::PointerInside(false) => {
+                let outside = self.last_inside;
+                self.last_inside = None;
+                (None, outside)
+            }
+            _ => (None, None),
+        };
+
         let mut dispatcher = EventDispatcher {
             event,
             ctx,
-            last_inside: self.last_inside,
-            inside: None,
+            inside,
+            outside,
         };
-        let ret = self.child.accept_rev(&mut dispatcher, child_vp).err();
-        if self.last_inside != dispatcher.inside {
-            println!("inside changed: new={:?} last={:?}", dispatcher.inside, self.last_inside);
-            self.last_inside = dispatcher.inside;
-        }
-        ret
+
+        self.child.accept_rev(&mut dispatcher, child_vp).err()
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {

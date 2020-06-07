@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 mod dispatcher;
-pub(crate) use dispatcher::EventDispatcher;
+pub(crate) use dispatcher::*;
 
 /// Raw key id from hardware.
 pub type ScanCode = u32;
