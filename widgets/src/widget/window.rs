@@ -120,9 +120,13 @@ impl<T: Widget> TopLevel for Window<T> {
             ctx,
             inside,
             outside,
+            consumed_inout: None,
         };
 
-        self.child.accept_rev(&mut dispatcher, child_vp).err()
+        self.child
+            .accept_rev(&mut dispatcher, child_vp)
+            .err()
+            .or(dispatcher.consumed_inout)
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {

@@ -13,6 +13,7 @@ struct TestWidget<T, U> {
     color: Color,
     label: &'static str,
     id: WidgetId,
+    hover: bool,
     child: T,
     child2: U,
 }
@@ -39,7 +40,8 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.draw_rect([0, 0], self.bounds.size, self.color, None);
+        let color = if self.hover { Color::WHITE } else { self.color };
+        dc.draw_rect([0, 0], self.bounds.size, color, None);
         dc.draw_child(&self.child);
         dc.draw_child(&self.child2);
     }
@@ -59,6 +61,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
                 EventResult::Consumed
             }
             Event::PointerInside(inside) => {
+                self.hover = *inside;
                 println!("TestWidget({}, {:?}) inside={}", self.label, self.id, inside);
                 EventResult::Consumed
             }
@@ -80,6 +83,7 @@ fn main() {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::red(0.25),
         label: "red",
+        hover: false,
         id: WidgetId::new(),
         child: TestWidget {
             // 2
@@ -87,12 +91,14 @@ fn main() {
             color: Color::BLUE,
             label: "blue",
             id: WidgetId::new(),
+            hover: false,
             child: TestWidget {
                 // 3
                 bounds: Rect::new([70, 100], [70, 50]),
                 color: Color::green(0.5),
                 label: "green",
                 id: WidgetId::new(),
+                hover: false,
                 child: (),
                 child2: (),
             },
@@ -104,6 +110,7 @@ fn main() {
             color: Color::YELLOW,
             label: "yellow",
             id: WidgetId::new(),
+            hover: false,
             child: (),
             child2: (),
         },

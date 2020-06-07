@@ -254,6 +254,13 @@ pub enum EventResult {
     Consumed,
 }
 
+impl EventResult {
+    #[inline]
+    pub fn consumed(self) -> bool {
+        self == EventResult::Consumed
+    }
+}
+
 impl Default for EventResult {
     #[inline]
     fn default() -> Self {

@@ -9,6 +9,7 @@ pub struct EventDispatcher {
     pub ctx: EventContext,
     pub inside: Option<WidgetId>,
     pub outside: Option<WidgetId>,
+    pub consumed_inout: Option<WidgetId>,
 }
 
 impl EventDispatcher {
@@ -16,10 +17,14 @@ impl EventDispatcher {
         let pos = self.ctx.abs_pos;
 
         if self.inside.map_or(false, |wid| wid == widget.get_id()) {
-            widget.handle_event(&Event::PointerInside(true), self.ctx);
+            if widget.handle_event(&Event::PointerInside(true), self.ctx).consumed() {
+                self.consumed_inout = Some(widget.get_id());
+            }
         }
         if self.outside.map_or(false, |wid| wid == widget.get_id()) {
-            widget.handle_event(&Event::PointerInside(false), self.ctx);
+            if widget.handle_event(&Event::PointerInside(false), self.ctx).consumed() {
+                self.consumed_inout = Some(widget.get_id());
+            }
         }
 
         //TODO: keyboard focus
