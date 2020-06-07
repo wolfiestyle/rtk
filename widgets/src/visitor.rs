@@ -6,10 +6,10 @@ pub trait Visitor {
     type Context;
 
     /// Performs the action on the specified widget.
-    fn visit<W: Widget + ?Sized>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error>;
+    fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error>;
 
     /// Derives a new context for a child widget.
-    fn new_context<W: Widget + ?Sized>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context;
+    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context;
 }
 
 /// Allows an object to accept visitors.
