@@ -28,8 +28,7 @@ impl EventDispatchVisitor {
 
         //TODO: keyboard focus
         match self.event {
-            Event::Keyboard { .. } => widget.handle_event(&self.event, self.ctx),
-            Event::Character(_) => widget.handle_event(&self.event, self.ctx),
+            Event::Keyboard { .. } | Event::Character(_) => widget.handle_event(&self.event, self.ctx),
             Event::MouseMoved(AxisValue::Position(_)) => {
                 if pos.inside(abs_bounds) {
                     widget.handle_event(&Event::MouseMoved(AxisValue::Position(self.ctx.pointer_pos)), self.ctx)
@@ -37,21 +36,7 @@ impl EventDispatchVisitor {
                     EventResult::Pass
                 }
             }
-            Event::MouseMoved(_) => {
-                if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event, self.ctx)
-                } else {
-                    EventResult::Pass
-                }
-            }
-            Event::MouseButton { .. } => {
-                if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event, self.ctx)
-                } else {
-                    EventResult::Pass
-                }
-            }
-            Event::FileDropped(_) => {
+            Event::MouseMoved(_) | Event::MouseButton { .. } | Event::FileDropped(_) => {
                 if pos.inside(abs_bounds) {
                     widget.handle_event(&self.event, self.ctx)
                 } else {
