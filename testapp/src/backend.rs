@@ -84,7 +84,7 @@ impl<T: TopLevel> GliumWindow<T> {
         for drawcmd in &self.draw_queue.commands {
             match drawcmd {
                 DrawCommand::Clear(color) => target.clear_color(color.r, color.g, color.b, color.a),
-                DrawCommand::Draw(cmd) => {
+                DrawCommand::Primitives(cmd) => {
                     // clip the viewport against the visible window area
                     if let Some(scissor) = cmd.viewport.clip_inside(win_size.into()) {
                         let mode = match cmd.primitive {

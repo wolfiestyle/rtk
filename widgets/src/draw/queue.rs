@@ -26,7 +26,7 @@ pub struct DrawCmdPrim {
 #[derive(Debug, Clone, PartialEq)]
 pub enum DrawCommand {
     Clear(Color),
-    Draw(DrawCmdPrim),
+    Primitives(DrawCmdPrim),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -69,7 +69,7 @@ impl DrawQueue {
     fn get_last_cmd_if_compatible(
         &mut self, primitive: Primitive, viewport: Rect, texture: &Option<Image>,
     ) -> Option<&mut DrawCmdPrim> {
-        if let Some(DrawCommand::Draw(cmd)) = self.commands.last_mut() {
+        if let Some(DrawCommand::Primitives(cmd)) = self.commands.last_mut() {
             if cmd.primitive == primitive && &cmd.texture == texture && cmd.viewport == viewport {
                 return Some(cmd);
             }
@@ -106,7 +106,7 @@ impl DrawQueue {
             cmd.idx_len += indices.len();
         } else {
             // state change, we need to create a new draw command
-            self.commands.push(DrawCommand::Draw(DrawCmdPrim {
+            self.commands.push(DrawCommand::Primitives(DrawCmdPrim {
                 primitive,
                 idx_offset: self.indices.len(),
                 idx_len: indices.len(),
