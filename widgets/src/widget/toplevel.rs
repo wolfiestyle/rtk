@@ -1,13 +1,13 @@
 use crate::draw::DrawQueue;
 use crate::event::{Event, EventContext};
-use crate::geometry::{Pointi, Size};
+use crate::geometry::{Position, Size};
 use crate::widget::{WidgetId, WindowAttributes};
 
 /// Defines an object that can be a top level window.
 pub trait TopLevel {
-    fn get_position(&self) -> Pointi;
+    fn get_position(&self) -> Position;
 
-    fn set_position(&mut self, position: Pointi);
+    fn set_position(&mut self, position: Position);
 
     fn get_size(&self) -> Size;
 

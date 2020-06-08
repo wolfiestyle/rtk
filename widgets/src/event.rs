@@ -1,4 +1,4 @@
-use crate::geometry::{Pointd, Pointi, Size};
+use crate::geometry::{Point, Position, Size};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -30,7 +30,7 @@ pub enum Event {
     /// Window resized.
     Resized(Size),
     /// Window moved.
-    Moved(Pointi),
+    Moved(Position),
     /// Window focused state.
     Focused(bool),
     /// Window close button pressed.
@@ -47,9 +47,9 @@ pub struct EventContext {
     /// Instant when the event was received.
     pub timestamp: Instant,
     /// Last known cursor position, relative to the widget.
-    pub pointer_pos: Pointd,
+    pub pointer_pos: Point<f64>,
     /// Last known cursor position, relative to the window.
-    pub abs_pos: Pointd,
+    pub abs_pos: Point<f64>,
     /// Current mouse button state.
     pub button_state: ButtonState,
     /// Current keyboard modifier state.
@@ -59,7 +59,7 @@ pub struct EventContext {
 impl EventContext {
     /// Creates a new event context using the specified data.
     #[inline]
-    pub fn new(pointer_pos: Pointd, button_state: ButtonState, mod_state: ModState) -> Self {
+    pub fn new(pointer_pos: Point<f64>, button_state: ButtonState, mod_state: ModState) -> Self {
         Self {
             timestamp: Instant::now(),
             pointer_pos,
@@ -120,7 +120,7 @@ impl MouseButton {
 /// Axis of movement for mouse pointer.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AxisValue {
-    Position(Pointd),
+    Position(Point<f64>),
     Scroll(f32, f32),
     Pressure(f64),
     Tilt(f64, f64),

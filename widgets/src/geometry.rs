@@ -7,10 +7,7 @@ pub use rect::Rect;
 mod border;
 pub use border::Border;
 
-pub type Pointi = Point<i32>;
-pub type Pointl = Point<i64>;
-pub type Pointf = Point<f32>;
-pub type Pointd = Point<f64>;
+pub type Position = Point<i32>;
 
 #[inline]
 pub fn point<T>(x: T, y: T) -> Point<T> {

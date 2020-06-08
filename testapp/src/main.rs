@@ -1,6 +1,6 @@
 use widgets::draw::{Color, DrawContext};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
-use widgets::geometry::{Pointi, Rect, Size};
+use widgets::geometry::{Position, Rect, Size};
 use widgets::implement_visitable;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
 
@@ -23,7 +23,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         self.id
     }
 
-    fn get_position(&self) -> Pointi {
+    fn get_position(&self) -> Position {
         self.bounds.pos
     }
 
@@ -31,7 +31,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         self.bounds.size
     }
 
-    fn set_position(&mut self, position: Pointi) {
+    fn set_position(&mut self, position: Position) {
         self.bounds.pos = position
     }
 

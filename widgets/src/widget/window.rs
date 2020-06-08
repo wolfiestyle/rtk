@@ -1,6 +1,6 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
 use crate::event::{Event, EventContext, EventDispatcher};
-use crate::geometry::{Pointi, Size};
+use crate::geometry::{Position, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
 
@@ -44,11 +44,11 @@ impl<T> ops::DerefMut for Window<T> {
 }
 
 impl<T: Widget> TopLevel for Window<T> {
-    fn get_position(&self) -> Pointi {
+    fn get_position(&self) -> Position {
         self.attr.position.unwrap_or_default()
     }
 
-    fn set_position(&mut self, position: Pointi) {
+    fn set_position(&mut self, position: Position) {
         self.attr.position = Some(position);
     }
 
@@ -107,7 +107,7 @@ impl<T: Widget> TopLevel for Window<T> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct WindowAttributes {
     pub title: Option<String>,
-    pub position: Option<Pointi>,
+    pub position: Option<Position>,
     pub size: Size,
     pub min_size: Size,
     pub max_size: Size,
@@ -126,7 +126,7 @@ impl WindowAttributes {
     }
 
     #[inline]
-    pub fn set_position(&mut self, position: impl Into<Pointi>) {
+    pub fn set_position(&mut self, position: impl Into<Position>) {
         self.position = Some(position.into())
     }
 

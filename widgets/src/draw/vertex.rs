@@ -1,23 +1,23 @@
 use crate::draw::{Color, TexCoord};
-use crate::geometry::Pointf;
+use crate::geometry::Point;
 
 /// A single vertex for drawing operations.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[repr(C)]
 pub struct Vertex {
-    pub pos: Pointf,
+    pub pos: Point<f32>,
     pub color: Color,
     pub texc: TexCoord,
 }
 
 impl Vertex {
     #[inline]
-    pub const fn new(pos: Pointf, color: Color, texc: TexCoord) -> Self {
+    pub const fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
         Vertex { pos, color, texc }
     }
 
     #[inline]
-    pub const fn colored(pos: Pointf, color: Color) -> Self {
+    pub const fn colored(pos: Point<f32>, color: Color) -> Self {
         Vertex {
             pos,
             color,
@@ -26,7 +26,7 @@ impl Vertex {
     }
 
     #[inline]
-    pub const fn textured(pos: Pointf, texc: TexCoord) -> Self {
+    pub const fn textured(pos: Point<f32>, texc: TexCoord) -> Self {
         Vertex {
             pos,
             color: Color::WHITE,
@@ -35,7 +35,7 @@ impl Vertex {
     }
 
     #[inline]
-    pub fn translate(self, offset: Pointf) -> Self {
+    pub fn translate(self, offset: Point<f32>) -> Self {
         Vertex {
             pos: self.pos + offset,
             color: self.color,

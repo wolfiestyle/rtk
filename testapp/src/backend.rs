@@ -7,7 +7,7 @@ use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
 use widgets::draw::{DrawCommand, DrawQueue, Primitive};
 use widgets::event::{AxisValue, ButtonState, EvState, Event, EventContext, ModState};
-use widgets::geometry::Pointd;
+use widgets::geometry::Point;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 
 mod event;
@@ -19,7 +19,7 @@ pub struct GliumWindow<T> {
     t_white: glium::texture::Texture2d,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
-    last_pos: Pointd,
+    last_pos: Point<f64>,
     mod_state: ModState,
     button_state: ButtonState,
     window: T,

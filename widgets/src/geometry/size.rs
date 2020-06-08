@@ -1,4 +1,4 @@
-use crate::geometry::{Border, Point, Pointf, Pointi};
+use crate::geometry::{Border, Point, Position};
 use std::ops;
 
 /// Defines the size of an object.
@@ -97,15 +97,15 @@ impl Size {
     }
 
     #[inline]
-    pub fn as_point(self) -> Pointi {
-        Point {
+    pub fn as_position(self) -> Position {
+        Position {
             x: self.w as i32,
             y: self.h as i32,
         }
     }
 
     #[inline]
-    pub fn as_pointf(self) -> Pointf {
+    pub fn as_pointf(self) -> Point<f32> {
         Point {
             x: self.w as f32,
             y: self.h as f32,

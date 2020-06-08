@@ -1,18 +1,18 @@
-use crate::geometry::{Border, Point, Pointi, Size};
+use crate::geometry::{Border, Point, Position, Size};
 
 /// Defines a rectangle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[repr(C)]
 pub struct Rect {
     /// Position of the top left corner.
-    pub pos: Pointi,
+    pub pos: Position,
     /// Rectangle size.
     pub size: Size,
 }
 
 impl Rect {
     #[inline]
-    pub fn new(pos: impl Into<Pointi>, size: impl Into<Size>) -> Self {
+    pub fn new(pos: impl Into<Position>, size: impl Into<Size>) -> Self {
         Rect {
             pos: pos.into(),
             size: size.into(),
@@ -20,11 +20,11 @@ impl Rect {
     }
 
     #[inline]
-    pub fn new_centered(center: impl Into<Pointi>, size: impl Into<Size>) -> Self {
+    pub fn new_centered(center: impl Into<Position>, size: impl Into<Size>) -> Self {
         let center = center.into();
         let size = size.into();
         Rect {
-            pos: center - size.as_point() / 2,
+            pos: center - size.as_position() / 2,
             size,
         }
     }
@@ -90,12 +90,12 @@ impl Rect {
     }
 
     #[inline]
-    pub fn top_left(self) -> Pointi {
+    pub fn top_left(self) -> Position {
         self.pos
     }
 
     #[inline]
-    pub fn top_right(self) -> Pointi {
+    pub fn top_right(self) -> Position {
         Point {
             x: self.end_x(),
             y: self.y(),
@@ -103,7 +103,7 @@ impl Rect {
     }
 
     #[inline]
-    pub fn bottom_left(self) -> Pointi {
+    pub fn bottom_left(self) -> Position {
         Point {
             x: self.x(),
             y: self.end_y(),
@@ -111,7 +111,7 @@ impl Rect {
     }
 
     #[inline]
-    pub fn bottom_right(self) -> Pointi {
+    pub fn bottom_right(self) -> Position {
         Point {
             x: self.end_x(),
             y: self.end_y(),
@@ -124,7 +124,7 @@ impl Rect {
     }
 
     #[inline]
-    pub fn contains(self, p: Pointi) -> bool {
+    pub fn contains(self, p: Position) -> bool {
         p.x >= self.x() && p.x <= self.end_x() && p.y >= self.y() && p.y <= self.end_y()
     }
 
@@ -139,7 +139,7 @@ impl Rect {
     }
 
     #[inline]
-    pub fn moved_to(self, pos: Pointi) -> Self {
+    pub fn moved_to(self, pos: Position) -> Self {
         Rect { pos, size: self.size }
     }
 
@@ -160,12 +160,12 @@ impl Rect {
     pub fn expand_to_origin(self) -> Self {
         Rect {
             pos: Default::default(),
-            size: (self.pos + self.size.as_point()).as_size(),
+            size: (self.pos + self.size.as_position()).as_size(),
         }
     }
 
     #[inline]
-    pub fn offset(self, p: Pointi) -> Self {
+    pub fn offset(self, p: Position) -> Self {
         Rect {
             pos: self.pos.offset(p.x, p.y),
             size: self.size,
@@ -218,7 +218,7 @@ impl Rect {
     #[inline]
     pub fn map_pos<F>(self, f: F) -> Rect
     where
-        F: FnOnce(Pointi) -> Pointi,
+        F: FnOnce(Position) -> Position,
     {
         Rect {
             pos: f(self.pos),
@@ -238,23 +238,23 @@ impl Rect {
     }
 }
 
-impl From<(Pointi, Size)> for Rect {
+impl From<(Position, Size)> for Rect {
     #[inline]
-    fn from((pos, size): (Pointi, Size)) -> Self {
+    fn from((pos, size): (Position, Size)) -> Self {
         Rect { pos, size }
     }
 }
 
-impl From<[Pointi; 2]> for Rect {
+impl From<[Position; 2]> for Rect {
     #[inline]
-    fn from([p0, p1]: [Pointi; 2]) -> Self {
+    fn from([p0, p1]: [Position; 2]) -> Self {
         Rect::from_coords(p0.x, p0.y, p1.x, p1.y)
     }
 }
 
-impl From<(Pointi, Pointi)> for Rect {
+impl From<(Position, Position)> for Rect {
     #[inline]
-    fn from((p0, p1): (Pointi, Pointi)) -> Self {
+    fn from((p0, p1): (Position, Position)) -> Self {
         Rect::from_coords(p0.x, p0.y, p1.x, p1.y)
     }
 }

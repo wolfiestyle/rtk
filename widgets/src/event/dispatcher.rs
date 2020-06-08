@@ -1,5 +1,5 @@
 use crate::event::{AxisValue, Event, EventContext, EventResult};
-use crate::geometry::{Pointd, Rect};
+use crate::geometry::{Point, Rect};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
@@ -69,7 +69,7 @@ impl Visitor for EventDispatchVisitor {
 }
 
 struct InsideCheckVisitor {
-    pos: Pointd,
+    pos: Point<f64>,
 }
 
 impl Visitor for InsideCheckVisitor {

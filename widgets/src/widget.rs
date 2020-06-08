@@ -1,6 +1,6 @@
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
-use crate::geometry::{Pointi, Rect, Size};
+use crate::geometry::{Position, Rect, Size};
 use crate::visitor::Visitable;
 
 mod id;
@@ -16,7 +16,7 @@ pub trait Widget: Visitable {
     fn get_id(&self) -> WidgetId;
 
     /// Gets the current position.
-    fn get_position(&self) -> Pointi;
+    fn get_position(&self) -> Position;
 
     /// Gets the current size.
     fn get_size(&self) -> Size;
@@ -27,7 +27,7 @@ pub trait Widget: Visitable {
     }
 
     /// Sets the current object position.
-    fn set_position(&mut self, position: Pointi);
+    fn set_position(&mut self, position: Position);
 
     /// Update this object's size.
     fn update_size(&mut self, parent_rect: Rect);
@@ -47,7 +47,7 @@ impl Widget for () {
     }
 
     #[inline]
-    fn get_position(&self) -> Pointi {
+    fn get_position(&self) -> Position {
         Default::default()
     }
 
@@ -57,7 +57,7 @@ impl Widget for () {
     }
 
     #[inline]
-    fn set_position(&mut self, _position: Pointi) {}
+    fn set_position(&mut self, _position: Position) {}
 
     #[inline]
     fn update_size(&mut self, _parent_rect: Rect) {}
@@ -76,7 +76,7 @@ impl<T: Widget> Widget for Option<T> {
         self.as_ref().map_or_else(Default::default, Widget::get_id)
     }
 
-    fn get_position(&self) -> Pointi {
+    fn get_position(&self) -> Position {
         self.as_ref().map(Widget::get_position).unwrap_or_default()
     }
 
@@ -88,7 +88,7 @@ impl<T: Widget> Widget for Option<T> {
         self.as_ref().map(Widget::get_bounds).unwrap_or_default()
     }
 
-    fn set_position(&mut self, position: Pointi) {
+    fn set_position(&mut self, position: Position) {
         if let Some(widget) = self {
             widget.set_position(position)
         }

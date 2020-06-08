@@ -1,6 +1,6 @@
 use crate::draw::queue::{DrawError, DrawQueue, Primitive};
 use crate::draw::{Color, Image, Vertex};
-use crate::geometry::{Pointf, Rect, Size};
+use crate::geometry::{Point, Rect, Size};
 use crate::widget::Widget;
 
 /// Draw context attached to a widget.
@@ -42,13 +42,13 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draws a point.
-    pub fn draw_point(&mut self, p: impl Into<Pointf>, color: impl Into<Color>) {
+    pub fn draw_point(&mut self, p: impl Into<Point<f32>>, color: impl Into<Color>) {
         let verts = [Vertex::colored(p.into(), color.into())];
         self.draw_prim(Primitive::Points, &verts, &[0], None).unwrap()
     }
 
     /// Draws a line.
-    pub fn draw_line(&mut self, p0: impl Into<Pointf>, p1: impl Into<Pointf>, color: impl Into<Color>) {
+    pub fn draw_line(&mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, color: impl Into<Color>) {
         let color = color.into();
         let verts = [Vertex::colored(p0.into(), color), Vertex::colored(p1.into(), color)];
         self.draw_prim(Primitive::Lines, &verts, &[0, 1], None).unwrap()
@@ -56,7 +56,8 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a triangle.
     pub fn draw_triangle(
-        &mut self, p0: impl Into<Pointf>, p1: impl Into<Pointf>, p2: impl Into<Pointf>, color: impl Into<Color>,
+        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>,
+        color: impl Into<Color>,
     ) {
         let color = color.into();
         let verts = [
@@ -69,7 +70,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a rectangle with an optional image.
     pub fn draw_rect(
-        &mut self, pos: impl Into<Pointf>, size: impl Into<Size>, color: impl Into<Color>,
+        &mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>,
         image: impl Into<Option<Image>>,
     ) {
         let size = size.into();
@@ -78,11 +79,11 @@ impl<'a> DrawContext<'a> {
         }
         let top_left = pos.into();
         let bot_right = top_left + (size - Size::square(1)).as_pointf();
-        let top_right = Pointf {
+        let top_right = Point {
             x: bot_right.x,
             y: top_left.y,
         };
-        let bot_left = Pointf {
+        let bot_left = Point {
             x: top_left.x,
             y: bot_right.y,
         };
