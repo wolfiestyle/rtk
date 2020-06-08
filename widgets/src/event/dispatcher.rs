@@ -14,7 +14,7 @@ struct EventDispatchVisitor {
 impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.ctx.abs_pos;
-        let ctx = EventContext{
+        let ctx = EventContext {
             pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast().unwrap_or_default(),
             ..self.ctx
         };

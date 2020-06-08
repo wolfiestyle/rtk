@@ -40,7 +40,11 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 
     fn draw(&self, mut dc: DrawContext) {
-        let color = if self.hover { Color::WHITE } else { self.color };
+        let color = if self.hover {
+            self.color.mix(Color::WHITE, 0.25)
+        } else {
+            self.color
+        };
         dc.draw_rect([0, 0], self.bounds.size, color, None);
         dc.draw_child(&self.child);
         dc.draw_child(&self.child2);
@@ -107,7 +111,7 @@ fn main() {
         child2: TestWidget {
             // 4
             bounds: Rect::new([70, 160], [120, 100]),
-            color: Color::YELLOW,
+            color: Color::yellow(0.5),
             label: "yellow",
             id: WidgetId::new(),
             hover: false,
