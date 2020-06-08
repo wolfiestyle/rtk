@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
-use crate::event::{Event, EventContext, EventDispatchHelper};
+use crate::event::{Event, EventContext, EventDispatcher};
 use crate::geometry::{Pointi, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
@@ -11,7 +11,7 @@ pub struct Window<T> {
     /// The window attributes.
     pub attr: WindowAttributes,
     /// Event dispatcher
-    dispatcher: EventDispatchHelper,
+    dispatcher: EventDispatcher,
     /// Window content.
     pub child: T,
 }

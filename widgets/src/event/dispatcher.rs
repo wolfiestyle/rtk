@@ -3,7 +3,7 @@ use crate::geometry::{Pointd, Rect};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
-struct EventDispatcher {
+struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
     inside: Option<WidgetId>,
@@ -11,7 +11,7 @@ struct EventDispatcher {
     consumed_inout: Option<WidgetId>,
 }
 
-impl EventDispatcher {
+impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.ctx.abs_pos;
 
@@ -63,7 +63,7 @@ impl EventDispatcher {
     }
 }
 
-impl Visitor for EventDispatcher {
+impl Visitor for EventDispatchVisitor {
     type Error = WidgetId;
     type Context = Option<Rect>;
 
@@ -79,11 +79,11 @@ impl Visitor for EventDispatcher {
     }
 }
 
-struct InsideCheck {
+struct InsideCheckVisitor {
     pos: Pointd,
 }
 
-impl Visitor for InsideCheck {
+impl Visitor for InsideCheckVisitor {
     type Error = WidgetId;
     type Context = Option<Rect>;
 
@@ -102,12 +102,13 @@ impl Visitor for InsideCheck {
     }
 }
 
+/// Helper to dispatch toplevel events into a widget tree.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct EventDispatchHelper {
+pub struct EventDispatcher {
     last_inside: Option<WidgetId>,
 }
 
-impl EventDispatchHelper {
+impl EventDispatcher {
     #[inline]
     pub fn new() -> Self {
         Default::default()
@@ -120,7 +121,7 @@ impl EventDispatchHelper {
 
         let (inside, outside) = match event {
             Event::MouseMoved(AxisValue::Position(pos)) => {
-                let inside = widget.accept_rev(&mut InsideCheck { pos }, child_vp).err();
+                let inside = widget.accept_rev(&mut InsideCheckVisitor { pos }, child_vp).err();
                 if inside != self.last_inside {
                     let outside = self.last_inside;
                     self.last_inside = inside;
@@ -137,7 +138,7 @@ impl EventDispatchHelper {
             _ => (None, None),
         };
 
-        let mut dispatcher = EventDispatcher {
+        let mut dispatcher = EventDispatchVisitor {
             event,
             ctx,
             inside,
