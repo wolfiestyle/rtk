@@ -6,23 +6,23 @@ use crate::widget::{Widget, WidgetId};
 struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
-    inside: Option<WidgetId>,
-    outside: Option<WidgetId>,
-    consumed_inout: Option<WidgetId>,
+    inside_target: Option<WidgetId>,
+    outside_target: Option<WidgetId>,
+    inout_result: Option<WidgetId>,
 }
 
 impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.ctx.abs_pos;
 
-        if self.inside.map_or(false, |wid| wid == widget.get_id()) {
+        if self.inside_target.map_or(false, |wid| wid == widget.get_id()) {
             if widget.handle_event(&Event::PointerInside(true), self.ctx).consumed() {
-                self.consumed_inout = Some(widget.get_id());
+                self.inout_result = Some(widget.get_id());
             }
         }
-        if self.outside.map_or(false, |wid| wid == widget.get_id()) {
+        if self.outside_target.map_or(false, |wid| wid == widget.get_id()) {
             if widget.handle_event(&Event::PointerInside(false), self.ctx).consumed() {
-                self.consumed_inout = Some(widget.get_id());
+                self.inout_result = Some(widget.get_id());
             }
         }
 
@@ -126,14 +126,14 @@ impl EventDispatcher {
         let mut dispatcher = EventDispatchVisitor {
             event,
             ctx,
-            inside,
-            outside,
-            consumed_inout: None,
+            inside_target: inside,
+            outside_target: outside,
+            inout_result: None,
         };
 
         widget
             .accept_rev(&mut dispatcher, child_vp)
             .err()
-            .or(dispatcher.consumed_inout)
+            .or(dispatcher.inout_result)
     }
 }
