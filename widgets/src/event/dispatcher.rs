@@ -3,13 +3,12 @@ use crate::geometry::{Pointd, Rect};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
-#[derive(Debug)]
-pub struct EventDispatcher {
-    pub event: Event,
-    pub ctx: EventContext,
-    pub inside: Option<WidgetId>,
-    pub outside: Option<WidgetId>,
-    pub consumed_inout: Option<WidgetId>,
+struct EventDispatcher {
+    event: Event,
+    ctx: EventContext,
+    inside: Option<WidgetId>,
+    outside: Option<WidgetId>,
+    consumed_inout: Option<WidgetId>,
 }
 
 impl EventDispatcher {
@@ -80,8 +79,8 @@ impl Visitor for EventDispatcher {
     }
 }
 
-pub struct InsideCheck {
-    pub pos: Pointd,
+struct InsideCheck {
+    pos: Pointd,
 }
 
 impl Visitor for InsideCheck {
@@ -100,5 +99,55 @@ impl Visitor for InsideCheck {
 
     fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context {
         parent_ctx.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct EventDispatchHelper {
+    last_inside: Option<WidgetId>,
+}
+
+impl EventDispatchHelper {
+    #[inline]
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn dispatch_event<W: Widget>(
+        &mut self, widget: &mut W, event: Event, ctx: EventContext, parent_vp: Rect,
+    ) -> Option<WidgetId> {
+        let child_vp = widget.get_bounds().clip_inside(parent_vp);
+
+        let (inside, outside) = match event {
+            Event::MouseMoved(AxisValue::Position(pos)) => {
+                let inside = widget.accept_rev(&mut InsideCheck { pos }, child_vp).err();
+                if inside != self.last_inside {
+                    let outside = self.last_inside;
+                    self.last_inside = inside;
+                    (inside, outside)
+                } else {
+                    (None, None)
+                }
+            }
+            Event::PointerInside(false) => {
+                let outside = self.last_inside;
+                self.last_inside = None;
+                (None, outside)
+            }
+            _ => (None, None),
+        };
+
+        let mut dispatcher = EventDispatcher {
+            event,
+            ctx,
+            inside,
+            outside,
+            consumed_inout: None,
+        };
+
+        widget
+            .accept_rev(&mut dispatcher, child_vp)
+            .err()
+            .or(dispatcher.consumed_inout)
     }
 }

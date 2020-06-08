@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
-use crate::event::{AxisValue, Event, EventContext, EventDispatcher, InsideCheck};
+use crate::event::{Event, EventContext, EventDispatchHelper};
 use crate::geometry::{Pointi, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
@@ -10,7 +10,8 @@ pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
 pub struct Window<T> {
     /// The window attributes.
     pub attr: WindowAttributes,
-    last_inside: Option<WidgetId>,
+    /// Event dispatcher
+    dispatcher: EventDispatchHelper,
     /// Window content.
     pub child: T,
 }
@@ -20,7 +21,7 @@ impl<T> Window<T> {
     pub fn new(child: T) -> Self {
         Window {
             attr: Default::default(),
-            last_inside: Default::default(),
+            dispatcher: Default::default(),
             child,
         }
     }
@@ -94,39 +95,8 @@ impl<T: Widget> TopLevel for Window<T> {
     }
 
     fn push_event(&mut self, event: Event, ctx: EventContext) -> Option<WidgetId> {
-        let child_vp = self.child.get_bounds().clip_inside(self.get_size().into());
-
-        let (inside, outside) = match event {
-            Event::MouseMoved(AxisValue::Position(pos)) => {
-                let inside = self.child.accept_rev(&mut InsideCheck { pos }, child_vp).err();
-                if inside != self.last_inside {
-                    let outside = self.last_inside;
-                    self.last_inside = inside;
-                    (inside, outside)
-                } else {
-                    (None, None)
-                }
-            }
-            Event::PointerInside(false) => {
-                let outside = self.last_inside;
-                self.last_inside = None;
-                (None, outside)
-            }
-            _ => (None, None),
-        };
-
-        let mut dispatcher = EventDispatcher {
-            event,
-            ctx,
-            inside,
-            outside,
-            consumed_inout: None,
-        };
-
-        self.child
-            .accept_rev(&mut dispatcher, child_vp)
-            .err()
-            .or(dispatcher.consumed_inout)
+        let parent_vp = self.get_size().into();
+        self.dispatcher.dispatch_event(&mut self.child, event, ctx, parent_vp)
     }
 
     fn get_window_attributes(&self) -> &WindowAttributes {
