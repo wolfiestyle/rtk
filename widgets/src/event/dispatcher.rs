@@ -14,31 +14,35 @@ struct EventDispatchVisitor {
 impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.ctx.abs_pos;
+        let ctx = EventContext{
+            pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast().unwrap_or_default(),
+            ..self.ctx
+        };
 
         if self.inside_target.map_or(false, |wid| wid == widget.get_id()) {
-            if widget.handle_event(&Event::PointerInside(true), self.ctx).consumed() {
+            if widget.handle_event(&Event::PointerInside(true), ctx).consumed() {
                 self.inout_result = Some(widget.get_id());
             }
         }
         if self.outside_target.map_or(false, |wid| wid == widget.get_id()) {
-            if widget.handle_event(&Event::PointerInside(false), self.ctx).consumed() {
+            if widget.handle_event(&Event::PointerInside(false), ctx).consumed() {
                 self.inout_result = Some(widget.get_id());
             }
         }
 
         //TODO: keyboard focus
         match self.event {
-            Event::Keyboard { .. } | Event::Character(_) => widget.handle_event(&self.event, self.ctx),
+            Event::Keyboard { .. } | Event::Character(_) => widget.handle_event(&self.event, ctx),
             Event::MouseMoved(AxisValue::Position(_)) => {
                 if pos.inside(abs_bounds) {
-                    widget.handle_event(&Event::MouseMoved(AxisValue::Position(self.ctx.pointer_pos)), self.ctx)
+                    widget.handle_event(&Event::MouseMoved(AxisValue::Position(ctx.pointer_pos)), ctx)
                 } else {
                     EventResult::Pass
                 }
             }
             Event::MouseMoved(_) | Event::MouseButton { .. } | Event::FileDropped(_) => {
                 if pos.inside(abs_bounds) {
-                    widget.handle_event(&self.event, self.ctx)
+                    widget.handle_event(&self.event, ctx)
                 } else {
                     EventResult::Pass
                 }
