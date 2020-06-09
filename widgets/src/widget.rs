@@ -110,3 +110,40 @@ impl<T: Widget> Widget for Option<T> {
         self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event, ctx))
     }
 }
+
+impl<T: Widget + ?Sized> Widget for Box<T> {
+    #[inline]
+    fn get_id(&self) -> WidgetId {
+        (**self).get_id()
+    }
+
+    #[inline]
+    fn get_position(&self) -> Position {
+        (**self).get_position()
+    }
+
+    #[inline]
+    fn get_size(&self) -> Size {
+        (**self).get_size()
+    }
+
+    #[inline]
+    fn set_position(&mut self, position: Position) {
+        (**self).set_position(position)
+    }
+
+    #[inline]
+    fn update_size(&mut self, parent_rect: Rect) {
+        (**self).update_size(parent_rect)
+    }
+
+    #[inline]
+    fn draw(&self, dc: DrawContext) {
+        (**self).draw(dc)
+    }
+
+    #[inline]
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
+        (**self).handle_event(event, ctx)
+    }
+}

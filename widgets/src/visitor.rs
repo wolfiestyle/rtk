@@ -57,6 +57,18 @@ impl<T: Visitable, E> Visitable for Result<T, E> {
     }
 }
 
+impl<T: Visitable + ?Sized> Visitable for Box<T> {
+    #[inline]
+    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        (**self).accept(visitor, ctx)
+    }
+
+    #[inline]
+    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+        (**self).accept_rev(visitor, ctx)
+    }
+}
+
 /// Helper for implementing Visitable on a widget.
 #[macro_export]
 macro_rules! implement_visitable {
