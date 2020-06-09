@@ -5,7 +5,7 @@ use widgets::implement_visitable;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
 
 mod backend;
-use backend::GliumWindow;
+use backend::*;
 
 #[derive(Debug)]
 struct TestWidget<T, U> {
@@ -77,11 +77,6 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
 implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
 
 fn main() {
-    use glium::glutin::event::{Event, WindowEvent};
-    use glium::glutin::event_loop::{ControlFlow, EventLoop};
-
-    let event_loop = EventLoop::new();
-
     let widget = TestWidget {
         // 1
         bounds: Rect::new([20, 10], [320, 240]),
@@ -122,34 +117,14 @@ fn main() {
 
     let mut window = Window::new(widget);
     window.set_title("awoo");
-    //window.set_background([0.1, 0.1, 0.1]);
-    window.attr.background = None;
+    window.set_background([0.1, 0.1, 0.1]);
     window.update();
 
-    let mut gl_win = GliumWindow::new(window, &event_loop);
+    let mut win2 = Window::new(());
+    win2.set_size([100, 100].into());
 
-    event_loop.run(move |event, _, cf| {
-        *cf = ControlFlow::Wait;
-        //println!("{:?}", event);
-
-        match event {
-            Event::WindowEvent { event, .. } => {
-                if let WindowEvent::CloseRequested = event {
-                    *cf = ControlFlow::Exit;
-                }
-
-                if let Some(id) = gl_win.push_event(event) {
-                    println!("recv by {:?}", id);
-                    gl_win.redraw();
-                }
-            }
-            Event::MainEventsCleared => {
-                gl_win.update();
-            }
-            Event::RedrawRequested(_) => {
-                gl_win.draw();
-            }
-            _ => (),
-        }
-    });
+    let mut app = GliumApplication::new_dyn();
+    app.add_window(Box::new(window));
+    app.add_window(Box::new(win2));
+    app.run();
 }
