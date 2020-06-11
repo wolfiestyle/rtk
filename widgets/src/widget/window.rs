@@ -70,7 +70,7 @@ impl<T: Widget> TopLevel for Window<T> {
                 .map_size(|s| s.nonzero_or(DEFAULT_WINDOW_SIZE)); // if we failed to get a size then use a default
 
             // update the child's size using this size as our viewport
-            self.child.update_size(initial);
+            self.child.update_layout(initial);
 
             // set our size to the calculated content size
             let updated = self
@@ -82,7 +82,7 @@ impl<T: Widget> TopLevel for Window<T> {
             self.set_size(updated);
         } else {
             // we alread have a size, only update child
-            self.child.update_size(self.get_size().into());
+            self.child.update_layout(self.get_size().into());
         }
     }
 

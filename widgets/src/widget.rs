@@ -15,8 +15,8 @@ pub trait Widget: Bounds + Visitable {
     /// Gets the widget id.
     fn get_id(&self) -> WidgetId;
 
-    /// Update this object's size.
-    fn update_size(&mut self, parent_rect: Rect);
+    /// Update the object's layout.
+    fn update_layout(&mut self, parent_rect: Rect);
 
     /// Draws the contents of this object.
     //TODO: invalidate mechanics to avoid overdraw
@@ -33,7 +33,7 @@ impl Widget for () {
     }
 
     #[inline]
-    fn update_size(&mut self, _parent_rect: Rect) {}
+    fn update_layout(&mut self, _parent_rect: Rect) {}
 
     #[inline]
     fn draw(&self, _dc: DrawContext) {}
@@ -49,9 +49,9 @@ impl<T: Widget> Widget for Option<T> {
         self.as_ref().map_or_else(Default::default, Widget::get_id)
     }
 
-    fn update_size(&mut self, parent_rect: Rect) {
+    fn update_layout(&mut self, parent_rect: Rect) {
         if let Some(widget) = self {
-            widget.update_size(parent_rect)
+            widget.update_layout(parent_rect)
         }
     }
 
@@ -73,8 +73,8 @@ impl<T: Widget + ?Sized> Widget for Box<T> {
     }
 
     #[inline]
-    fn update_size(&mut self, parent_rect: Rect) {
-        (**self).update_size(parent_rect)
+    fn update_layout(&mut self, parent_rect: Rect) {
+        (**self).update_layout(parent_rect)
     }
 
     #[inline]

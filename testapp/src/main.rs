@@ -21,8 +21,8 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         self.id
     }
 
-    fn update_size(&mut self, _parent_rect: Rect) {
-        self.child.update_size(self.bounds);
+    fn update_layout(&mut self, _parent_rect: Rect) {
+        self.child.update_layout(self.bounds);
     }
 
     fn draw(&self, mut dc: DrawContext) {
