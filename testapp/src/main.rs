@@ -3,9 +3,7 @@ use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::{Position, Rect, Size};
 use widgets::implement_visitable;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
-
-mod backend;
-use backend::*;
+use widgets_glium::GliumApplication;
 
 #[derive(Debug)]
 struct TestWidget<T, U> {

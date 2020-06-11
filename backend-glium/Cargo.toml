@@ -1,10 +1,9 @@
 [package]
-name = "testapp"
+name = "widgets-glium"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"
-build = false
 
 [dependencies]
+glium = "0.27.0"
 widgets = { path = "../widgets", features = ["glium"] }
-widgets-glium = { path = "../backend-glium" }
