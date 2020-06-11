@@ -1,6 +1,6 @@
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
-use crate::geometry::{Position, Rect, Size};
+use crate::geometry::{Bounds, Rect};
 use crate::visitor::Visitable;
 
 mod id;
@@ -11,23 +11,9 @@ mod window;
 pub use window::*;
 
 /// Defines an object that can be drawn and viewed inside a window.
-pub trait Widget: Visitable {
+pub trait Widget: Bounds + Visitable {
     /// Gets the widget id.
     fn get_id(&self) -> WidgetId;
-
-    /// Gets the current position.
-    fn get_position(&self) -> Position;
-
-    /// Gets the current size.
-    fn get_size(&self) -> Size;
-
-    // Gets the drawing bounds of this object.
-    fn get_bounds(&self) -> Rect {
-        Rect::new(self.get_position(), self.get_size())
-    }
-
-    /// Sets the current object position.
-    fn set_position(&mut self, position: Position);
 
     /// Update this object's size.
     fn update_size(&mut self, parent_rect: Rect);
@@ -47,19 +33,6 @@ impl Widget for () {
     }
 
     #[inline]
-    fn get_position(&self) -> Position {
-        Default::default()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        Default::default()
-    }
-
-    #[inline]
-    fn set_position(&mut self, _position: Position) {}
-
-    #[inline]
     fn update_size(&mut self, _parent_rect: Rect) {}
 
     #[inline]
@@ -74,24 +47,6 @@ impl Widget for () {
 impl<T: Widget> Widget for Option<T> {
     fn get_id(&self) -> WidgetId {
         self.as_ref().map_or_else(Default::default, Widget::get_id)
-    }
-
-    fn get_position(&self) -> Position {
-        self.as_ref().map(Widget::get_position).unwrap_or_default()
-    }
-
-    fn get_size(&self) -> Size {
-        self.as_ref().map(Widget::get_size).unwrap_or_default()
-    }
-
-    fn get_bounds(&self) -> Rect {
-        self.as_ref().map(Widget::get_bounds).unwrap_or_default()
-    }
-
-    fn set_position(&mut self, position: Position) {
-        if let Some(widget) = self {
-            widget.set_position(position)
-        }
     }
 
     fn update_size(&mut self, parent_rect: Rect) {
@@ -115,21 +70,6 @@ impl<T: Widget + ?Sized> Widget for Box<T> {
     #[inline]
     fn get_id(&self) -> WidgetId {
         (**self).get_id()
-    }
-
-    #[inline]
-    fn get_position(&self) -> Position {
-        (**self).get_position()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        (**self).get_size()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        (**self).set_position(position)
     }
 
     #[inline]

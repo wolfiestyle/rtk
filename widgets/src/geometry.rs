@@ -6,6 +6,8 @@ mod rect;
 pub use rect::Rect;
 mod border;
 pub use border::Border;
+mod bounds;
+pub use bounds::Bounds;
 
 pub type Position = Point<i32>;
 

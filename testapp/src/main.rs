@@ -1,8 +1,8 @@
 use widgets::draw::{Color, DrawContext};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
-use widgets::geometry::{Position, Rect, Size};
-use widgets::implement_visitable;
+use widgets::geometry::Rect;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
+use widgets::{implement_bounds, implement_visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug)]
@@ -19,18 +19,6 @@ struct TestWidget<T, U> {
 impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     fn get_id(&self) -> WidgetId {
         self.id
-    }
-
-    fn get_position(&self) -> Position {
-        self.bounds.pos
-    }
-
-    fn get_size(&self) -> Size {
-        self.bounds.size
-    }
-
-    fn set_position(&mut self, position: Position) {
-        self.bounds.pos = position
     }
 
     fn update_size(&mut self, _parent_rect: Rect) {
@@ -72,6 +60,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 }
 
+implement_bounds!(TestWidget<A, B>, rect: bounds);
 implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
 
 fn main() {
