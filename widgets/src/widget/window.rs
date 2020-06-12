@@ -1,6 +1,6 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
 use crate::event::{Event, EventContext, EventDispatcher};
-use crate::geometry::{Position, Size};
+use crate::geometry::{Bounds, Position, Size};
 use crate::widget::{TopLevel, Widget, WidgetId};
 use std::ops;
 
@@ -43,7 +43,7 @@ impl<T> ops::DerefMut for Window<T> {
     }
 }
 
-impl<T: Widget> TopLevel for Window<T> {
+impl<T> Bounds for Window<T> {
     fn get_position(&self) -> Position {
         self.attr.position.unwrap_or_default()
     }
@@ -59,7 +59,9 @@ impl<T: Widget> TopLevel for Window<T> {
     fn set_size(&mut self, size: Size) {
         self.attr.size = size;
     }
+}
 
+impl<T: Widget> TopLevel for Window<T> {
     fn update(&mut self) {
         if self.attr.size.is_zero_area() {
             // our size is unset, first try to get the default content size

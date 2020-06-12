@@ -1,18 +1,10 @@
 use crate::draw::DrawQueue;
 use crate::event::{Event, EventContext};
-use crate::geometry::{Position, Size};
+use crate::geometry::Bounds;
 use crate::widget::{WidgetId, WindowAttributes};
 
 /// Defines an object that can be a top level window.
-pub trait TopLevel {
-    fn get_position(&self) -> Position;
-
-    fn set_position(&mut self, position: Position);
-
-    fn get_size(&self) -> Size;
-
-    fn set_size(&mut self, size: Size);
-
+pub trait TopLevel: Bounds {
     fn update(&mut self);
 
     fn draw(&self, dq: &mut DrawQueue);
@@ -23,26 +15,6 @@ pub trait TopLevel {
 }
 
 impl<T: TopLevel + ?Sized> TopLevel for Box<T> {
-    #[inline]
-    fn get_position(&self) -> Position {
-        (**self).get_position()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        (**self).set_position(position)
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        (**self).get_size()
-    }
-
-    #[inline]
-    fn set_size(&mut self, size: Size) {
-        (**self).set_size(size)
-    }
-
     #[inline]
     fn update(&mut self) {
         (**self).update()
