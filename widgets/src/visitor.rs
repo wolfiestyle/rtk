@@ -72,18 +72,46 @@ impl<T: Visitable + ?Sized> Visitable for Box<T> {
 /// Helper for implementing Visitable on a widget.
 #[macro_export]
 macro_rules! implement_visitable {
-    ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)? , $($field:ident),* ) => {
+    ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)?) => {
         impl  $(< $($gen $(: $bound)? ),+ >)? $crate::visitor::Visitable for $type $(<$($gen),+>)? {
             fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
-                visitor.visit(self, &ctx)?;
-                $(self.$field.accept(visitor, visitor.new_context(&self.$field, &ctx))?;)*
-                Ok(())
+                visitor.visit(self, &ctx)
             }
 
             fn accept_rev<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
-                $(self.$field.accept_rev(visitor, visitor.new_context(&self.$field, &ctx))?;)*
                 visitor.visit(self, &ctx)
             }
         }
+    };
+
+    ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)? , $($field:ident),+ ) => {
+        impl  $(< $($gen $(: $bound)? ),+ >)? $crate::visitor::Visitable for $type $(<$($gen),+>)? {
+            fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+                visitor.visit(self, &ctx)?;
+                $crate::implement_visitable!(@accept self, visitor, ctx; $($field),+)
+            }
+
+            fn accept_rev<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Error> {
+                $crate::implement_visitable!(@accept_rev self, visitor, ctx; $($field),+ ;);
+                visitor.visit(self, &ctx)
+            }
+        }
+    };
+
+    (@accept $self:ident, $visitor:ident, $ctx:ident ; $field:ident $(, $tail:ident)+) => ({
+        $self.$field.accept($visitor, $visitor.new_context(&$self.$field, &$ctx))?;
+        $crate::implement_visitable!(@accept $self, $visitor, $ctx; $($tail),+)
+    });
+
+    (@accept $self:ident, $visitor:ident, $ctx:ident ; $field:ident) => {
+        $self.$field.accept($visitor, $visitor.new_context(&$self.$field, &$ctx))
+    };
+
+    (@accept_rev $self:ident, $visitor:ident, $ctx:ident ; $field:ident $(, $tail:ident)* ; $($reversed:ident)*) => {
+        $crate::implement_visitable!(@accept_rev $self, $visitor, $ctx; $($tail),*; $field $($reversed)*);
+    };
+
+    (@accept_rev $self:ident, $visitor:ident, $ctx:ident ; ; $($field:ident)*) => {
+        $($self.$field.accept_rev($visitor, $visitor.new_context(&$self.$field, &$ctx))?;)*
     };
 }
