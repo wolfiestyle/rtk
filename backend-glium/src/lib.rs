@@ -14,7 +14,7 @@ use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 mod event;
 use event::translate_event;
 
-pub struct GliumWindow<T> {
+struct GliumWindow<T> {
     display: glium::Display,
     program: glium::Program,
     t_white: glium::texture::Texture2d,
@@ -27,7 +27,7 @@ pub struct GliumWindow<T> {
 }
 
 impl<T: TopLevel> GliumWindow<T> {
-    pub fn new(window: T, event_loop: &EventLoop<()>) -> Self {
+    fn new(window: T, event_loop: &EventLoop<()>) -> Self {
         let win_attr = window.get_window_attributes();
         let size = win_attr.size.nonzero_or(widgets::DEFAULT_WINDOW_SIZE);
         let mut win_builder = WindowBuilder::new()
@@ -124,7 +124,7 @@ impl<T: TopLevel> GliumWindow<T> {
         }
     }
 
-    pub fn draw(&mut self) {
+    fn draw(&mut self) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
         let mut target = self.display.draw();
@@ -132,20 +132,20 @@ impl<T: TopLevel> GliumWindow<T> {
         target.finish().unwrap();
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         self.window.update()
         //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
     }
 
-    pub fn redraw(&self) {
+    fn redraw(&self) {
         self.display.gl_window().window().request_redraw();
     }
 
-    pub fn get_id(&self) -> WindowId {
+    fn get_id(&self) -> WindowId {
         self.display.gl_window().window().id()
     }
 
-    pub fn push_event(&mut self, event: WindowEvent) -> Option<WidgetId> {
+    fn push_event(&mut self, event: WindowEvent) -> Option<WidgetId> {
         use widgets::event::Event;
 
         if let WindowEvent::ModifiersChanged(mod_state) = event {
