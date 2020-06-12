@@ -38,7 +38,6 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("TestWidget({:?}): {:?}", self.label, event);
-
         match event {
             Event::MouseButton {
                 state: EvState::Pressed,
@@ -62,6 +61,38 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
 
 implement_bounds!(TestWidget<A, B>, rect: bounds);
 implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
+
+struct TestWidget2 {
+    id: WidgetId,
+    bounds: Rect,
+}
+
+impl Widget for TestWidget2 {
+    fn get_id(&self) -> WidgetId {
+        self.id
+    }
+
+    fn update_layout(&mut self, _parent_rect: Rect) {}
+
+    fn draw(&self, mut _dc: DrawContext) {}
+
+    fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
+        //println!("Window2: {:?}", event);
+        match event {
+            Event::MouseButton {
+                state: EvState::Pressed,
+                button: MouseButton::Left,
+            } => {
+                println!("clicked!");
+                EventResult::Consumed
+            }
+            _ => EventResult::Pass,
+        }
+    }
+}
+
+implement_bounds!(TestWidget2, rect: bounds);
+implement_visitable!(TestWidget2);
 
 fn main() {
     let widget = TestWidget {
@@ -107,8 +138,13 @@ fn main() {
     window.set_background([0.1, 0.1, 0.1]);
     window.update();
 
-    let mut win2 = Window::new(());
-    win2.set_size([100, 100].into());
+    let widget2 = TestWidget2 {
+        id: WidgetId::new(),
+        bounds: Rect::new([0, 0], [200, 100]),
+    };
+    let mut win2 = Window::new(widget2);
+    win2.set_title("window2");
+    win2.update();
 
     let mut app = GliumApplication::new_dyn();
     app.add_window(Box::new(window));
