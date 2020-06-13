@@ -1,4 +1,4 @@
-use crate::draw::{Color, Image, Vertex};
+use crate::draw::{Color, ImageRef, Vertex};
 use crate::geometry::Rect;
 use std::fmt;
 
@@ -18,7 +18,7 @@ pub struct DrawCmdPrim {
     pub primitive: Primitive,
     pub idx_offset: usize, // the draw command references the indices on a shared vertex buffer
     pub idx_len: usize,
-    pub texture: Option<Image>,
+    pub texture: Option<ImageRef>,
     pub viewport: Rect,
 }
 
@@ -67,7 +67,7 @@ impl DrawQueue {
 
     /// Checks if the last draw command has the same state of the incoming one.
     fn get_last_cmd_if_compatible(
-        &mut self, primitive: Primitive, viewport: Rect, texture: &Option<Image>,
+        &mut self, primitive: Primitive, viewport: Rect, texture: &Option<ImageRef>,
     ) -> Option<&mut DrawCmdPrim> {
         if let Some(DrawCommand::Primitives(cmd)) = self.commands.last_mut() {
             if cmd.primitive == primitive && &cmd.texture == texture && cmd.viewport == viewport {
@@ -85,7 +85,8 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<Image>, viewport: Rect,
+        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
+        viewport: Rect,
     ) -> Result<(), DrawError> {
         let nvert = vertices.len() as u32;
         // no vertices means nothing to do

@@ -6,8 +6,7 @@ mod queue;
 pub use queue::*;
 mod context;
 pub use context::DrawContext;
+mod image;
+pub use self::image::*;
 
 pub type TexCoord = [f32; 2];
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Image; //TODO: implement. Image reference?

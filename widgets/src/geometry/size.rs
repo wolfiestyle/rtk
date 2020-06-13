@@ -43,8 +43,8 @@ impl Size {
     }
 
     #[inline]
-    pub fn area(self) -> u32 {
-        self.w * self.h
+    pub fn area(self) -> usize {
+        self.w as usize * self.h as usize
     }
 
     #[inline]

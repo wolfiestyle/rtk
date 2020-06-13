@@ -4,9 +4,10 @@ use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use glium::glutin::window::{WindowBuilder, WindowId};
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
+use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use std::collections::HashMap;
-use widgets::draw::{DrawCommand, DrawQueue, Primitive};
+use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageId, PixelFormat, Primitive};
 use widgets::event::{AxisValue, ButtonState, EvState, EventContext, ModState};
 use widgets::geometry::Point;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
@@ -17,7 +18,8 @@ use event::translate_event;
 struct GliumWindow<T> {
     display: glium::Display,
     program: glium::Program,
-    t_white: glium::texture::Texture2d,
+    t_white: SrgbTexture2d,
+    texture_map: HashMap<ImageId, SrgbTexture2d>,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
     last_pos: Point<f64>,
@@ -62,13 +64,14 @@ impl<T: TopLevel> GliumWindow<T> {
         let frag_src = include_str!("widgets.frag.glsl");
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
-        let image = glium::texture::RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let t_white = glium::texture::Texture2d::new(&display, image).unwrap();
+        let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
+        let t_white = SrgbTexture2d::new(&display, image).unwrap();
 
         Self {
             display,
             program,
             t_white,
+            texture_map: Default::default(),
             draw_queue: DrawQueue::new(),
             cur_attr: win_attr.clone(),
             last_pos: Default::default(),
@@ -99,10 +102,16 @@ impl<T: TopLevel> GliumWindow<T> {
                         // indices reference a single shared vertex buffer
                         let indices = &self.draw_queue.indices[cmd.idx_offset..cmd.idx_offset + cmd.idx_len];
                         let index_buf = glium::IndexBuffer::new(&self.display, mode, indices).unwrap();
+                        // get texture to use
+                        let texture = cmd
+                            .texture
+                            .as_ref()
+                            .and_then(|img| self.texture_map.get(&img.id))
+                            .unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: win_size.as_pointf().components(),
-                            tex: &self.t_white,
+                            tex: texture.sampled().minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
                         };
                         let draw_params = glium::DrawParameters {
                             blend: glium::Blend::alpha_blending(),
@@ -124,9 +133,52 @@ impl<T: TopLevel> GliumWindow<T> {
         }
     }
 
+    fn load_textures(&mut self) {
+        let display = &self.display;
+        for cmd in &self.draw_queue.commands {
+            if let DrawCommand::Primitives(DrawCmdPrim {
+                texture: Some(image), ..
+            }) = cmd
+            {
+                self.texture_map.entry(image.id).or_insert_with(|| match &image.data {
+                    ImageData::Empty => SrgbTexture2d::empty(display, image.size.w, image.size.h).unwrap(),
+                    ImageData::Bpp8(vec) => {
+                        let img = RawImage2d {
+                            data: std::borrow::Cow::Borrowed(&vec),
+                            width: image.size.w,
+                            height: image.size.h,
+                            format: match image.format {
+                                PixelFormat::Luma => ClientFormat::U8,
+                                PixelFormat::LumaA => ClientFormat::U8U8,
+                                PixelFormat::Rgb => ClientFormat::U8U8U8,
+                                PixelFormat::Rgba => ClientFormat::U8U8U8U8,
+                            },
+                        };
+                        SrgbTexture2d::new(display, img).unwrap()
+                    }
+                    ImageData::Bpp16(vec) => {
+                        let img = RawImage2d {
+                            data: std::borrow::Cow::Borrowed(&vec),
+                            width: image.size.w,
+                            height: image.size.h,
+                            format: match image.format {
+                                PixelFormat::Luma => ClientFormat::U16,
+                                PixelFormat::LumaA => ClientFormat::U16U16,
+                                PixelFormat::Rgb => ClientFormat::U16U16U16,
+                                PixelFormat::Rgba => ClientFormat::U16U16U16U16,
+                            },
+                        };
+                        SrgbTexture2d::new(display, img).unwrap()
+                    }
+                });
+            }
+        }
+    }
+
     fn draw(&mut self) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
+        self.load_textures();
         let mut target = self.display.draw();
         self.draw_elements(&mut target);
         target.finish().unwrap();

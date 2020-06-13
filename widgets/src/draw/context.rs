@@ -1,5 +1,5 @@
 use crate::draw::queue::{DrawError, DrawQueue, Primitive};
-use crate::draw::{Color, Image, Vertex};
+use crate::draw::{Color, ImageRef, Vertex};
 use crate::geometry::{Point, Rect, Size};
 use crate::widget::Widget;
 
@@ -35,7 +35,7 @@ impl<'a> DrawContext<'a> {
     /// Draws raw elements into the widget area.
     #[inline]
     pub fn draw_prim(
-        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<Image>,
+        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
     ) -> Result<(), DrawError> {
         self.queue
             .push_prim(primitive, vertices, indices, texture, self.viewport)
@@ -70,8 +70,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a rectangle with an optional image.
     pub fn draw_rect(
-        &mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>,
-        image: impl Into<Option<Image>>,
+        &mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>, image: Option<ImageRef>,
     ) {
         let size = size.into();
         if size.is_zero_area() {
@@ -94,7 +93,7 @@ impl<'a> DrawContext<'a> {
             Vertex::new(bot_right, color, [1.0, 1.0]),
             Vertex::new(bot_left, color, [0.0, 1.0]),
         ];
-        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image.into())
+        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image)
             .unwrap()
     }
 }

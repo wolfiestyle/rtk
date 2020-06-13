@@ -1,4 +1,4 @@
-use widgets::draw::{Color, DrawContext};
+use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
 use widgets::widget::{TopLevel, Widget, WidgetId, Window};
@@ -65,6 +65,7 @@ implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
 struct TestWidget2 {
     id: WidgetId,
     bounds: Rect,
+    image: ImageRef,
 }
 
 impl Widget for TestWidget2 {
@@ -74,7 +75,9 @@ impl Widget for TestWidget2 {
 
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
-    fn draw(&self, mut _dc: DrawContext) {}
+    fn draw(&self, mut dc: DrawContext) {
+        dc.draw_rect([0, 0], self.image.size, Color::WHITE, Some(self.image.clone()));
+    }
 
     fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
         //println!("Window2: {:?}", event);
@@ -140,7 +143,8 @@ fn main() {
 
     let widget2 = TestWidget2 {
         id: WidgetId::new(),
-        bounds: Rect::new([0, 0], [200, 100]),
+        bounds: Rect::new([0, 0], [512, 512]),
+        image: Image::from_file("image.png").unwrap().into(),
     };
     let mut win2 = Window::new(widget2);
     win2.set_title("window2");
