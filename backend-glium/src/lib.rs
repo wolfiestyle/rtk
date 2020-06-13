@@ -7,7 +7,7 @@ use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use std::collections::HashMap;
-use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageId, PixelFormat, Primitive};
+use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageRef, PixelFormat, Primitive};
 use widgets::event::{AxisValue, ButtonState, EvState, EventContext, ModState};
 use widgets::geometry::Point;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
@@ -19,7 +19,7 @@ struct GliumWindow<T> {
     display: glium::Display,
     program: glium::Program,
     t_white: SrgbTexture2d,
-    texture_map: HashMap<ImageId, SrgbTexture2d>,
+    texture_map: HashMap<ImageRef, SrgbTexture2d>,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
     last_pos: Point<f64>,
@@ -106,7 +106,7 @@ impl<T: TopLevel> GliumWindow<T> {
                         let texture = cmd
                             .texture
                             .as_ref()
-                            .and_then(|img| self.texture_map.get(&img.get_id()))
+                            .and_then(|img| self.texture_map.get(img))
                             .unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
@@ -141,7 +141,7 @@ impl<T: TopLevel> GliumWindow<T> {
             }) = cmd
             {
                 self.texture_map
-                    .entry(image.get_id())
+                    .entry(image.clone())
                     .or_insert_with(|| match image.get_data() {
                         ImageData::Empty => {
                             SrgbTexture2d::empty(display, image.get_size().w, image.get_size().h).unwrap()

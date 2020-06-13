@@ -1,4 +1,5 @@
 use crate::geometry::Size;
+use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -63,11 +64,6 @@ impl Image {
     pub fn get_format(&self) -> PixelFormat {
         self.format
     }
-
-    #[inline]
-    pub fn get_id(&self) -> ImageId {
-        self.id
-    }
 }
 
 #[cfg(feature = "image")]
@@ -124,6 +120,13 @@ impl PartialEq for Image {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+impl Hash for Image {
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 
@@ -222,7 +225,7 @@ impl PixelFormat {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ImageId(usize);
+struct ImageId(usize);
 
 static IMAGE_ID: AtomicUsize = AtomicUsize::new(1);
 
