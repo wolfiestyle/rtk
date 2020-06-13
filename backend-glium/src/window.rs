@@ -9,8 +9,6 @@ use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageWeakRef, PixelFormat, Primitive};
-use widgets::event::{AxisValue, ButtonState, EvState, EventContext, ModState};
-use widgets::geometry::Point;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
 
 pub struct GliumWindow<T> {
@@ -20,9 +18,6 @@ pub struct GliumWindow<T> {
     texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
-    last_pos: Point<f64>,
-    mod_state: ModState,
-    button_state: ButtonState,
     window: T,
 }
 
@@ -72,9 +67,6 @@ impl<T: TopLevel> GliumWindow<T> {
             texture_map: Default::default(),
             draw_queue: DrawQueue::new(),
             cur_attr: win_attr.clone(),
-            last_pos: Default::default(),
-            mod_state: Default::default(),
-            button_state: Default::default(),
             window,
         }
     }
@@ -204,32 +196,8 @@ impl<T: TopLevel> GliumWindow<T> {
     pub fn push_event(&mut self, event: WindowEvent) -> Option<WidgetId> {
         use widgets::event::Event;
 
-        if let WindowEvent::ModifiersChanged(mod_state) = event {
-            self.mod_state = ModState {
-                shift: mod_state.shift(),
-                ctrl: mod_state.ctrl(),
-                alt: mod_state.alt(),
-                meta: mod_state.logo(),
-            };
-        }
-
         translate_event(event).and_then(|event| {
             match event {
-                Event::MouseMoved(AxisValue::Position(pos)) => {
-                    self.last_pos = pos;
-                }
-                Event::MouseButton {
-                    state: EvState::Pressed,
-                    button,
-                } => {
-                    self.button_state.set(button);
-                }
-                Event::MouseButton {
-                    state: EvState::Released,
-                    button,
-                } => {
-                    self.button_state.unset(button);
-                }
                 Event::Resized(size) => {
                     self.cur_attr.set_size(size);
                     self.window.set_size(size);
@@ -240,10 +208,7 @@ impl<T: TopLevel> GliumWindow<T> {
                 }
                 _ => (),
             }
-            self.window.push_event(
-                event,
-                EventContext::new(self.last_pos, self.button_state, self.mod_state),
-            )
+            self.window.push_event(event)
         })
     }
 }

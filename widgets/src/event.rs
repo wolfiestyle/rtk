@@ -19,6 +19,8 @@ pub enum Event {
     },
     /// Processed keyboard input as an unicode character.
     Character(char),
+    /// Keyboard modifier state changed.
+    ModifiersChanged(ModState),
     /// Mouse pointer motion.
     MouseMoved(AxisValue),
     /// Mouse button input.

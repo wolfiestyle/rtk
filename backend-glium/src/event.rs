@@ -1,6 +1,6 @@
 use glium::glutin::dpi::{PhysicalPosition, PhysicalSize};
 use glium::glutin::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
-use widgets::event::{AxisValue, EvState, Event, Key, KeySide};
+use widgets::event::{AxisValue, EvState, Event, Key, KeySide, ModState};
 use widgets::geometry::{Point, Size};
 
 pub fn translate_event(event: WindowEvent) -> Option<Event> {
@@ -19,6 +19,12 @@ pub fn translate_event(event: WindowEvent) -> Option<Event> {
             key: translate_keycode(input.virtual_keycode),
             scancode: input.scancode,
         },
+        WindowEvent::ModifiersChanged(mod_state) => ModifiersChanged(ModState {
+            shift: mod_state.shift(),
+            ctrl: mod_state.ctrl(),
+            alt: mod_state.alt(),
+            meta: mod_state.logo(),
+        }),
         WindowEvent::CursorMoved {
             position: PhysicalPosition { x, y },
             ..

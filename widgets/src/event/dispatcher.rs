@@ -1,4 +1,4 @@
-use crate::event::{AxisValue, Event, EventContext, EventResult};
+use crate::event::{AxisValue, ButtonState, EvState, Event, EventContext, EventResult, ModState};
 use crate::geometry::{Point, Rect};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
@@ -92,8 +92,11 @@ impl Visitor for InsideCheckVisitor {
 }
 
 /// Helper to dispatch toplevel events into a widget tree.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct EventDispatcher {
+    last_pos: Point<f64>,
+    mod_state: ModState,
+    button_state: ButtonState,
     last_inside: Option<WidgetId>,
 }
 
@@ -103,35 +106,49 @@ impl EventDispatcher {
         Default::default()
     }
 
-    pub fn dispatch_event<W: Widget>(
-        &mut self, widget: &mut W, event: Event, ctx: EventContext, parent_vp: Rect,
-    ) -> Option<WidgetId> {
+    pub fn dispatch_event<W: Widget>(&mut self, widget: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
         let child_vp = widget.get_bounds().clip_inside(parent_vp);
 
-        let (inside, outside) = match event {
+        let mut inside_target = None;
+        let mut outside_target = None;
+
+        match event {
             Event::MouseMoved(AxisValue::Position(pos)) => {
+                self.last_pos = pos;
                 let inside = widget.accept_rev(&mut InsideCheckVisitor { pos }, child_vp).err();
                 if inside != self.last_inside {
-                    let outside = self.last_inside;
+                    inside_target = inside;
+                    outside_target = self.last_inside;
                     self.last_inside = inside;
-                    (inside, outside)
-                } else {
-                    (None, None)
                 }
             }
             Event::PointerInside(false) => {
-                let outside = self.last_inside;
+                outside_target = self.last_inside;
                 self.last_inside = None;
-                (None, outside)
             }
-            _ => (None, None),
-        };
+            Event::MouseButton {
+                state: EvState::Pressed,
+                button,
+            } => {
+                self.button_state.set(button);
+            }
+            Event::MouseButton {
+                state: EvState::Released,
+                button,
+            } => {
+                self.button_state.unset(button);
+            }
+            Event::ModifiersChanged(mod_state) => {
+                self.mod_state = mod_state;
+            }
+            _ => (),
+        }
 
         let mut dispatcher = EventDispatchVisitor {
             event,
-            ctx,
-            inside_target: inside,
-            outside_target: outside,
+            ctx: EventContext::new(self.last_pos, self.button_state, self.mod_state),
+            inside_target,
+            outside_target,
             inout_result: None,
         };
 
