@@ -250,7 +250,9 @@ pub enum Key {
 /// The result of processing an input event.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EventResult {
+    /// Event was completely ignored, will propagate.
     Pass,
+    /// Event was consumed, do not propagate. Will trigger a redraw.
     Consumed,
 }
 

@@ -10,6 +10,7 @@ use image::{DynamicImage, ImageResult};
 pub type ImageRef = Arc<Image>;
 pub type ImageWeakRef = Weak<Image>;
 
+/// An image to be used for drawing operations.
 #[derive(Debug, Eq)]
 pub struct Image {
     data: ImageData,
