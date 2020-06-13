@@ -35,10 +35,7 @@ pub fn translate_event(event: WindowEvent) -> Option<Event> {
             delta: MouseScrollDelta::LineDelta(x, y),
             ..
         } => MouseMoved(AxisValue::Scroll(x, y)),
-        WindowEvent::MouseInput { state, button, .. } => MouseButton {
-            state: translate_state(state),
-            button: translate_button(button),
-        },
+        WindowEvent::MouseInput { state, button, .. } => MouseButton(translate_state(state), translate_button(button)),
         WindowEvent::TouchpadPressure { pressure, .. } => MouseMoved(AxisValue::Pressure(pressure as f64)),
         _ => {
             return None;

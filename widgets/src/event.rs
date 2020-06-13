@@ -24,7 +24,7 @@ pub enum Event {
     /// Mouse pointer motion.
     MouseMoved(AxisValue),
     /// Mouse button input.
-    MouseButton { state: EvState, button: MouseButton },
+    MouseButton(EvState, MouseButton),
     /// Pointer has crossed the window boundaries.
     PointerInside(bool),
     /// A file has been dropped into the window.

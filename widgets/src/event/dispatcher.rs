@@ -40,7 +40,7 @@ impl EventDispatchVisitor {
                     EventResult::Pass
                 }
             }
-            Event::MouseMoved(_) | Event::MouseButton { .. } | Event::FileDropped(_) => {
+            Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 if pos.inside(abs_bounds) {
                     widget.handle_event(&self.event, ctx)
                 } else {
@@ -126,16 +126,10 @@ impl EventDispatcher {
                 outside_target = self.last_inside;
                 self.last_inside = None;
             }
-            Event::MouseButton {
-                state: EvState::Pressed,
-                button,
-            } => {
+            Event::MouseButton(EvState::Pressed, button) => {
                 self.button_state.set(button);
             }
-            Event::MouseButton {
-                state: EvState::Released,
-                button,
-            } => {
+            Event::MouseButton(EvState::Released, button) => {
                 self.button_state.unset(button);
             }
             Event::ModifiersChanged(mod_state) => {
