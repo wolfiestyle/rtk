@@ -10,10 +10,10 @@ pub type ImageRef = Arc<Image>;
 
 #[derive(Debug, Eq)]
 pub struct Image {
-    pub data: ImageData,
-    pub size: Size,
-    pub format: PixelFormat,
-    pub id: ImageId,
+    data: ImageData,
+    size: Size,
+    format: PixelFormat,
+    id: ImageId,
 }
 
 impl Image {
@@ -47,6 +47,26 @@ impl Image {
     #[inline]
     pub fn from_bytes(buffer: &[u8]) -> ImageResult<Self> {
         image::load_from_memory(buffer).map(Image::from)
+    }
+
+    #[inline]
+    pub fn get_data(&self) -> &ImageData {
+        &self.data
+    }
+
+    #[inline]
+    pub fn get_size(&self) -> Size {
+        self.size
+    }
+
+    #[inline]
+    pub fn get_format(&self) -> PixelFormat {
+        self.format
+    }
+
+    #[inline]
+    pub fn get_id(&self) -> ImageId {
+        self.id
     }
 }
 

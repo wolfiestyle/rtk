@@ -76,7 +76,7 @@ impl Widget for TestWidget2 {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.draw_rect([0, 0], self.image.size, Color::WHITE, Some(self.image.clone()));
+        dc.draw_rect([0, 0], self.image.get_size(), Color::WHITE, Some(self.image.clone()));
     }
 
     fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {

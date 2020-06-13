@@ -106,7 +106,7 @@ impl<T: TopLevel> GliumWindow<T> {
                         let texture = cmd
                             .texture
                             .as_ref()
-                            .and_then(|img| self.texture_map.get(&img.id))
+                            .and_then(|img| self.texture_map.get(&img.get_id()))
                             .unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
@@ -140,14 +140,14 @@ impl<T: TopLevel> GliumWindow<T> {
                 texture: Some(image), ..
             }) = cmd
             {
-                self.texture_map.entry(image.id).or_insert_with(|| match &image.data {
-                    ImageData::Empty => SrgbTexture2d::empty(display, image.size.w, image.size.h).unwrap(),
+                self.texture_map.entry(image.get_id()).or_insert_with(|| match image.get_data() {
+                    ImageData::Empty => SrgbTexture2d::empty(display, image.get_size().w, image.get_size().h).unwrap(),
                     ImageData::Bpp8(vec) => {
                         let img = RawImage2d {
                             data: std::borrow::Cow::Borrowed(&vec),
-                            width: image.size.w,
-                            height: image.size.h,
-                            format: match image.format {
+                            width: image.get_size().w,
+                            height: image.get_size().h,
+                            format: match image.get_format() {
                                 PixelFormat::Luma => ClientFormat::U8,
                                 PixelFormat::LumaA => ClientFormat::U8U8,
                                 PixelFormat::Rgb => ClientFormat::U8U8U8,
@@ -159,9 +159,9 @@ impl<T: TopLevel> GliumWindow<T> {
                     ImageData::Bpp16(vec) => {
                         let img = RawImage2d {
                             data: std::borrow::Cow::Borrowed(&vec),
-                            width: image.size.w,
-                            height: image.size.h,
-                            format: match image.format {
+                            width: image.get_size().w,
+                            height: image.get_size().h,
+                            format: match image.get_format() {
                                 PixelFormat::Luma => ClientFormat::U16,
                                 PixelFormat::LumaA => ClientFormat::U16U16,
                                 PixelFormat::Rgb => ClientFormat::U16U16U16,
