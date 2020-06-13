@@ -10,8 +10,3 @@ mod bounds;
 pub use bounds::Bounds;
 
 pub type Position = Point<i32>;
-
-#[inline]
-pub fn point<T>(x: T, y: T) -> Point<T> {
-    Point { x, y }
-}
