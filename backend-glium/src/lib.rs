@@ -7,7 +7,8 @@ use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use std::collections::HashMap;
-use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageRef, PixelFormat, Primitive};
+use weak_table::WeakKeyHashMap;
+use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageWeakRef, PixelFormat, Primitive};
 use widgets::event::{AxisValue, ButtonState, EvState, EventContext, ModState};
 use widgets::geometry::Point;
 use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
@@ -19,7 +20,7 @@ struct GliumWindow<T> {
     display: glium::Display,
     program: glium::Program,
     t_white: SrgbTexture2d,
-    texture_map: HashMap<ImageRef, SrgbTexture2d>,
+    texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
     last_pos: Point<f64>,
@@ -134,12 +135,14 @@ impl<T: TopLevel> GliumWindow<T> {
     }
 
     fn load_textures(&mut self) {
-        let display = &self.display;
+        self.texture_map.remove_expired();
+
         for cmd in &self.draw_queue.commands {
             if let DrawCommand::Primitives(DrawCmdPrim {
                 texture: Some(image), ..
             }) = cmd
             {
+                let display = &self.display;
                 self.texture_map
                     .entry(image.clone())
                     .or_insert_with(|| match image.get_data() {

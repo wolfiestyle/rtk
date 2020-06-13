@@ -2,12 +2,13 @@ use crate::geometry::Size;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 #[cfg(feature = "image")]
 use image::{DynamicImage, ImageResult};
 
 pub type ImageRef = Arc<Image>;
+pub type ImageWeakRef = Weak<Image>;
 
 #[derive(Debug, Eq)]
 pub struct Image {
