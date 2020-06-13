@@ -70,10 +70,12 @@ impl Widget for TestWidget2 {
         self.id
     }
 
-    fn update_layout(&mut self, _parent_rect: Rect) {}
+    fn update_layout(&mut self, parent_rect: Rect) {
+        self.bounds.size = parent_rect.size;
+    }
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.draw_rect([0, 0], self.image.get_size(), Color::WHITE, Some(self.image.clone()));
+        dc.draw_rect([0, 0], self.bounds.size, Color::WHITE, Some(self.image.clone()));
     }
 
     fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
@@ -137,7 +139,7 @@ fn main() {
 
     let widget2 = TestWidget2 {
         id: WidgetId::new(),
-        bounds: Rect::new([0, 0], [512, 512]),
+        bounds: Rect::new([0, 0], [128, 128]),
         image: Image::from_file("image.png").unwrap().into(),
     };
     let mut win2 = Window::new(widget2);
