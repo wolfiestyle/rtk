@@ -153,6 +153,34 @@ impl From<Vec<u16>> for ImageData {
     }
 }
 
+impl From<Box<[u8]>> for ImageData {
+    #[inline]
+    fn from(data: Box<[u8]>) -> Self {
+        ImageData::Bpp8(data.into_vec())
+    }
+}
+
+impl From<Box<[u16]>> for ImageData {
+    #[inline]
+    fn from(data: Box<[u16]>) -> Self {
+        ImageData::Bpp16(data.into_vec())
+    }
+}
+
+impl From<&[u8]> for ImageData {
+    #[inline]
+    fn from(data: &[u8]) -> Self {
+        ImageData::Bpp8(data.to_vec())
+    }
+}
+
+impl From<&[u16]> for ImageData {
+    #[inline]
+    fn from(data: &[u16]) -> Self {
+        ImageData::Bpp16(data.to_vec())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     Luma,
