@@ -1,5 +1,6 @@
-use crate::draw::{Color, DrawCmdPrim, DrawCommand, ImageRef, Primitive, Vertex};
+use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, ImageRef, Primitive, TextDrawMode, Vertex};
 use crate::geometry::Rect;
+use std::borrow::Cow;
 use std::fmt;
 
 /// Buffer with draw commands to be sent to the backend.
@@ -78,6 +79,19 @@ impl DrawQueue {
         // indices are added with an offset pointing to a single vertex buffer
         self.indices.extend(indices.iter().map(|i| i + base_vert));
         Ok(())
+    }
+
+    /// Adds a draw text command to the draw queue.
+    #[inline]
+    pub(crate) fn push_text(
+        &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, viewport: Rect,
+    ) {
+        self.commands.push(DrawCommand::Text(DrawCmdText {
+            text,
+            font_desc,
+            mode,
+            viewport,
+        }));
     }
 }
 

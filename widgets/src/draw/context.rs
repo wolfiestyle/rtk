@@ -1,7 +1,8 @@
 use crate::draw::queue::{DrawError, DrawQueue};
-use crate::draw::{Color, ImageRef, Primitive, Vertex};
+use crate::draw::{Color, ImageRef, Primitive, TextDrawMode, Vertex};
 use crate::geometry::{Point, Rect, Size};
 use crate::widget::Widget;
+use std::borrow::Cow;
 
 /// Draw context attached to a widget.
 #[derive(Debug)]
@@ -39,6 +40,16 @@ impl<'a> DrawContext<'a> {
     ) -> Result<(), DrawError> {
         self.queue
             .push_prim(primitive, vertices, indices, texture, self.viewport)
+    }
+
+    /// Draws text.
+    #[inline]
+    pub fn draw_text(
+        &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>,
+        mode: impl Into<TextDrawMode>,
+    ) {
+        self.queue
+            .push_text(text.into(), font_desc.into(), mode.into(), self.viewport)
     }
 
     /// Draws a point.

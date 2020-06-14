@@ -120,6 +120,10 @@ impl<T: TopLevel> GliumWindow<T> {
                             .unwrap();
                     }
                 }
+                DrawCommand::Text(cmd) => {
+                    //TODO: implement text drawing
+                    dbg!(cmd);
+                }
             }
         }
     }
