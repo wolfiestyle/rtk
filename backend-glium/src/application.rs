@@ -18,7 +18,8 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
 
     #[inline]
     pub fn add_window(&mut self, window: T) {
-        let gl_win = GliumWindow::new(window, &self.event_loop);
+        let mut gl_win = GliumWindow::new(window, &self.event_loop);
+        gl_win.window.push_event(widgets::event::Event::Created);
         self.window_map.insert(gl_win.get_id(), gl_win);
     }
 
@@ -33,20 +34,26 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
 
             match event {
                 Event::WindowEvent { event, window_id } => {
-                    //TODO: handle close request
-                    if let WindowEvent::CloseRequested = event {
-                        *cf = ControlFlow::Exit;
-                    }
-
                     if let Some(window) = window_map.get_mut(&window_id) {
+                        let is_close_req = matches!(event, WindowEvent::CloseRequested);
                         if window.push_event(event).is_some() {
+                            // event was consumed, trigger redraw
                             window.redraw();
+                        } else if is_close_req {
+                            // CloseRequest wasn't consumed, destroy window
+                            window.window.push_event(widgets::event::Event::Destroyed);
+                            window_map.remove(&window_id);
                         }
                     }
                 }
                 Event::MainEventsCleared => {
                     for window in window_map.values_mut() {
                         window.update();
+                    }
+
+                    if window_map.is_empty() {
+                        // no windows left, close the application
+                        *cf = ControlFlow::Exit;
                     }
                 }
                 Event::RedrawRequested(window_id) => {

@@ -18,7 +18,7 @@ pub struct GliumWindow<T> {
     texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
-    window: T,
+    pub window: T,
 }
 
 impl<T: TopLevel> GliumWindow<T> {

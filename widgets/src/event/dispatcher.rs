@@ -49,6 +49,7 @@ impl EventDispatchVisitor {
                     EventResult::Pass
                 }
             }
+            Event::CloseRequest | Event::Created | Event::Destroyed => widget.handle_event(&self.event, ctx),
             _ => EventResult::Pass,
         }
     }
