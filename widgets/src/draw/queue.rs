@@ -1,46 +1,6 @@
-use crate::draw::{Color, ImageRef, Vertex};
+use crate::draw::{Color, DrawCmdPrim, DrawCommand, ImageRef, Primitive, Vertex};
 use crate::geometry::Rect;
 use std::fmt;
-
-/// Types of drawing primitives.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Primitive {
-    Points,
-    Lines,
-    LineStrip,
-    Triangles,
-    TriangleStrip,
-    TriangleFan,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DrawCmdPrim {
-    pub primitive: Primitive,
-    pub idx_offset: usize, // the draw command references the indices on a shared vertex buffer
-    pub idx_len: usize,
-    pub texture: Option<ImageRef>,
-    pub viewport: Rect,
-}
-
-/// A single draw command.
-#[derive(Debug, Clone, PartialEq)]
-pub enum DrawCommand {
-    Clear(Color),
-    Primitives(DrawCmdPrim),
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DrawError {
-    IndexOutOfBounds { idx: u32, nvert: u32 },
-}
-
-impl fmt::Display for DrawError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            DrawError::IndexOutOfBounds { idx, nvert } => write!(f, "index {} out of bounds ({})", idx, nvert),
-        }
-    }
-}
 
 /// Buffer with draw commands to be sent to the backend.
 #[derive(Debug, Clone, Default)]
@@ -118,5 +78,18 @@ impl DrawQueue {
         // indices are added with an offset pointing to a single vertex buffer
         self.indices.extend(indices.iter().map(|i| i + base_vert));
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DrawError {
+    IndexOutOfBounds { idx: u32, nvert: u32 },
+}
+
+impl fmt::Display for DrawError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DrawError::IndexOutOfBounds { idx, nvert } => write!(f, "index {} out of bounds ({})", idx, nvert),
+        }
     }
 }

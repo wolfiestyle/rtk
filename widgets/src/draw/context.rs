@@ -1,5 +1,5 @@
-use crate::draw::queue::{DrawError, DrawQueue, Primitive};
-use crate::draw::{Color, ImageRef, Vertex};
+use crate::draw::queue::{DrawError, DrawQueue};
+use crate::draw::{Color, ImageRef, Primitive, Vertex};
 use crate::geometry::{Point, Rect, Size};
 use crate::widget::Widget;
 
