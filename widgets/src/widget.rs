@@ -1,7 +1,8 @@
-use crate::draw::DrawContext;
+use crate::draw::{Color, DrawContext};
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Rect};
 use crate::visitor::Visitable;
+use std::fmt::Display;
 
 mod id;
 pub use id::*;
@@ -44,6 +45,25 @@ impl<T: Widget> Widget for Option<T> {
     fn draw(&self, dc: DrawContext) {
         if let Some(widget) = self {
             widget.draw(dc)
+        }
+    }
+
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
+        self.as_mut().map_or(EventResult::Pass, |w| w.handle_event(event, ctx))
+    }
+}
+
+impl<T: Widget, E: Display> Widget for Result<T, E> {
+    fn update_layout(&mut self, parent_rect: Rect) {
+        if let Ok(widget) = self {
+            widget.update_layout(parent_rect)
+        }
+    }
+
+    fn draw(&self, mut dc: DrawContext) {
+        match self {
+            Ok(widget) => widget.draw(dc),
+            Err(err) => dc.draw_text(err.to_string(), "monospace 9", self.get_bounds(), Color::WHITE),
         }
     }
 
