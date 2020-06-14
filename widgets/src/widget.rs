@@ -5,8 +5,6 @@ use crate::visitor::Visitable;
 
 mod id;
 pub use id::WidgetId;
-mod toplevel;
-pub use toplevel::TopLevel;
 mod window;
 pub use window::*;
 

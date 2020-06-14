@@ -1,7 +1,8 @@
 use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
-use widgets::widget::{TopLevel, Widget, WidgetId, Window};
+use widgets::toplevel::TopLevel;
+use widgets::widget::{Widget, WidgetId, Window};
 use widgets::{implement_bounds, implement_visitable};
 use widgets_glium::GliumApplication;
 

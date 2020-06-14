@@ -3,7 +3,7 @@ use glium::glutin::event::WindowEvent;
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use glium::glutin::window::WindowId;
 use std::collections::HashMap;
-use widgets::widget::TopLevel;
+use widgets::toplevel::TopLevel;
 
 pub struct GliumApplication<T> {
     event_loop: EventLoop<()>,

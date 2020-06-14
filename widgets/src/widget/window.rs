@@ -1,7 +1,8 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Bounds, Position, Size};
-use crate::widget::{TopLevel, Widget, WidgetId};
+use crate::toplevel::TopLevel;
+use crate::widget::{Widget, WidgetId};
 use std::ops;
 
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);

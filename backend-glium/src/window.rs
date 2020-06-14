@@ -9,7 +9,8 @@ use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageWeakRef, PixelFormat, Primitive};
-use widgets::widget::{TopLevel, WidgetId, WindowAttributes};
+use widgets::toplevel::TopLevel;
+use widgets::widget::{WidgetId, WindowAttributes};
 
 pub struct GliumWindow<T> {
     display: glium::Display,
