@@ -6,8 +6,11 @@ use std::fmt;
 /// Buffer with draw commands to be sent to the backend.
 #[derive(Debug, Clone, Default)]
 pub struct DrawQueue {
+    /// Shared vertex buffer.
     pub vertices: Vec<Vertex>,
+    /// Shared index buffer.
     pub indices: Vec<u32>,
+    /// List of draw commands to be executed.
     pub commands: Vec<DrawCommand>,
 }
 

@@ -26,12 +26,18 @@ pub enum Primitive {
     TriangleFan,
 }
 
+/// Draw command primitive detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrawCmdPrim {
+    /// The primitive to draw.
     pub primitive: Primitive,
-    pub idx_offset: usize, // the draw command references the indices on a shared vertex buffer
+    /// Offset inside the shared index buffer on the draw queue.
+    pub idx_offset: usize,
+    /// Length of the indices slice.
     pub idx_len: usize,
+    /// Image to use for this draw command.
     pub texture: Option<ImageRef>,
+    /// Clipping viewport.
     pub viewport: Rect,
 }
 
