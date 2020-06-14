@@ -45,18 +45,22 @@ impl<T> ops::DerefMut for Window<T> {
 }
 
 impl<T> Bounds for Window<T> {
+    #[inline]
     fn get_position(&self) -> Position {
         self.attr.position.unwrap_or_default()
     }
 
+    #[inline]
     fn set_position(&mut self, position: Position) {
         self.attr.position = Some(position);
     }
 
+    #[inline]
     fn get_size(&self) -> Size {
         self.attr.size
     }
 
+    #[inline]
     fn set_size(&mut self, size: Size) {
         self.attr.size = size;
     }
@@ -102,6 +106,7 @@ impl<T: Widget> TopLevel for Window<T> {
         self.dispatcher.dispatch_event(&mut self.child, event, parent_vp)
     }
 
+    #[inline]
     fn get_window_attributes(&self) -> &WindowAttributes {
         &self.attr
     }
