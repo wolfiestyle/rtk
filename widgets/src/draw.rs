@@ -42,11 +42,12 @@ pub struct DrawCmdPrim {
 }
 
 /// Draw command text detail.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DrawCmdText {
     pub text: Cow<'static, str>,
     pub font_desc: Cow<'static, str>,
     pub mode: TextDrawMode,
+    pub color: Color,
     pub viewport: Rect,
 }
 

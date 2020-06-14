@@ -46,10 +46,10 @@ impl<'a> DrawContext<'a> {
     #[inline]
     pub fn draw_text(
         &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>,
-        mode: impl Into<TextDrawMode>,
+        mode: impl Into<TextDrawMode>, color: impl Into<Color>,
     ) {
         self.queue
-            .push_text(text.into(), font_desc.into(), mode.into(), self.viewport)
+            .push_text(text.into(), font_desc.into(), mode.into(), color.into(), self.viewport)
     }
 
     /// Draws a point.

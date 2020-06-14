@@ -87,12 +87,14 @@ impl DrawQueue {
     /// Adds a draw text command to the draw queue.
     #[inline]
     pub(crate) fn push_text(
-        &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, viewport: Rect,
+        &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color,
+        viewport: Rect,
     ) {
         self.commands.push(DrawCommand::Text(DrawCmdText {
             text,
             font_desc,
             mode,
+            color,
             viewport,
         }));
     }
