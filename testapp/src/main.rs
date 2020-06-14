@@ -3,7 +3,7 @@ use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
 use widgets::toplevel::TopLevel;
 use widgets::widget::{Widget, WidgetId, Window};
-use widgets::{implement_bounds, implement_visitable};
+use widgets::{implement_bounds, implement_objectid, implement_visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug)]
@@ -18,10 +18,6 @@ struct TestWidget<T, U> {
 }
 
 impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
-    fn get_id(&self) -> WidgetId {
-        self.id
-    }
-
     fn update_layout(&mut self, _parent_rect: Rect) {
         self.child.update_layout(self.bounds);
     }
@@ -49,7 +45,6 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
             }
             Event::PointerInside(inside) => {
                 self.hover = *inside;
-                println!("TestWidget({}, {:?}) inside={}", self.label, self.id, inside);
                 EventResult::Consumed
             }
             _ => EventResult::Pass,
@@ -57,6 +52,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 }
 
+implement_objectid!(TestWidget<A, B>, id);
 implement_bounds!(TestWidget<A, B>, rect: bounds);
 implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
 
@@ -67,10 +63,6 @@ struct TestWidget2 {
 }
 
 impl Widget for TestWidget2 {
-    fn get_id(&self) -> WidgetId {
-        self.id
-    }
-
     fn update_layout(&mut self, parent_rect: Rect) {
         self.bounds.size = parent_rect.size;
     }
@@ -91,6 +83,7 @@ impl Widget for TestWidget2 {
     }
 }
 
+implement_objectid!(TestWidget2, id);
 implement_bounds!(TestWidget2, rect: bounds);
 implement_visitable!(TestWidget2);
 

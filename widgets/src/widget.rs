@@ -4,15 +4,12 @@ use crate::geometry::{Bounds, Rect};
 use crate::visitor::Visitable;
 
 mod id;
-pub use id::WidgetId;
+pub use id::*;
 mod window;
 pub use window::*;
 
 /// Defines an object that can be drawn and viewed inside a window.
-pub trait Widget: Bounds + Visitable {
-    /// Gets the widget id.
-    fn get_id(&self) -> WidgetId;
-
+pub trait Widget: ObjectId + Bounds + Visitable {
     /// Update the object's layout.
     fn update_layout(&mut self, parent_rect: Rect);
 
@@ -26,11 +23,6 @@ pub trait Widget: Bounds + Visitable {
 
 impl Widget for () {
     #[inline]
-    fn get_id(&self) -> WidgetId {
-        Default::default()
-    }
-
-    #[inline]
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     #[inline]
@@ -43,10 +35,6 @@ impl Widget for () {
 }
 
 impl<T: Widget> Widget for Option<T> {
-    fn get_id(&self) -> WidgetId {
-        self.as_ref().map_or_else(Default::default, Widget::get_id)
-    }
-
     fn update_layout(&mut self, parent_rect: Rect) {
         if let Some(widget) = self {
             widget.update_layout(parent_rect)
@@ -65,11 +53,6 @@ impl<T: Widget> Widget for Option<T> {
 }
 
 impl<T: Widget + ?Sized> Widget for Box<T> {
-    #[inline]
-    fn get_id(&self) -> WidgetId {
-        (**self).get_id()
-    }
-
     #[inline]
     fn update_layout(&mut self, parent_rect: Rect) {
         (**self).update_layout(parent_rect)
