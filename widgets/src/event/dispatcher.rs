@@ -32,7 +32,9 @@ impl EventDispatchVisitor {
 
         //TODO: keyboard focus
         match self.event {
-            Event::Keyboard { .. } | Event::Character(_) => widget.handle_event(&self.event, ctx),
+            Event::Keyboard { .. } | Event::Character(_) | Event::ModifiersChanged(_) => {
+                widget.handle_event(&self.event, ctx)
+            }
             Event::MouseMoved(AxisValue::Position(_)) => {
                 if pos.inside(abs_bounds) {
                     widget.handle_event(&Event::MouseMoved(AxisValue::Position(ctx.pointer_pos)), ctx)
