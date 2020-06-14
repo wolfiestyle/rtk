@@ -20,6 +20,7 @@ pub struct Image {
 }
 
 impl Image {
+    /// Creates a new image from raw pixels.
     pub fn new(data: impl Into<ImageData>, size: impl Into<Size>, format: PixelFormat) -> Self {
         let mut data = data.into();
         let size = size.into();
@@ -40,12 +41,14 @@ impl Image {
         }
     }
 
+    /// Loads an image from file.
     #[cfg(feature = "image")]
     #[inline]
     pub fn from_file(path: impl AsRef<Path>) -> ImageResult<Self> {
         image::open(path).map(Image::from)
     }
 
+    /// Load an image from memory.
     #[cfg(feature = "image")]
     #[inline]
     pub fn from_bytes(buffer: &[u8]) -> ImageResult<Self> {
