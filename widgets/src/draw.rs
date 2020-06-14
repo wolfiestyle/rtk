@@ -132,6 +132,13 @@ impl From<Position> for TextDrawMode {
     }
 }
 
+impl From<[i32; 2]> for TextDrawMode {
+    #[inline]
+    fn from([x, y]: [i32; 2]) -> Self {
+        TextDrawMode::Baseline(Position { x, y })
+    }
+}
+
 impl From<Rect> for TextDrawMode {
     #[inline]
     fn from(bounds: Rect) -> Self {
