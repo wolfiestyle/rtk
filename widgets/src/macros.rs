@@ -1,3 +1,43 @@
+macro_rules! implement_map {
+    ($elem:ty, $($field:ident),*) => {
+        #[inline]
+        pub fn map<F>(self, mut f: F) -> Self
+        where
+            F: FnMut($elem) -> $elem,
+        {
+            Self {
+                $($field: f(self.$field),)*
+            }
+        }
+
+        #[inline]
+        pub fn map2<F>(self, other: Self, mut f: F) -> Self
+        where
+            F: FnMut($elem, $elem) -> $elem,
+        {
+            Self {
+                $($field: f(self.$field, other.$field),)*
+            }
+        }
+
+        #[inline]
+        pub fn map_mut<F>(&mut self, mut f: F)
+        where
+            F: FnMut(&mut $elem),
+        {
+            $(f(&mut self.$field);)*
+        }
+
+        #[inline]
+        pub fn map2_mut<F>(&mut self, other: Self, mut f: F)
+        where
+            F: FnMut(&mut $elem, $elem),
+        {
+            $(f(&mut self.$field, other.$field);)*
+        }
+    };
+}
+
 macro_rules! implement_ops {
     ($type:ty, $elem:ty) => {
         impl std::ops::Add for $type {

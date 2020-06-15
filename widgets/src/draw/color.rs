@@ -197,54 +197,6 @@ impl Color {
     }
 
     #[inline]
-    pub fn map<F>(self, mut f: F) -> Self
-    where
-        F: FnMut(f32) -> f32,
-    {
-        Color {
-            r: f(self.r),
-            g: f(self.g),
-            b: f(self.b),
-            a: f(self.a),
-        }
-    }
-
-    #[inline]
-    pub fn map2<F>(self, other: Color, mut f: F) -> Self
-    where
-        F: FnMut(f32, f32) -> f32,
-    {
-        Color {
-            r: f(self.r, other.r),
-            g: f(self.g, other.g),
-            b: f(self.b, other.b),
-            a: f(self.a, other.a),
-        }
-    }
-
-    #[inline]
-    pub fn map_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut f32),
-    {
-        f(&mut self.r);
-        f(&mut self.g);
-        f(&mut self.b);
-        f(&mut self.a);
-    }
-
-    #[inline]
-    pub fn map2_mut<F>(&mut self, other: Self, mut f: F)
-    where
-        F: FnMut(&mut f32, f32),
-    {
-        f(&mut self.r, other.r);
-        f(&mut self.g, other.g);
-        f(&mut self.b, other.b);
-        f(&mut self.a, other.a);
-    }
-
-    #[inline]
     pub fn clamp(self) -> Self {
         self.map(|a| a.max(0.0).min(1.0))
     }
@@ -254,6 +206,8 @@ impl Color {
         let a = a.max(0.0).min(1.0);
         self * (1.0 - a) + other * a
     }
+
+    implement_map!(f32, r, g, b, a);
 }
 
 impl From<[f32; 4]> for Color {

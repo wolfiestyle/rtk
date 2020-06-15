@@ -116,45 +116,7 @@ impl Size {
         [self.w, self.h]
     }
 
-    #[inline]
-    pub fn map<F>(self, mut f: F) -> Self
-    where
-        F: FnMut(u32) -> u32,
-    {
-        Size {
-            w: f(self.w),
-            h: f(self.h),
-        }
-    }
-
-    #[inline]
-    pub fn map2<F>(self, other: Self, mut f: F) -> Self
-    where
-        F: FnMut(u32, u32) -> u32,
-    {
-        Size {
-            w: f(self.w, other.w),
-            h: f(self.h, other.h),
-        }
-    }
-
-    #[inline]
-    pub fn map_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut u32),
-    {
-        f(&mut self.w);
-        f(&mut self.h);
-    }
-
-    #[inline]
-    pub fn map2_mut<F>(&mut self, other: Self, mut f: F)
-    where
-        F: FnMut(&mut u32, u32),
-    {
-        f(&mut self.w, other.w);
-        f(&mut self.h, other.h);
-    }
+    implement_map!(u32, w, h);
 }
 
 impl From<[u32; 2]> for Size {

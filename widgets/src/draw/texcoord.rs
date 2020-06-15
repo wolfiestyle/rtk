@@ -32,45 +32,7 @@ impl TexCoord {
         [self.u, self.v]
     }
 
-    #[inline]
-    pub fn map<F>(self, mut f: F) -> Self
-    where
-        F: FnMut(f32) -> f32,
-    {
-        TexCoord {
-            u: f(self.u),
-            v: f(self.v),
-        }
-    }
-
-    #[inline]
-    pub fn map2<F>(self, other: Self, mut f: F) -> Self
-    where
-        F: FnMut(f32, f32) -> f32,
-    {
-        TexCoord {
-            u: f(self.u, other.u),
-            v: f(self.v, other.v),
-        }
-    }
-
-    #[inline]
-    pub fn map_mut<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut f32),
-    {
-        f(&mut self.u);
-        f(&mut self.v);
-    }
-
-    #[inline]
-    pub fn map2_mut<F>(&mut self, other: Self, mut f: F)
-    where
-        F: FnMut(&mut f32, f32),
-    {
-        f(&mut self.u, other.u);
-        f(&mut self.v, other.v);
-    }
+    implement_map!(f32, u, v);
 }
 
 impl From<[f32; 2]> for TexCoord {
