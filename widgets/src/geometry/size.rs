@@ -1,5 +1,4 @@
 use crate::geometry::{Border, Point, Position};
-use std::ops;
 
 /// Defines the size of an object.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -172,82 +171,4 @@ impl From<(u32, u32)> for Size {
     }
 }
 
-impl ops::Add for Size {
-    type Output = Self;
-
-    #[inline]
-    fn add(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Add::add)
-    }
-}
-
-impl ops::Sub for Size {
-    type Output = Self;
-
-    #[inline]
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Sub::sub)
-    }
-}
-
-impl ops::Mul<u32> for Size {
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rhs: u32) -> Self::Output {
-        self.map(|a| a * rhs)
-    }
-}
-
-impl ops::Div<u32> for Size {
-    type Output = Self;
-
-    #[inline]
-    fn div(self, rhs: u32) -> Self::Output {
-        self.map(|a| a / rhs)
-    }
-}
-
-impl ops::Rem<u32> for Size {
-    type Output = Self;
-
-    #[inline]
-    fn rem(self, rhs: u32) -> Self::Output {
-        self.map(|a| a % rhs)
-    }
-}
-
-impl ops::AddAssign for Size {
-    #[inline]
-    fn add_assign(&mut self, rhs: Self) {
-        self.map2_mut(rhs, ops::AddAssign::add_assign)
-    }
-}
-
-impl ops::SubAssign for Size {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Self) {
-        self.map2_mut(rhs, ops::SubAssign::sub_assign)
-    }
-}
-
-impl ops::MulAssign<u32> for Size {
-    #[inline]
-    fn mul_assign(&mut self, rhs: u32) {
-        self.map_mut(|a| *a *= rhs)
-    }
-}
-
-impl ops::DivAssign<u32> for Size {
-    #[inline]
-    fn div_assign(&mut self, rhs: u32) {
-        self.map_mut(|a| *a /= rhs)
-    }
-}
-
-impl ops::RemAssign<u32> for Size {
-    #[inline]
-    fn rem_assign(&mut self, rhs: u32) {
-        self.map_mut(|a| *a %= rhs)
-    }
-}
+implement_ops!(Size, u32);

@@ -1,5 +1,4 @@
 use crate::geometry::Point;
-use std::ops;
 
 /// Texture coordinates (in [0, 1] range).
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -95,82 +94,4 @@ impl From<Point<f32>> for TexCoord {
     }
 }
 
-impl ops::Add for TexCoord {
-    type Output = Self;
-
-    #[inline]
-    fn add(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Add::add)
-    }
-}
-
-impl ops::Sub for TexCoord {
-    type Output = Self;
-
-    #[inline]
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Sub::sub)
-    }
-}
-
-impl ops::Mul<f32> for TexCoord {
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rhs: f32) -> Self::Output {
-        self.map(|a| a * rhs)
-    }
-}
-
-impl ops::Div<f32> for TexCoord {
-    type Output = Self;
-
-    #[inline]
-    fn div(self, rhs: f32) -> Self::Output {
-        self.map(|a| a / rhs)
-    }
-}
-
-impl ops::Rem<f32> for TexCoord {
-    type Output = Self;
-
-    #[inline]
-    fn rem(self, rhs: f32) -> Self::Output {
-        self.map(|a| a % rhs)
-    }
-}
-
-impl ops::AddAssign for TexCoord {
-    #[inline]
-    fn add_assign(&mut self, rhs: Self) {
-        self.map2_mut(rhs, ops::AddAssign::add_assign)
-    }
-}
-
-impl ops::SubAssign for TexCoord {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Self) {
-        self.map2_mut(rhs, ops::SubAssign::sub_assign)
-    }
-}
-
-impl ops::MulAssign<f32> for TexCoord {
-    #[inline]
-    fn mul_assign(&mut self, rhs: f32) {
-        self.map_mut(|a| *a *= rhs)
-    }
-}
-
-impl ops::DivAssign<f32> for TexCoord {
-    #[inline]
-    fn div_assign(&mut self, rhs: f32) {
-        self.map_mut(|a| *a /= rhs)
-    }
-}
-
-impl ops::RemAssign<f32> for TexCoord {
-    #[inline]
-    fn rem_assign(&mut self, rhs: f32) {
-        self.map_mut(|a| *a %= rhs)
-    }
-}
+implement_ops!(TexCoord, f32);

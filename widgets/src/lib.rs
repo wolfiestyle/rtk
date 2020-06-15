@@ -1,3 +1,6 @@
+#[macro_use]
+mod macros;
+
 pub mod draw;
 pub mod event;
 pub mod geometry;

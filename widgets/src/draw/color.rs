@@ -1,5 +1,3 @@
-use std::ops;
-
 #[inline]
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {
@@ -225,6 +223,28 @@ impl Color {
     }
 
     #[inline]
+    pub fn map_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut f32),
+    {
+        f(&mut self.r);
+        f(&mut self.g);
+        f(&mut self.b);
+        f(&mut self.a);
+    }
+
+    #[inline]
+    pub fn map2_mut<F>(&mut self, other: Self, mut f: F)
+    where
+        F: FnMut(&mut f32, f32),
+    {
+        f(&mut self.r, other.r);
+        f(&mut self.g, other.g);
+        f(&mut self.b, other.b);
+        f(&mut self.a, other.a);
+    }
+
+    #[inline]
     pub fn clamp(self) -> Self {
         self.map(|a| a.max(0.0).min(1.0))
     }
@@ -278,82 +298,4 @@ impl From<[u8; 3]> for Color {
     }
 }
 
-impl ops::Add for Color {
-    type Output = Self;
-
-    #[inline]
-    fn add(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Add::add).clamp()
-    }
-}
-
-impl ops::Sub for Color {
-    type Output = Self;
-
-    #[inline]
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.map2(rhs, ops::Sub::sub).clamp()
-    }
-}
-
-impl ops::Mul<f32> for Color {
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rhs: f32) -> Self::Output {
-        self.map(|a| a * rhs).clamp()
-    }
-}
-
-impl ops::Div<f32> for Color {
-    type Output = Self;
-
-    #[inline]
-    fn div(self, rhs: f32) -> Self::Output {
-        self.map(|a| a / rhs).clamp()
-    }
-}
-
-impl ops::Rem<f32> for Color {
-    type Output = Self;
-
-    #[inline]
-    fn rem(self, rhs: f32) -> Self::Output {
-        self.map(|a| a % rhs).clamp()
-    }
-}
-
-impl ops::AddAssign for Color {
-    #[inline]
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs
-    }
-}
-
-impl ops::SubAssign for Color {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs
-    }
-}
-
-impl ops::MulAssign<f32> for Color {
-    #[inline]
-    fn mul_assign(&mut self, rhs: f32) {
-        *self = *self * rhs
-    }
-}
-
-impl ops::DivAssign<f32> for Color {
-    #[inline]
-    fn div_assign(&mut self, rhs: f32) {
-        *self = *self / rhs
-    }
-}
-
-impl ops::RemAssign<f32> for Color {
-    #[inline]
-    fn rem_assign(&mut self, rhs: f32) {
-        *self = *self % rhs
-    }
-}
+implement_ops!(Color, f32);
