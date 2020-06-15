@@ -1,31 +1,3 @@
-#[inline]
-fn srgb_to_linear(s: f32) -> f32 {
-    if s <= 0.04045 {
-        s / 12.92
-    } else {
-        ((s + 0.055) / 1.055).powf(2.4)
-    }
-}
-
-#[inline]
-fn linear_to_srgb(l: f32) -> f32 {
-    if l <= 0.0031308 {
-        l * 12.92
-    } else {
-        1.055 * l.powf(1.0 / 2.4) - 0.055
-    }
-}
-
-#[inline]
-fn u8_to_linear(srgb: u8) -> f32 {
-    srgb_to_linear(srgb as f32 / 255.0)
-}
-
-#[inline]
-fn linear_to_u8(linear: f32) -> u8 {
-    (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[repr(C)]
 pub struct Color {
@@ -253,3 +225,31 @@ impl From<[u8; 3]> for Color {
 }
 
 implement_ops!(Color, f32);
+
+#[inline]
+fn srgb_to_linear(s: f32) -> f32 {
+    if s <= 0.04045 {
+        s / 12.92
+    } else {
+        ((s + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+#[inline]
+fn linear_to_srgb(l: f32) -> f32 {
+    if l <= 0.0031308 {
+        l * 12.92
+    } else {
+        1.055 * l.powf(1.0 / 2.4) - 0.055
+    }
+}
+
+#[inline]
+fn u8_to_linear(srgb: u8) -> f32 {
+    srgb_to_linear(srgb as f32 / 255.0)
+}
+
+#[inline]
+fn linear_to_u8(linear: f32) -> u8 {
+    (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
+}
