@@ -21,7 +21,7 @@ impl Vertex {
         Vertex {
             pos,
             color,
-            texc: [0.0, 0.0],
+            texc: TexCoord::TOP_LEFT,
         }
     }
 

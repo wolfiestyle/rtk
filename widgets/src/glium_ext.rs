@@ -1,4 +1,4 @@
-use crate::draw::{Color, Vertex};
+use crate::draw::{Color, TexCoord, Vertex};
 use crate::geometry::Point;
 use glium::vertex::{Attribute, AttributeType};
 
@@ -22,5 +22,12 @@ unsafe impl Attribute for Color {
     #[inline]
     fn get_type() -> AttributeType {
         AttributeType::F32F32F32F32
+    }
+}
+
+unsafe impl Attribute for TexCoord {
+    #[inline]
+    fn get_type() -> AttributeType {
+        AttributeType::F32F32
     }
 }

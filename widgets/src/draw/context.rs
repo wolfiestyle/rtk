@@ -1,5 +1,5 @@
 use crate::draw::queue::{DrawError, DrawQueue};
-use crate::draw::{Color, ImageRef, Primitive, TextDrawMode, Vertex};
+use crate::draw::{Color, ImageRef, Primitive, TexCoord, TextDrawMode, Vertex};
 use crate::geometry::{Point, Rect, Size};
 use crate::widget::Widget;
 use std::borrow::Cow;
@@ -99,10 +99,10 @@ impl<'a> DrawContext<'a> {
         };
         let color = color.into();
         let verts = [
-            Vertex::new(top_left, color, [0.0, 0.0]),
-            Vertex::new(top_right, color, [1.0, 0.0]),
-            Vertex::new(bot_right, color, [1.0, 1.0]),
-            Vertex::new(bot_left, color, [0.0, 1.0]),
+            Vertex::new(top_left, color, TexCoord::TOP_LEFT),
+            Vertex::new(top_right, color, TexCoord::TOP_RIGHT),
+            Vertex::new(bot_right, color, TexCoord::BOTTOM_RIGHT),
+            Vertex::new(bot_left, color, TexCoord::BOTTOM_LEFT),
         ];
         self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image)
             .unwrap()
