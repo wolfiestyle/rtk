@@ -263,6 +263,14 @@ impl EventResult {
     pub fn consumed(self) -> bool {
         self == EventResult::Consumed
     }
+
+    #[inline]
+    pub fn as_opt(self) -> Option<()> {
+        match self {
+            EventResult::Pass => None,
+            EventResult::Consumed => Some(()),
+        }
+    }
 }
 
 impl Default for EventResult {

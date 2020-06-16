@@ -6,9 +6,6 @@ use crate::widget::{Widget, WidgetId};
 struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
-    inside_target: Option<WidgetId>,
-    outside_target: Option<WidgetId>,
-    inout_result: Option<WidgetId>,
 }
 
 impl EventDispatchVisitor {
@@ -18,17 +15,6 @@ impl EventDispatchVisitor {
             pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast().unwrap_or_default(),
             ..self.ctx
         };
-
-        if self.inside_target.map_or(false, |wid| wid == widget.get_id()) {
-            if widget.handle_event(&Event::PointerInside(true), ctx).consumed() {
-                self.inout_result = Some(widget.get_id());
-            }
-        }
-        if self.outside_target.map_or(false, |wid| wid == widget.get_id()) {
-            if widget.handle_event(&Event::PointerInside(false), ctx).consumed() {
-                self.inout_result = Some(widget.get_id());
-            }
-        }
 
         //TODO: keyboard focus
         match self.event {
@@ -60,10 +46,8 @@ impl Visitor for EventDispatchVisitor {
     type Context = Option<Rect>;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error> {
-        ctx.map_or(Ok(()), |vp| match self.dispatch(widget, vp) {
-            EventResult::Pass => Ok(()),
-            EventResult::Consumed => Err(widget.get_id()),
-        })
+        ctx.and_then(|vp| self.dispatch(widget, vp).as_opt())
+            .map_or(Ok(()), |_| Err(widget.get_id()))
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context {
@@ -80,17 +64,43 @@ impl Visitor for InsideCheckVisitor {
     type Context = Option<Rect>;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error> {
-        ctx.map_or(Ok(()), |bounds| {
-            if self.pos.inside(bounds) {
-                Err(widget.get_id())
-            } else {
-                Ok(())
-            }
-        })
+        let inside = ctx.map(|bounds| self.pos.inside(bounds)).unwrap_or_default();
+        if inside {
+            Err(widget.get_id())
+        } else {
+            Ok(())
+        }
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context {
         parent_ctx.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    }
+}
+
+struct TargetedDispatchVisitor {
+    target: WidgetId,
+    event: Event,
+    ctx: EventContext,
+}
+
+impl Visitor for TargetedDispatchVisitor {
+    type Error = EventResult;
+    type Context = Point<f64>;
+
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Error> {
+        if self.target == widget.get_id() {
+            let ctx = EventContext {
+                pointer_pos: self.ctx.pointer_pos - *abs_pos,
+                ..self.ctx
+            };
+            Err(widget.handle_event(&self.event, ctx))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Self::Context {
+        *parent_pos + child.get_position().cast().unwrap_or_default()
     }
 }
 
@@ -109,16 +119,16 @@ impl EventDispatcher {
         Default::default()
     }
 
-    pub fn dispatch_event<W: Widget>(&mut self, widget: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
-        let child_vp = widget.get_bounds().clip_inside(parent_vp);
+    pub fn dispatch_event<W: Widget>(&mut self, root: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
+        let child_vp = root.get_bounds().clip_inside(parent_vp);
+        self.update_state(&event);
 
+        // check if pointer inside/outside status changed.
         let mut inside_target = None;
         let mut outside_target = None;
-
         match event {
             Event::MouseMoved(AxisValue::Position(pos)) => {
-                self.last_pos = pos;
-                let inside = widget.accept_rev(&mut InsideCheckVisitor { pos }, child_vp).err();
+                let inside = root.accept_rev(&mut InsideCheckVisitor { pos }, child_vp).err();
                 if inside != self.last_inside {
                     inside_target = inside;
                     outside_target = self.last_inside;
@@ -129,29 +139,50 @@ impl EventDispatcher {
                 outside_target = self.last_inside;
                 self.last_inside = None;
             }
+            _ => (),
+        }
+        // dispatch "inside changed" event
+        let in_res = inside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(true)));
+        // dispatch "outside changed" event
+        let out_res =
+            outside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(false)));
+
+        // dispatch other events
+        let ctx = EventContext::new(self.last_pos, self.button_state, self.mod_state);
+        let mut dispatcher = EventDispatchVisitor { event, ctx };
+        root.accept_rev(&mut dispatcher, child_vp).err().or(in_res).or(out_res)
+    }
+
+    /// Update input state.
+    fn update_state(&mut self, event: &Event) {
+        match event {
+            Event::MouseMoved(AxisValue::Position(pos)) => {
+                self.last_pos = *pos;
+            }
             Event::MouseButton(EvState::Pressed, button) => {
-                self.button_state.set(button);
+                self.button_state.set(*button);
             }
             Event::MouseButton(EvState::Released, button) => {
-                self.button_state.unset(button);
+                self.button_state.unset(*button);
             }
             Event::ModifiersChanged(mod_state) => {
-                self.mod_state = mod_state;
+                self.mod_state = *mod_state;
             }
             _ => (),
         }
+    }
 
-        let mut dispatcher = EventDispatchVisitor {
+    /// Dispatch an event to a single widget.
+    fn dispatch_targeted<W: Widget>(&self, target: WidgetId, root: &mut W, event: Event) -> Option<WidgetId> {
+        let mut dispatcher = TargetedDispatchVisitor {
+            target,
             event,
             ctx: EventContext::new(self.last_pos, self.button_state, self.mod_state),
-            inside_target,
-            outside_target,
-            inout_result: None,
         };
-
-        widget
-            .accept_rev(&mut dispatcher, child_vp)
+        let pos = root.get_position().cast().unwrap_or_default();
+        root.accept(&mut dispatcher, pos)
             .err()
-            .or(dispatcher.inout_result)
+            .and_then(EventResult::as_opt)
+            .map(|_| target)
     }
 }
