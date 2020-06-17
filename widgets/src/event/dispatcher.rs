@@ -134,7 +134,7 @@ impl EventDispatcher {
         let ctx = EventContext::new(self.last_pos, self.button_state, self.mod_state);
         self.update_state(&event);
 
-        // check if pointer inside/outside status changed, and dispatch "inside" event
+        // check if pointer inside/outside changed, also dispatch inside event
         let mut in_res = None;
         let mut outside_target = None;
         match event {
@@ -163,25 +163,24 @@ impl EventDispatcher {
             outside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(false)));
 
         // dispatch other events
-
         let mut dispatcher = EventDispatchVisitor { event, ctx };
         root.accept_rev(&mut dispatcher, child_vp).err().or(in_res).or(out_res)
     }
 
     /// Update input state.
     fn update_state(&mut self, event: &Event) {
-        match event {
+        match *event {
             Event::MouseMoved(AxisValue::Position(pos)) => {
-                self.last_pos = *pos;
+                self.last_pos = pos;
             }
             Event::MouseButton(EvState::Pressed, button) => {
-                self.button_state.set(*button);
+                self.button_state.set(button);
             }
             Event::MouseButton(EvState::Released, button) => {
-                self.button_state.unset(*button);
+                self.button_state.unset(button);
             }
             Event::ModifiersChanged(mod_state) => {
-                self.mod_state = *mod_state;
+                self.mod_state = mod_state;
             }
             _ => (),
         }
