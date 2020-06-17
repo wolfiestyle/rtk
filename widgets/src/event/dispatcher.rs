@@ -78,28 +78,35 @@ struct InsideCheckVisitor {
     in_res: EventResult,
 }
 
+impl InsideCheckVisitor {
+    fn check_inside<W: Widget>(&mut self, widget: &mut W, bounds: Rect) -> bool {
+        let inside = self.pos.inside(bounds);
+        if inside && self.last_inside != widget.get_id() {
+            let ctx = EventContext {
+                pointer_pos: self.pos - bounds.pos.cast(),
+                ..self.ctx
+            };
+            self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
+        }
+        inside
+    }
+}
+
 impl Visitor for InsideCheckVisitor {
     type Error = WidgetId;
     type Context = Option<Rect>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error> {
-        if let &Some(bounds) = ctx {
-            if self.pos.inside(bounds) {
-                if self.last_inside != widget.get_id() {
-                    let ctx = EventContext {
-                        pointer_pos: self.pos - bounds.pos.cast(),
-                        ..self.ctx
-                    };
-                    self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
-                }
-                return Err(widget.get_id());
-            }
+    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Error> {
+        let inside = viewport.map_or(false, |bounds| self.check_inside(widget, bounds));
+        if inside {
+            Err(widget.get_id())
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context {
-        parent_ctx.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Self::Context {
+        parent_vp.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
     }
 }
 
