@@ -63,7 +63,7 @@ impl DrawQueue {
         }
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;
-        let offset = viewport.pos.cast().unwrap_or_default();
+        let offset = viewport.pos.cast();
         self.vertices.extend(vertices.iter().map(|v| v.translate(offset)));
         // check if the previous draw command can be reused
         if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {

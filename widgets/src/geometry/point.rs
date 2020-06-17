@@ -49,7 +49,7 @@ impl<T> Point<T> {
     where
         T: NumCast,
     {
-        if let Some(p) = self.cast::<i32>() {
+        if let Some(p) = self.cast_checked::<i32>() {
             p.x >= rect.x() && p.x <= rect.end_x() && p.y >= rect.y() && p.y <= rect.end_y()
         } else {
             false
@@ -97,7 +97,19 @@ impl<T> Point<T> {
     }
 
     #[inline]
-    pub fn cast<R>(self) -> Option<Point<R>>
+    pub fn cast<R>(self) -> Point<R>
+    where
+        T: NumCast,
+        R: NumCast + Default,
+    {
+        Point {
+            x: num_traits::cast(self.x).unwrap_or_default(),
+            y: num_traits::cast(self.y).unwrap_or_default(),
+        }
+    }
+
+    #[inline]
+    pub fn cast_checked<R>(self) -> Option<Point<R>>
     where
         T: NumCast,
         R: NumCast,

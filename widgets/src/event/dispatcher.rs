@@ -12,7 +12,7 @@ impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let pos = self.ctx.abs_pos;
         let ctx = EventContext {
-            pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast().unwrap_or_default(),
+            pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast(),
             ..self.ctx
         };
 
@@ -71,7 +71,7 @@ impl Visitor for InsideCheckVisitor {
             if self.pos.inside(bounds) {
                 if self.last_inside != widget.get_id() {
                     let ctx = EventContext {
-                        pointer_pos: self.pos - bounds.pos.cast().unwrap_or_default(),
+                        pointer_pos: self.pos - bounds.pos.cast(),
                         ..self.ctx
                     };
                     self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
@@ -110,7 +110,7 @@ impl Visitor for TargetedDispatchVisitor {
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Self::Context {
-        *parent_pos + child.get_position().cast().unwrap_or_default()
+        *parent_pos + child.get_position().cast()
     }
 }
 
@@ -193,7 +193,7 @@ impl EventDispatcher {
             event,
             ctx: EventContext::new(self.last_pos, self.button_state, self.mod_state),
         };
-        let pos = root.get_position().cast().unwrap_or_default();
+        let pos = root.get_position().cast();
         root.accept(&mut dispatcher, pos)
             .err()
             .and_then(EventResult::as_opt)
