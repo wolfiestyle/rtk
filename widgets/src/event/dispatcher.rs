@@ -57,6 +57,9 @@ impl Visitor for EventDispatchVisitor {
 
 struct InsideCheckVisitor {
     pos: Point<f64>,
+    ctx: EventContext,
+    last_inside: WidgetId,
+    in_res: EventResult,
 }
 
 impl Visitor for InsideCheckVisitor {
@@ -64,12 +67,19 @@ impl Visitor for InsideCheckVisitor {
     type Context = Option<Rect>;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Error> {
-        let inside = ctx.map(|bounds| self.pos.inside(bounds)).unwrap_or_default();
-        if inside {
-            Err(widget.get_id())
-        } else {
-            Ok(())
+        if let &Some(bounds) = ctx {
+            if self.pos.inside(bounds) {
+                if self.last_inside != widget.get_id() {
+                    let ctx = EventContext {
+                        pointer_pos: self.pos - bounds.pos.cast().unwrap_or_default(),
+                        ..self.ctx
+                    };
+                    self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
+                }
+                return Err(widget.get_id());
+            }
         }
+        Ok(())
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context {
@@ -121,16 +131,23 @@ impl EventDispatcher {
 
     pub fn dispatch_event<W: Widget>(&mut self, root: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
         let child_vp = root.get_bounds().clip_inside(parent_vp);
+        let ctx = EventContext::new(self.last_pos, self.button_state, self.mod_state);
         self.update_state(&event);
 
-        // check if pointer inside/outside status changed.
-        let mut inside_target = None;
+        // check if pointer inside/outside status changed, and dispatch "inside" event
+        let mut in_res = None;
         let mut outside_target = None;
         match event {
             Event::MouseMoved(AxisValue::Position(pos)) => {
-                let inside = root.accept_rev(&mut InsideCheckVisitor { pos }, child_vp).err();
+                let mut visitor = InsideCheckVisitor {
+                    pos,
+                    ctx,
+                    last_inside: self.last_inside.unwrap_or_default(),
+                    in_res: Default::default(),
+                };
+                let inside = root.accept_rev(&mut visitor, child_vp).err();
                 if inside != self.last_inside {
-                    inside_target = inside;
+                    in_res = visitor.in_res.as_opt().and(inside);
                     outside_target = self.last_inside;
                     self.last_inside = inside;
                 }
@@ -141,14 +158,12 @@ impl EventDispatcher {
             }
             _ => (),
         }
-        // dispatch "inside changed" event
-        let in_res = inside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(true)));
         // dispatch "outside changed" event
         let out_res =
             outside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(false)));
 
         // dispatch other events
-        let ctx = EventContext::new(self.last_pos, self.button_state, self.mod_state);
+
         let mut dispatcher = EventDispatchVisitor { event, ctx };
         root.accept_rev(&mut dispatcher, child_vp).err().or(in_res).or(out_res)
     }
