@@ -12,7 +12,7 @@ struct EventDispatchVisitor {
 impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let ctx = EventContext {
-            pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast(),
+            local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
             ..self.ctx
         };
         widget.handle_event(&self.event, ctx)
@@ -43,7 +43,7 @@ struct PositionDispatchVisitor {
 impl PositionDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         let ctx = EventContext {
-            pointer_pos: self.ctx.pointer_pos - abs_bounds.pos.cast(),
+            local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
             ..self.ctx
         };
 
@@ -83,7 +83,7 @@ impl InsideCheckVisitor {
         let inside = self.pos.inside(bounds);
         if inside && self.last_inside != widget.get_id() {
             let ctx = EventContext {
-                pointer_pos: self.pos - bounds.pos.cast(),
+                local_pos: self.pos - bounds.pos.cast(),
                 ..self.ctx
             };
             self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
@@ -124,7 +124,7 @@ impl Visitor for TargetedDispatchVisitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Error> {
         if self.target == widget.get_id() {
             let ctx = EventContext {
-                pointer_pos: self.ctx.pointer_pos - *abs_pos,
+                local_pos: self.ctx.local_pos - *abs_pos,
                 ..self.ctx
             };
             Err(widget.handle_event(&self.event, ctx))

@@ -34,16 +34,17 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
-        //println!("TestWidget({:?}): {:?}", self.label, event);
+        //println!("TestWidget({:?}): {:?} {:?}", self.label, event, ctx.local_pos);
         match event {
             Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
                 println!(
                     "TestWidget({}, {:?}) clicked! (pos={:?})",
-                    self.label, self.id, ctx.pointer_pos
+                    self.label, self.id, ctx.local_pos
                 );
                 EventResult::Consumed
             }
             Event::PointerInside(inside) => {
+                println!("inside({}, {}): pos={:?}", inside, self.label, ctx.local_pos);
                 self.hover = *inside;
                 EventResult::Consumed
             }

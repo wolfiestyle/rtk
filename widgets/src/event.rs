@@ -49,7 +49,7 @@ pub struct EventContext {
     /// Instant when the event was received.
     pub timestamp: Instant,
     /// Last known cursor position, relative to the widget.
-    pub pointer_pos: Point<f64>,
+    pub local_pos: Point<f64>,
     /// Last known cursor position, relative to the window.
     pub abs_pos: Point<f64>,
     /// Current mouse button state.
@@ -64,7 +64,7 @@ impl EventContext {
     pub fn new(pointer_pos: Point<f64>, button_state: ButtonState, mod_state: ModState) -> Self {
         Self {
             timestamp: Instant::now(),
-            pointer_pos,
+            local_pos: pointer_pos,
             abs_pos: pointer_pos,
             button_state,
             mod_state,
