@@ -20,10 +20,10 @@ impl EventDispatchVisitor {
 }
 
 impl Visitor for EventDispatchVisitor {
-    type Error = WidgetId;
+    type Return = WidgetId;
     type Context = Option<Rect>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Error> {
+    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
         viewport
             .and_then(|vp| self.dispatch(widget, vp).as_opt())
             .map_or(Ok(()), |_| Err(widget.get_id()))
@@ -56,10 +56,10 @@ impl PositionDispatchVisitor {
 }
 
 impl Visitor for PositionDispatchVisitor {
-    type Error = WidgetId;
+    type Return = WidgetId;
     type Context = Option<Rect>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Error> {
+    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
         viewport
             .and_then(|vp| self.dispatch(widget, vp).as_opt())
             .map_or(Ok(()), |_| Err(widget.get_id()))
@@ -93,10 +93,10 @@ impl InsideCheckVisitor {
 }
 
 impl Visitor for InsideCheckVisitor {
-    type Error = WidgetId;
+    type Return = WidgetId;
     type Context = Option<Rect>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Error> {
+    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
         let inside = viewport.map_or(false, |bounds| self.check_inside(widget, bounds));
         if inside {
             Err(widget.get_id())
@@ -118,10 +118,10 @@ struct TargetedDispatchVisitor {
 }
 
 impl Visitor for TargetedDispatchVisitor {
-    type Error = EventResult;
+    type Return = EventResult;
     type Context = Point<f64>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Error> {
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
         if self.target == widget.get_id() {
             let ctx = EventContext {
                 local_pos: self.ctx.local_pos - *abs_pos,
