@@ -72,6 +72,7 @@ impl<T: Visitable + ?Sized> Visitable for Box<T> {
 /// Helper for implementing Visitable on a widget.
 #[macro_export]
 macro_rules! implement_visitable {
+    // no child
     ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)?) => {
         impl  $(< $($gen $(: $bound)? ),+ >)? $crate::visitor::Visitable for $type $(<$($gen),+>)? {
             fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
@@ -84,6 +85,27 @@ macro_rules! implement_visitable {
         }
     };
 
+    // array child
+    ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)? , $field:ident [] ) => {
+        impl  $(< $($gen $(: $bound)? ),+ >)? $crate::visitor::Visitable for $type $(<$($gen),+>)? {
+            fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
+                visitor.visit(self, &ctx)?;
+                for child in &mut self.$field {
+                    visitor.new_context(child, &ctx).map_or(Ok(()), |ctx| child.accept(visitor, ctx))?;
+                }
+                Ok(())
+            }
+
+            fn accept_rev<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
+                for child in self.$field.iter_mut().rev() {
+                    visitor.new_context(child, &ctx).map_or(Ok(()), |ctx| child.accept_rev(visitor, ctx))?;
+                }
+                visitor.visit(self, &ctx)
+            }
+        }
+    };
+
+    // list of childs
     ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)? , $($field:ident),+ ) => {
         impl  $(< $($gen $(: $bound)? ),+ >)? $crate::visitor::Visitable for $type $(<$($gen),+>)? {
             fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
