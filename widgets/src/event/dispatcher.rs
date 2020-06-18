@@ -21,16 +21,16 @@ impl EventDispatchVisitor {
 
 impl Visitor for EventDispatchVisitor {
     type Return = WidgetId;
-    type Context = Option<Rect>;
+    type Context = Rect;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        viewport
-            .and_then(|vp| self.dispatch(widget, vp).as_opt())
+        self.dispatch(widget, *viewport)
+            .as_opt()
             .map_or(Ok(()), |_| Err(widget.get_id()))
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Self::Context {
-        parent_vp.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Option<Self::Context> {
+        child.get_bounds().offset(parent_vp.pos).clip_inside(*parent_vp)
     }
 }
 
@@ -57,16 +57,16 @@ impl PositionDispatchVisitor {
 
 impl Visitor for PositionDispatchVisitor {
     type Return = WidgetId;
-    type Context = Option<Rect>;
+    type Context = Rect;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        viewport
-            .and_then(|vp| self.dispatch(widget, vp).as_opt())
+        self.dispatch(widget, *viewport)
+            .as_opt()
             .map_or(Ok(()), |_| Err(widget.get_id()))
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Self::Context {
-        parent_vp.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Option<Self::Context> {
+        child.get_bounds().offset(parent_vp.pos).clip_inside(*parent_vp)
     }
 }
 
@@ -94,19 +94,18 @@ impl InsideCheckVisitor {
 
 impl Visitor for InsideCheckVisitor {
     type Return = WidgetId;
-    type Context = Option<Rect>;
+    type Context = Rect;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        let inside = viewport.map_or(false, |bounds| self.check_inside(widget, bounds));
-        if inside {
+        if self.check_inside(widget, *viewport) {
             Err(widget.get_id())
         } else {
             Ok(())
         }
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Self::Context {
-        parent_vp.and_then(|vp| child.get_bounds().offset(vp.pos).clip_inside(vp))
+    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Option<Self::Context> {
+        child.get_bounds().offset(parent_vp.pos).clip_inside(*parent_vp)
     }
 }
 
@@ -133,8 +132,8 @@ impl Visitor for TargetedDispatchVisitor {
         }
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Self::Context {
-        *parent_pos + child.get_position().cast()
+    fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Option<Self::Context> {
+        child.get_position().cast_checked().map(|pos| *parent_pos + pos)
     }
 }
 
@@ -169,7 +168,7 @@ impl EventDispatcher {
                     last_inside: self.last_inside.unwrap_or_default(),
                     in_res: Default::default(),
                 };
-                let inside = root.accept_rev(&mut visitor, child_vp).err();
+                let inside = child_vp.and_then(|vp| root.accept_rev(&mut visitor, vp).err());
                 if inside != self.last_inside {
                     in_res = visitor.in_res.as_opt().and(inside);
                     outside_target = self.last_inside;
@@ -188,30 +187,32 @@ impl EventDispatcher {
 
         // dispatch other events
         // TODO: keyboard focus, mouse grab
-        let res = match event {
-            // position independant events
-            Event::Keyboard { .. }
-            | Event::Character(_)
-            | Event::ModifiersChanged(_)
-            | Event::CloseRequest
-            | Event::Resized(_)
-            | Event::Moved(_)
-            | Event::Focused(_)
-            | Event::Created
-            | Event::Destroyed => {
-                let mut dispatcher = EventDispatchVisitor { event, ctx };
-                root.accept_rev(&mut dispatcher, child_vp)
+        let res = child_vp.and_then(|vp| {
+            match event {
+                // position independant events
+                Event::Keyboard { .. }
+                | Event::Character(_)
+                | Event::ModifiersChanged(_)
+                | Event::CloseRequest
+                | Event::Resized(_)
+                | Event::Moved(_)
+                | Event::Focused(_)
+                | Event::Created
+                | Event::Destroyed => {
+                    let mut dispatcher = EventDispatchVisitor { event, ctx };
+                    root.accept_rev(&mut dispatcher, vp).err()
+                }
+                // position dependant events
+                Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
+                    let mut dispatcher = PositionDispatchVisitor { event, ctx };
+                    root.accept_rev(&mut dispatcher, vp).err()
+                }
+                // already handled
+                Event::PointerInside(_) => None,
             }
-            // position dependant events
-            Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
-                let mut dispatcher = PositionDispatchVisitor { event, ctx };
-                root.accept_rev(&mut dispatcher, child_vp)
-            }
-            // already handled
-            Event::PointerInside(_) => Ok(()),
-        };
+        });
 
-        res.err().or(in_res).or(out_res)
+        res.or(in_res).or(out_res)
     }
 
     /// Update input state.

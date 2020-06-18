@@ -9,7 +9,7 @@ pub trait Visitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Return>;
 
     /// Derives a new context for a child widget.
-    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Self::Context;
+    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Option<Self::Context>;
 }
 
 /// Allows an object to accept visitors.
@@ -99,12 +99,12 @@ macro_rules! implement_visitable {
     };
 
     (@accept $self:ident, $visitor:ident, $ctx:ident ; $field:ident $(, $tail:ident)+) => ({
-        $self.$field.accept($visitor, $visitor.new_context(&$self.$field, &$ctx))?;
+        $visitor.new_context(&$self.$field, &$ctx).map_or(Ok(()), |ctx| $self.$field.accept($visitor, ctx))?;
         $crate::implement_visitable!(@accept $self, $visitor, $ctx; $($tail),+)
     });
 
     (@accept $self:ident, $visitor:ident, $ctx:ident ; $field:ident) => {
-        $self.$field.accept($visitor, $visitor.new_context(&$self.$field, &$ctx))
+        $visitor.new_context(&$self.$field, &$ctx).map_or(Ok(()), |ctx| $self.$field.accept($visitor, ctx))
     };
 
     (@accept_rev $self:ident, $visitor:ident, $ctx:ident ; $field:ident $(, $tail:ident)* ; $($reversed:ident)*) => {
@@ -112,6 +112,6 @@ macro_rules! implement_visitable {
     };
 
     (@accept_rev $self:ident, $visitor:ident, $ctx:ident ; ; $($field:ident)*) => {
-        $($self.$field.accept_rev($visitor, $visitor.new_context(&$self.$field, &$ctx))?;)*
+        $($visitor.new_context(&$self.$field, &$ctx).map_or(Ok(()), |ctx| $self.$field.accept_rev($visitor, ctx))?;)*
     };
 }
