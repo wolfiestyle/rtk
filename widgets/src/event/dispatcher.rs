@@ -10,9 +10,9 @@ struct EventDispatchVisitor {
 }
 
 impl EventDispatchVisitor {
-    fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
+    fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_pos: Point<f64>) -> EventResult {
         let ctx = EventContext {
-            local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
+            local_pos: self.ctx.local_pos - abs_pos,
             ..self.ctx
         };
         widget.handle_event(&self.event, ctx)
@@ -21,16 +21,16 @@ impl EventDispatchVisitor {
 
 impl Visitor for EventDispatchVisitor {
     type Return = WidgetId;
-    type Context = Rect;
+    type Context = Point<f64>;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        self.dispatch(widget, *viewport)
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
+        self.dispatch(widget, *abs_pos)
             .as_opt()
             .map_or(Ok(()), |_| Err(widget.get_id()))
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Option<Self::Context> {
-        child.get_bounds().offset(parent_vp.pos).clip_inside(*parent_vp)
+    fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Option<Self::Context> {
+        child.get_position().cast_checked().map(|pos| *parent_pos + pos)
     }
 }
 
@@ -187,30 +187,29 @@ impl EventDispatcher {
 
         // dispatch other events
         // TODO: keyboard focus, mouse grab
-        let res = child_vp.and_then(|vp| {
-            match event {
-                // position independant events
-                Event::Keyboard { .. }
-                | Event::Character(_)
-                | Event::ModifiersChanged(_)
-                | Event::CloseRequest
-                | Event::Resized(_)
-                | Event::Moved(_)
-                | Event::Focused(_)
-                | Event::Created
-                | Event::Destroyed => {
-                    let mut dispatcher = EventDispatchVisitor { event, ctx };
-                    root.accept_rev(&mut dispatcher, vp).err()
-                }
-                // position dependant events
-                Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
-                    let mut dispatcher = PositionDispatchVisitor { event, ctx };
-                    root.accept_rev(&mut dispatcher, vp).err()
-                }
-                // already handled
-                Event::PointerInside(_) => None,
+        let res = match event {
+            // position independant events
+            Event::Keyboard { .. }
+            | Event::Character(_)
+            | Event::ModifiersChanged(_)
+            | Event::CloseRequest
+            | Event::Resized(_)
+            | Event::Moved(_)
+            | Event::Focused(_)
+            | Event::Created
+            | Event::Destroyed => {
+                let mut dispatcher = EventDispatchVisitor { event, ctx };
+                let pos = root.get_position().cast();
+                root.accept_rev(&mut dispatcher, pos).err()
             }
-        });
+            // position dependant events
+            Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
+                let mut dispatcher = PositionDispatchVisitor { event, ctx };
+                child_vp.and_then(|vp| root.accept_rev(&mut dispatcher, vp).err())
+            }
+            // already handled
+            Event::PointerInside(_) => None,
+        };
 
         res.or(in_res).or(out_res)
     }
