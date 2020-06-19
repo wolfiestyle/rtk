@@ -23,29 +23,6 @@ pub trait Bounds {
     }
 }
 
-impl Bounds for () {
-    #[inline]
-    fn get_position(&self) -> Position {
-        Default::default()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        Default::default()
-    }
-
-    #[inline]
-    fn set_position(&mut self, _position: Position) {}
-
-    #[inline]
-    fn set_size(&mut self, _size: Size) {}
-
-    #[inline]
-    fn get_bounds(&self) -> Rect {
-        Default::default()
-    }
-}
-
 impl Bounds for Rect {
     #[inline]
     fn get_position(&self) -> Position {
@@ -70,68 +47,6 @@ impl Bounds for Rect {
     #[inline]
     fn get_bounds(&self) -> Rect {
         *self
-    }
-}
-
-impl<T: Bounds> Bounds for Option<T> {
-    #[inline]
-    fn get_position(&self) -> Position {
-        self.as_ref().map(Bounds::get_position).unwrap_or_default()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        self.as_ref().map(Bounds::get_size).unwrap_or_default()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        if let Some(widget) = self {
-            widget.set_position(position)
-        }
-    }
-
-    #[inline]
-    fn set_size(&mut self, size: Size) {
-        if let Some(widget) = self {
-            widget.set_size(size)
-        }
-    }
-
-    #[inline]
-    fn get_bounds(&self) -> Rect {
-        self.as_ref().map(Bounds::get_bounds).unwrap_or_default()
-    }
-}
-
-impl<T: Bounds, E> Bounds for Result<T, E> {
-    #[inline]
-    fn get_position(&self) -> Position {
-        self.as_ref().map(Bounds::get_position).unwrap_or_default()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        self.as_ref().map(Bounds::get_size).unwrap_or_default()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        if let Ok(widget) = self {
-            widget.set_position(position)
-        }
-    }
-
-    #[inline]
-    fn set_size(&mut self, size: Size) {
-        if let Ok(widget) = self {
-            widget.set_size(size)
-        }
-    }
-
-    #[inline]
-    fn get_bounds(&self) -> Rect {
-        self.as_ref().map(Bounds::get_bounds).unwrap_or_default()
     }
 }
 
