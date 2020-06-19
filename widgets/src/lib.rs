@@ -4,6 +4,7 @@ mod macros;
 pub mod draw;
 pub mod event;
 pub mod geometry;
+pub mod layout;
 pub mod toplevel;
 pub mod visitor;
 pub mod widget;

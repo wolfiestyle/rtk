@@ -10,26 +10,32 @@ use widgets_glium::GliumApplication;
 struct TestWidget<T, U> {
     bounds: Rect,
     color: Color,
-    label: &'static str,
     id: WidgetId,
     hover: bool,
-    child: T,
+    child1: T,
     child2: U,
 }
 
 impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     fn update_layout(&mut self, _parent_rect: Rect) {
-        self.child.update_layout(self.bounds);
+        use widgets::layout::Layout;
+
+        self.child1.update_layout(self.bounds);
+        self.child2.update_layout(self.bounds);
+
+        self.child1.center_inside(&self.bounds.at_origin());
+        self.child2.right_of(&self.child1, 0).align_top(&self.child1, 0);
     }
 
     fn draw(&self, mut dc: DrawContext) {
         let color = if self.hover {
-            self.color.mix(Color::WHITE, 0.25)
+            self.color.mix(Color::WHITE, 0.01)
         } else {
             self.color
         };
         dc.draw_rect([0, 0], self.bounds.size, color, None);
-        dc.draw_child(&self.child);
+
+        dc.draw_child(&self.child1);
         dc.draw_child(&self.child2);
     }
 
@@ -37,14 +43,10 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         //println!("TestWidget({:?}): {:?} {:?}", self.label, event, ctx.local_pos);
         match event {
             Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
-                println!(
-                    "TestWidget({}, {:?}) clicked! (pos={:?})",
-                    self.label, self.id, ctx.local_pos
-                );
+                println!("TestWidget({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
                 EventResult::Consumed
             }
             Event::PointerInside(inside) => {
-                println!("inside({}, {}): pos={:?}", inside, self.label, ctx.local_pos);
                 self.hover = *inside;
                 EventResult::Consumed
             }
@@ -55,7 +57,7 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
 
 implement_objectid!(TestWidget<A, B>, id);
 implement_bounds!(TestWidget<A, B>, rect: bounds);
-implement_visitable!(TestWidget<A: Widget, B: Widget>, child, child2);
+implement_visitable!(TestWidget<A: Widget, B: Widget>, child1, child2);
 
 struct TestWidget2 {
     id: WidgetId,
@@ -64,19 +66,17 @@ struct TestWidget2 {
 }
 
 impl Widget for TestWidget2 {
-    fn update_layout(&mut self, parent_rect: Rect) {
-        self.bounds.size = parent_rect.size;
-    }
+    fn update_layout(&mut self, _parent_rect: Rect) {}
 
     fn draw(&self, mut dc: DrawContext) {
         dc.draw_rect([0, 0], self.bounds.size, Color::WHITE, Some(self.image.clone()));
     }
 
-    fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("Window2: {:?}", event);
         match event {
             Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
-                println!("clicked!");
+                println!("TestWidget2({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
                 EventResult::Consumed
             }
             _ => EventResult::Pass,
@@ -90,40 +90,19 @@ implement_visitable!(TestWidget2);
 
 fn main() {
     let widget = TestWidget {
-        // 1
         bounds: Rect::new([20, 10], [320, 240]),
-        color: Color::red(0.25),
-        label: "red",
+        color: Color::blue(0.25),
         hover: false,
         id: WidgetId::new(),
-        child: TestWidget {
-            // 2
-            bounds: Rect::new([50, 20], [210, 120]),
-            color: Color::BLUE,
-            label: "blue",
+        child1: TestWidget2 {
             id: WidgetId::new(),
-            hover: false,
-            child: TestWidget {
-                // 3
-                bounds: Rect::new([70, 100], [70, 50]),
-                color: Color::green(0.5),
-                label: "green",
-                id: WidgetId::new(),
-                hover: false,
-                child: (),
-                child2: (),
-            },
-            child2: (),
+            bounds: Rect::new([0, 0], [100, 100]),
+            image: Image::from_file("image.png").unwrap().into(),
         },
-        child2: TestWidget {
-            // 4
-            bounds: Rect::new([70, 160], [120, 100]),
-            color: Color::yellow(0.5),
-            label: "yellow",
+        child2: TestWidget2 {
             id: WidgetId::new(),
-            hover: false,
-            child: (),
-            child2: (),
+            bounds: Rect::new([0, 0], [64, 64]),
+            image: Image::from_file("image2.jpg").unwrap().into(),
         },
     };
 
@@ -132,17 +111,7 @@ fn main() {
     window.set_background([0.1, 0.1, 0.1]);
     window.update();
 
-    let widget2 = TestWidget2 {
-        id: WidgetId::new(),
-        bounds: Rect::new([0, 0], [128, 128]),
-        image: Image::from_file("image.png").unwrap().into(),
-    };
-    let mut win2 = Window::new(widget2);
-    win2.set_title("window2");
-    win2.update();
-
-    let mut app = GliumApplication::new_dyn();
-    app.add_window(Box::new(window));
-    app.add_window(Box::new(win2));
+    let mut app = GliumApplication::new();
+    app.add_window(window);
     app.run();
 }

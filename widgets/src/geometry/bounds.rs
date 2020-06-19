@@ -46,6 +46,33 @@ impl Bounds for () {
     }
 }
 
+impl Bounds for Rect {
+    #[inline]
+    fn get_position(&self) -> Position {
+        self.pos
+    }
+
+    #[inline]
+    fn get_size(&self) -> Size {
+        self.size
+    }
+
+    #[inline]
+    fn set_position(&mut self, position: Position) {
+        self.pos = position;
+    }
+
+    #[inline]
+    fn set_size(&mut self, size: Size) {
+        self.size = size;
+    }
+
+    #[inline]
+    fn get_bounds(&self) -> Rect {
+        *self
+    }
+}
+
 impl<T: Bounds> Bounds for Option<T> {
     #[inline]
     fn get_position(&self) -> Position {
