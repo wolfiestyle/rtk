@@ -28,6 +28,13 @@ impl ObjectId for () {
     }
 }
 
+impl ObjectId for crate::geometry::Rect {
+    #[inline]
+    fn get_id(&self) -> WidgetId {
+        Default::default()
+    }
+}
+
 impl<T: ObjectId> ObjectId for Option<T> {
     #[inline]
     fn get_id(&self) -> WidgetId {

@@ -21,6 +21,19 @@ pub trait Widget: ObjectId + Bounds + Visitable {
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult;
 }
 
+impl Widget for Rect {
+    #[inline]
+    fn update_layout(&mut self, _parent_rect: Rect) {}
+
+    #[inline]
+    fn draw(&self, _dc: DrawContext) {}
+
+    #[inline]
+    fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
+        EventResult::Pass
+    }
+}
+
 impl<T: Widget + ?Sized> Widget for Box<T> {
     #[inline]
     fn update_layout(&mut self, parent_rect: Rect) {

@@ -33,6 +33,18 @@ impl Visitable for () {
     }
 }
 
+impl Visitable for crate::geometry::Rect {
+    #[inline]
+    fn accept<V: Visitor>(&mut self, _visitor: &mut V, _ctx: V::Context) -> Result<(), V::Return> {
+        Ok(())
+    }
+
+    #[inline]
+    fn accept_rev<V: Visitor>(&mut self, _visitor: &mut V, _ctx: V::Context) -> Result<(), V::Return> {
+        Ok(())
+    }
+}
+
 impl<T: Visitable> Visitable for Option<T> {
     #[inline]
     fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
