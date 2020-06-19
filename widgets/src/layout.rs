@@ -1,4 +1,4 @@
-use crate::geometry::Bounds;
+use crate::geometry::{Bounds, Rect};
 
 pub trait Layout: Bounds {
     fn left_of<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
@@ -85,3 +85,13 @@ pub trait Layout: Bounds {
 }
 
 impl<T: Bounds> Layout for T {}
+
+/// Runs a layout expression for a collection of widgets.
+pub fn foreach<'a, T: Bounds + 'a, F>(mut items: impl Iterator<Item = &'a mut T>, mut f: F)
+where
+    F: FnMut(&'a mut T, &Rect) -> &'a mut T,
+{
+    if let Some(first) = items.next() {
+        items.fold(first.get_bounds(), |prev, item| f(item, &prev).get_bounds());
+    }
+}

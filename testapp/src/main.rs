@@ -7,24 +7,29 @@ use widgets::{implement_bounds, implement_objectid, implement_visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug)]
-struct TestWidget<T, U> {
+struct TestWidget<T> {
     bounds: Rect,
     color: Color,
     id: WidgetId,
     hover: bool,
-    child1: T,
-    child2: U,
+    childs: Vec<T>,
 }
 
-impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
+impl<T: Widget> Widget for TestWidget<T> {
     fn update_layout(&mut self, _parent_rect: Rect) {
-        use widgets::layout::Layout;
+        use widgets::layout::{foreach, Layout};
 
-        self.child1.update_layout(self.bounds);
-        self.child2.update_layout(self.bounds);
+        for child in &mut self.childs {
+            child.update_layout(self.bounds);
+        }
 
-        self.child1.center_inside(&self.bounds.at_origin());
-        self.child2.right_of(&self.child1, 0).align_top(&self.child1, 0);
+        if let Some(first) = self.childs.first_mut() {
+            first.set_position([10, 10].into());
+        }
+
+        foreach(self.childs.iter_mut(), |widget, prev| {
+            widget.right_of(prev, 0).align_top(prev, 0)
+        });
     }
 
     fn draw(&self, mut dc: DrawContext) {
@@ -35,8 +40,9 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
         };
         dc.draw_rect([0, 0], self.bounds.size, color, None);
 
-        dc.draw_child(&self.child1);
-        dc.draw_child(&self.child2);
+        for child in &self.childs {
+            dc.draw_child(child);
+        }
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
@@ -55,9 +61,9 @@ impl<T: Widget, U: Widget> Widget for TestWidget<T, U> {
     }
 }
 
-implement_objectid!(TestWidget<A, B>, id);
-implement_bounds!(TestWidget<A, B>, rect: bounds);
-implement_visitable!(TestWidget<A: Widget, B: Widget>, child1, child2);
+implement_objectid!(TestWidget<A>, id);
+implement_bounds!(TestWidget<A>, rect: bounds);
+implement_visitable!(TestWidget<A: Widget>, childs[]);
 
 struct TestWidget2 {
     id: WidgetId,
@@ -89,22 +95,32 @@ implement_bounds!(TestWidget2, rect: bounds);
 implement_visitable!(TestWidget2);
 
 fn main() {
-    let widget = TestWidget {
+    let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::blue(0.25),
         hover: false,
         id: WidgetId::new(),
-        child1: TestWidget2 {
-            id: WidgetId::new(),
-            bounds: Rect::new([0, 0], [100, 100]),
-            image: Image::from_file("image.png").unwrap().into(),
-        },
-        child2: TestWidget2 {
-            id: WidgetId::new(),
-            bounds: Rect::new([0, 0], [64, 64]),
-            image: Image::from_file("image2.jpg").unwrap().into(),
-        },
+        childs: vec![],
     };
+
+    let image: ImageRef = Image::from_file("image2.jpg").unwrap().into();
+
+    widget.childs.push(TestWidget2 {
+        id: WidgetId::new(),
+        bounds: Rect::new([10, 20], [100, 100]),
+        image: Image::from_file("image.png").unwrap().into(),
+    });
+
+    widget.childs.push(TestWidget2 {
+        id: WidgetId::new(),
+        bounds: Rect::new([0, 0], [64, 64]),
+        image: image.clone(),
+    });
+    widget.childs.push(TestWidget2 {
+        id: WidgetId::new(),
+        bounds: Rect::new([0, 0], [45, 30]),
+        image,
+    });
 
     let mut window = Window::new(widget);
     window.set_title("awoo");
