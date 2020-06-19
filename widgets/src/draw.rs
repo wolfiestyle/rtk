@@ -124,6 +124,15 @@ pub enum TextDrawMode {
     Bounded(Rect, Alignment),
 }
 
+impl TextDrawMode {
+    pub fn offset(self, offset: Position) -> Self {
+        match self {
+            TextDrawMode::Baseline(pos) => TextDrawMode::Baseline(pos + offset),
+            TextDrawMode::Bounded(rect, align) => TextDrawMode::Bounded(rect.offset(offset), align),
+        }
+    }
+}
+
 impl From<Position> for TextDrawMode {
     #[inline]
     fn from(pos: Position) -> Self {

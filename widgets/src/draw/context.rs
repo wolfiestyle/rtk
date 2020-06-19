@@ -57,8 +57,14 @@ impl<'a> DrawContext<'a> {
         &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>,
         mode: impl Into<TextDrawMode>, color: impl Into<Color>,
     ) {
-        self.queue
-            .push_text(text.into(), font_desc.into(), mode.into(), color.into(), self.viewport)
+        self.queue.push_text(
+            text.into(),
+            font_desc.into(),
+            mode.into(),
+            color.into(),
+            self.viewport,
+            self.offset,
+        )
     }
 
     /// Draws a point.

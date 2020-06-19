@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, ImageRef, Primitive, TextDrawMode, Vertex};
-use crate::geometry::{Point, Rect};
+use crate::geometry::{Point, Position, Rect};
 use std::borrow::Cow;
 use std::fmt;
 
@@ -87,12 +87,12 @@ impl DrawQueue {
     #[inline]
     pub(crate) fn push_text(
         &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color,
-        viewport: Rect,
+        viewport: Rect, offset: Position,
     ) {
         self.commands.push(DrawCommand::Text(DrawCmdText {
             text,
             font_desc,
-            mode,
+            mode: mode.offset(offset),
             color,
             viewport,
         }));
