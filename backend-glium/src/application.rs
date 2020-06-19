@@ -35,9 +35,24 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
             match event {
                 Event::WindowEvent { event, window_id } => {
                     if let Some(window) = window_map.get_mut(&window_id) {
-                        let is_close_req = matches!(event, WindowEvent::CloseRequested);
-                        if window.push_event(event).is_some() {
-                            // event was consumed, trigger redraw
+                        let mut is_close_req = false;
+                        let mut window_changed = false;
+                        match event {
+                            WindowEvent::CloseRequested => {
+                                is_close_req = true;
+                            }
+                            WindowEvent::Moved(_)
+                            | WindowEvent::Resized(_)
+                            | WindowEvent::Focused(_)
+                            | WindowEvent::ScaleFactorChanged { .. }
+                            | WindowEvent::ThemeChanged(_) => window_changed = true,
+                            _ => (),
+                        }
+
+                        let ev_res = window.push_event(event);
+                        if window_changed || ev_res.is_some() {
+                            // event was consumed, update and trigger a redraw
+                            window.update();
                             window.redraw();
                         } else if is_close_req {
                             // CloseRequest wasn't consumed, destroy window
@@ -47,10 +62,6 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
                     }
                 }
                 Event::MainEventsCleared => {
-                    for window in window_map.values_mut() {
-                        window.update();
-                    }
-
                     if window_map.is_empty() {
                         // no windows left, close the application
                         *cf = ControlFlow::Exit;
