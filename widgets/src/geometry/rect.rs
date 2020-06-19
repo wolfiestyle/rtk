@@ -167,7 +167,7 @@ impl Rect {
     #[inline]
     pub fn offset(self, p: Position) -> Self {
         Rect {
-            pos: self.pos.offset(p.x, p.y),
+            pos: self.pos + p,
             size: self.size,
         }
     }
