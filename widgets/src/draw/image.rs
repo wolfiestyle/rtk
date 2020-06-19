@@ -1,4 +1,5 @@
 use crate::geometry::Size;
+use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -135,11 +136,21 @@ impl Hash for Image {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum ImageData {
     Empty,
     Bpp8(Vec<u8>),
     Bpp16(Vec<u16>),
+}
+
+impl fmt::Debug for ImageData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ImageData::Empty => f.pad("Empty"),
+            ImageData::Bpp8(_) => f.pad("Bpp8([...])"),
+            ImageData::Bpp16(_) => f.pad("Bpp16([...])"),
+        }
+    }
 }
 
 impl ImageData {
