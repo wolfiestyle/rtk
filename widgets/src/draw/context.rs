@@ -1,6 +1,6 @@
 use crate::draw::queue::{DrawError, DrawQueue};
 use crate::draw::{Color, ImageRef, Primitive, TexCoord, TextDrawMode, Vertex};
-use crate::geometry::{Point, Rect, Size};
+use crate::geometry::{Point, Position, Rect, Size};
 use crate::widget::Widget;
 use std::borrow::Cow;
 
@@ -9,13 +9,18 @@ use std::borrow::Cow;
 pub struct DrawContext<'a> {
     queue: &'a mut DrawQueue,
     pub(crate) viewport: Rect,
+    offset: Position,
 }
 
 impl<'a> DrawContext<'a> {
     /// Creates a new context from the speficied DrawQueue.
     #[inline]
     pub fn new(queue: &'a mut DrawQueue, viewport: Rect) -> Self {
-        DrawContext { queue, viewport }
+        DrawContext {
+            queue,
+            viewport,
+            offset: viewport.pos,
+        }
     }
 
     /// Clears the drawing area.
@@ -26,9 +31,13 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a child widget.
     pub fn draw_child<W: Widget>(&mut self, child: &W) {
-        let child_vp = child.get_bounds().offset(self.viewport.pos);
+        let child_vp = child.get_bounds().offset(self.offset);
         if let Some(viewport) = child_vp.clip_inside(self.viewport) {
-            let dc = DrawContext::new(self.queue, viewport);
+            let dc = DrawContext {
+                queue: self.queue,
+                viewport,
+                offset: child_vp.pos,
+            };
             child.draw(dc);
         }
     }
@@ -39,7 +48,7 @@ impl<'a> DrawContext<'a> {
         &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
     ) -> Result<(), DrawError> {
         self.queue
-            .push_prim(primitive, vertices, indices, texture, self.viewport)
+            .push_prim(primitive, vertices, indices, texture, self.viewport, self.offset.cast())
     }
 
     /// Draws text.

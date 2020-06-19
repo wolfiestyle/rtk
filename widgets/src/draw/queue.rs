@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, ImageRef, Primitive, TextDrawMode, Vertex};
-use crate::geometry::Rect;
+use crate::geometry::{Point, Rect};
 use std::borrow::Cow;
 use std::fmt;
 
@@ -50,7 +50,7 @@ impl DrawQueue {
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
         &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
-        viewport: Rect,
+        viewport: Rect, offset: Point<f32>,
     ) -> Result<(), DrawError> {
         let nvert = vertices.len() as u32;
         // no vertices means nothing to do
@@ -63,7 +63,6 @@ impl DrawQueue {
         }
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;
-        let offset = viewport.pos.cast();
         self.vertices.extend(vertices.iter().map(|v| v.translate(offset)));
         // check if the previous draw command can be reused
         if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {
