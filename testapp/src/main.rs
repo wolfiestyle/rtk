@@ -1,7 +1,6 @@
 use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
-use widgets::toplevel::TopLevel;
 use widgets::widget::{Widget, WidgetId, Window};
 use widgets::{implement_bounds, implement_objectid, implement_visitable, make_widget_enum};
 use widgets_glium::GliumApplication;
@@ -46,7 +45,7 @@ impl<T: Widget> Widget for TestWidget<T> {
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
-        //println!("TestWidget({:?}): {:?} {:?}", self.label, event, ctx.local_pos);
+        //println!("TestWidget({:?}): {:?} {:?}", self.id, event, ctx.local_pos);
         match event {
             Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
                 println!("TestWidget({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
@@ -144,7 +143,6 @@ fn main() {
     let mut window = Window::new(widget);
     window.set_title("awoo");
     window.set_background([0.1, 0.1, 0.1]);
-    window.update();
 
     let mut app = GliumApplication::new();
     app.add_window(window);

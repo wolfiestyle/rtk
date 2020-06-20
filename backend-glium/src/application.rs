@@ -20,6 +20,7 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     pub fn add_window(&mut self, window: T) {
         let mut gl_win = GliumWindow::new(window, &self.event_loop);
         gl_win.window.push_event(widgets::event::Event::Created);
+        gl_win.window.update();
         self.window_map.insert(gl_win.get_id(), gl_win);
     }
 
