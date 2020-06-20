@@ -14,7 +14,7 @@ pub trait TopLevel: Bounds {
     fn get_window_attributes(&self) -> &WindowAttributes;
 }
 
-impl<T: TopLevel + ?Sized> TopLevel for Box<T> {
+impl<T: TopLevel> TopLevel for Box<T> {
     #[inline]
     fn update(&mut self) {
         (**self).update()

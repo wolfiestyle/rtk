@@ -50,7 +50,7 @@ impl Bounds for Rect {
     }
 }
 
-impl<T: Bounds + ?Sized> Bounds for Box<T> {
+impl<T: Bounds> Bounds for Box<T> {
     #[inline]
     fn get_position(&self) -> Position {
         (**self).get_position()
