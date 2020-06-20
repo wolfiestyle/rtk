@@ -79,13 +79,6 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     }
 }
 
-impl GliumApplication<Box<dyn TopLevel>> {
-    #[inline]
-    pub fn new_dyn() -> Self {
-        Default::default()
-    }
-}
-
 impl<T> Default for GliumApplication<T> {
     #[inline]
     fn default() -> Self {
