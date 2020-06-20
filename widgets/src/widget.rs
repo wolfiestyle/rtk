@@ -34,7 +34,7 @@ impl Widget for Rect {
     }
 }
 
-impl<T: Widget + ?Sized> Widget for Box<T> {
+impl<T: Widget> Widget for Box<T> {
     #[inline]
     fn update_layout(&mut self, parent_rect: Rect) {
         (**self).update_layout(parent_rect)

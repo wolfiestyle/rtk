@@ -69,7 +69,7 @@ impl<T: Visitable, E> Visitable for Result<T, E> {
     }
 }
 
-impl<T: Visitable + ?Sized> Visitable for Box<T> {
+impl<T: Visitable> Visitable for Box<T> {
     #[inline]
     fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
         (**self).accept(visitor, ctx)
