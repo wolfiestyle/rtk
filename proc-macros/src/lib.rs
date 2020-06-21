@@ -12,33 +12,31 @@ pub fn object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let path = quote!(::widgets::widget);
 
-    let expanded = match &input.data {
+    let body = match &input.data {
         Data::Struct(data) => find_field_struct(data, &name, "WidgetId").map(|field| {
-            quote! {
-                impl #impl_generics #path::ObjectId for #name #ty_generics #where_clause {
-                    fn get_id(&self) -> #path::WidgetId {
-                        self.#field
-                    }
-                }
-            }
+            quote! { self.#field }
         }),
         Data::Enum(data) => find_field_enum(data, &name, "WidgetId").map(|patterns| {
             quote! {
-                impl #impl_generics #path::ObjectId for #name #ty_generics #where_clause {
-                    fn get_id(&self) -> #path::WidgetId {
-                        match self {
-                            #(#patterns => a.get_id(),)*
-                        }
-                    }
+                match self {
+                    #(#patterns => a.get_id(),)*
                 }
             }
         }),
         Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
     };
 
-    expanded
-        .unwrap_or_else(|err| err.to_error("ObjectId").to_compile_error())
-        .into()
+    body.map(|body| {
+        quote! {
+            impl #impl_generics #path::ObjectId for #name #ty_generics #where_clause {
+                fn get_id(&self) -> #path::WidgetId {
+                    #body
+                }
+            }
+        }
+    })
+    .unwrap_or_else(|err| err.to_error("ObjectId").to_compile_error())
+    .into()
 }
 
 #[proc_macro_derive(Bounds)]
