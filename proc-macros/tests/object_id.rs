@@ -1,17 +1,18 @@
+#![allow(dead_code)]
 use widgets::widget::WidgetId;
-use widgets_derive::*;
+use widgets_derive::ObjectId;
 
-#[derive(Debug, ObjectId)]
+#[derive(ObjectId)]
 struct TestStruct {
     val: i32,
     my_id: WidgetId,
     stuff: String,
 }
 
-#[derive(Debug, ObjectId)]
+#[derive(ObjectId)]
 struct TestTuple(i32, WidgetId, String);
 
-#[derive(Debug, ObjectId)]
+#[derive(ObjectId)]
 enum TestEnum {
     Struct { asd: i32, stuff: WidgetId },
     Tuple(i32, WidgetId),
