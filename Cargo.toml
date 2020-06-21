@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "widgets",
-    "testapp",
+    "proc-macros",
     "backend-glium",
+    "testapp",
 ]

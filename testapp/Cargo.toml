@@ -8,3 +8,4 @@ build = false
 [dependencies]
 widgets = { path = "../widgets", features = ["glium"] }
 widgets-glium = { path = "../backend-glium" }
+widgets-derive = { path = "../proc-macros" }

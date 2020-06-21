@@ -2,10 +2,11 @@ use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
 use widgets::widget::{Widget, WidgetId, Window};
-use widgets::{implement_bounds, implement_objectid, implement_visitable, make_widget_enum};
+use widgets::{implement_bounds, implement_visitable, make_widget_enum};
+use widgets_derive::ObjectId;
 use widgets_glium::GliumApplication;
 
-#[derive(Debug)]
+#[derive(Debug, ObjectId)]
 struct TestWidget<T> {
     bounds: Rect,
     color: Color,
@@ -60,11 +61,10 @@ impl<T: Widget> Widget for TestWidget<T> {
     }
 }
 
-implement_objectid!(TestWidget<A>, id);
 implement_bounds!(TestWidget<A>, rect: bounds);
 implement_visitable!(TestWidget<A: Widget>, childs[]);
 
-#[derive(Debug)]
+#[derive(Debug, ObjectId)]
 struct TestWidget2 {
     id: WidgetId,
     bounds: Rect,
@@ -90,7 +90,6 @@ impl Widget for TestWidget2 {
     }
 }
 
-implement_objectid!(TestWidget2, id);
 implement_bounds!(TestWidget2, rect: bounds);
 implement_visitable!(TestWidget2);
 
