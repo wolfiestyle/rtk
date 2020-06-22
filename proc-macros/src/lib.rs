@@ -47,65 +47,60 @@ pub fn bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let path = quote!(::widgets::geometry);
 
     let expanded = match &input.data {
-        Data::Struct(data) => {
-            let res_rect = find_field_struct(data, &name, "Rect").map(|field| {
-                quote! {
-                    impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
-                        fn get_position(&self) -> #path::Position {
-                            self.#field.pos
-                        }
+        Data::Struct(data) => match find_field_struct(data, &name, "Rect") {
+            Ok(field) => Ok(quote! {
+                impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                    fn get_position(&self) -> #path::Position {
+                        self.#field.pos
+                    }
 
-                        fn get_size(&self) -> #path::Size {
-                            self.#field.size
-                        }
+                    fn get_size(&self) -> #path::Size {
+                        self.#field.size
+                    }
 
-                        fn set_position(&mut self, position: #path::Position) {
-                            self.#field.pos = position;
-                        }
+                    fn set_position(&mut self, position: #path::Position) {
+                        self.#field.pos = position;
+                    }
 
-                        fn set_size(&mut self, size: #path::Size) {
-                            self.#field.size = size;
-                        }
+                    fn set_size(&mut self, size: #path::Size) {
+                        self.#field.size = size;
+                    }
 
-                        fn get_bounds(&self) -> #path::Rect {
-                            self.#field
-                        }
+                    fn get_bounds(&self) -> #path::Rect {
+                        self.#field
                     }
                 }
-            });
+            }),
+            Err(FieldFindError::NotFound(rerr, rname)) => {
+                let pos_res = find_field_struct(data, &name, "Position");
+                let size_res = find_field_struct(data, &name, "Size");
 
-            match res_rect {
-                Err(FieldFindError::NotFound(rerr, rname)) => {
-                    let pos_res = find_field_struct(data, &name, "Position");
-                    let size_res = find_field_struct(data, &name, "Size");
-
-                    match (pos_res, size_res) {
-                        (Ok(pos), Ok(size)) => Ok(quote! {
-                            impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
-                                fn get_position(&self) -> #path::Position {
-                                    self.#pos
-                                }
-
-                                fn get_size(&self) -> #path::Size {
-                                    self.#size
-                                }
-
-                                fn set_position(&mut self, position: #path::Position) {
-                                    self.#pos = position;
-                                }
-
-                                fn set_size(&mut self, size: #path::Size) {
-                                    self.#size = size;
-                                }
+                match (pos_res, size_res) {
+                    (Ok(pos), Ok(size)) => Ok(quote! {
+                        impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                            fn get_position(&self) -> #path::Position {
+                                self.#pos
                             }
-                        }),
-                        (Ok(_), Err(err)) | (Err(err), Ok(_)) => Err(err),
-                        (Err(_), Err(_)) => Err(FieldFindError::NotFound(rerr, rname)),
-                    }
+
+                            fn get_size(&self) -> #path::Size {
+                                self.#size
+                            }
+
+                            fn set_position(&mut self, position: #path::Position) {
+                                self.#pos = position;
+                            }
+
+                            fn set_size(&mut self, size: #path::Size) {
+                                self.#size = size;
+                            }
+                        }
+                    }),
+                    (Ok(_), Err(err)) | (Err(err), Ok(_)) => Err(err),
+                    (Err(_), Err(_)) => Err(FieldFindError::NotFound(rerr, rname)),
                 }
-                other => other,
             }
-        }
+            other => other,
+        },
         Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
