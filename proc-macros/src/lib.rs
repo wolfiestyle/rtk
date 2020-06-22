@@ -6,7 +6,7 @@ mod helpers;
 use helpers::*;
 
 #[proc_macro_derive(ObjectId)]
-pub fn object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -40,7 +40,7 @@ pub fn object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 #[proc_macro_derive(Bounds)]
-pub fn bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
