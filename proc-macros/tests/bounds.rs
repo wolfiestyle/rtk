@@ -22,6 +22,13 @@ struct TestTuple1(i32, Rect, String);
 #[derive(Bounds)]
 struct TestTuple2(i32, Size, Position);
 
+#[derive(Bounds)]
+enum TestEnum {
+    First(TestStruct1),
+    Second(TestTuple2),
+    Third(Rect),
+}
+
 #[test]
 fn bounds() {
     use widgets::geometry::Bounds;
@@ -53,4 +60,11 @@ fn bounds() {
     assert_eq!(t2.get_position(), pos);
     assert_eq!(t2.get_size(), size);
     assert_eq!(t2.get_bounds(), Rect::new(pos, size));
+
+    let e1 = TestEnum::First(s1);
+    let e2 = TestEnum::Second(t2);
+    let e3 = TestEnum::Third(rect);
+    assert_eq!(e1.get_bounds(), rect);
+    assert_eq!(e2.get_bounds(), Rect::new(pos, size));
+    assert_eq!(e3.get_bounds(), rect);
 }

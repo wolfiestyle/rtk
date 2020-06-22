@@ -106,7 +106,41 @@ pub fn bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 other => other,
             }
         }
-        Data::Enum(_) => unimplemented!(),
+        Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
+            quote! {
+                impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                    fn get_position(&self) -> #path::Position {
+                        match self {
+                            #(#patterns => a.get_position(),)*
+                        }
+                    }
+
+                    fn get_size(&self) -> #path::Size {
+                        match self {
+                            #(#patterns => a.get_size(),)*
+                        }
+                    }
+
+                    fn set_position(&mut self, position: #path::Position) {
+                        match self {
+                            #(#patterns => a.set_position(position),)*
+                        }
+                    }
+
+                    fn set_size(&mut self, size: #path::Size) {
+                        match self {
+                            #(#patterns => a.set_size(size),)*
+                        }
+                    }
+
+                    fn get_bounds(&self) -> #path::Rect {
+                        match self {
+                            #(#patterns => a.get_bounds(),)*
+                        }
+                    }
+                }
+            }
+        }),
         Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
     };
 
