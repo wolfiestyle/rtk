@@ -5,7 +5,7 @@ use syn::{Data, DeriveInput};
 mod helpers;
 use helpers::*;
 
-#[proc_macro_derive(ObjectId)]
+#[proc_macro_derive(ObjectId, attributes(object_id))]
 pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
@@ -13,7 +13,7 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let path = quote!(::widgets::widget);
 
     let body = match &input.data {
-        Data::Struct(data) => find_field_struct(data, &name, "WidgetId").map(|field| {
+        Data::Struct(data) => find_field_struct(data, &name, "WidgetId", "object_id").map(|field| {
             quote! { self.#field }
         }),
         Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
@@ -39,7 +39,7 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     .into()
 }
 
-#[proc_macro_derive(Bounds)]
+#[proc_macro_derive(Bounds, attributes(bounds, position, size))]
 pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
@@ -47,7 +47,7 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let path = quote!(::widgets::geometry);
 
     let expanded = match &input.data {
-        Data::Struct(data) => match find_field_struct(data, &name, "Rect") {
+        Data::Struct(data) => match find_field_struct(data, &name, "Rect", "bounds") {
             Ok(field) => Ok(quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
                     fn get_position(&self) -> #path::Position {
@@ -72,8 +72,8 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }),
             Err(FieldFindError::NotFound(rerr, rname)) => {
-                let pos_res = find_field_struct(data, &name, "Position");
-                let size_res = find_field_struct(data, &name, "Size");
+                let pos_res = find_field_struct(data, &name, "Position", "position");
+                let size_res = find_field_struct(data, &name, "Size", "size");
 
                 match (pos_res, size_res) {
                     (Ok(pos), Ok(size)) => Ok(quote! {

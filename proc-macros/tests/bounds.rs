@@ -29,6 +29,23 @@ enum TestEnum {
     Third(Rect),
 }
 
+#[derive(Bounds)]
+struct TestAttr1 {
+    rect: Rect,
+    #[bounds]
+    other: Rect,
+}
+
+#[derive(Bounds)]
+struct TestAttr2 {
+    #[position]
+    pos: Position,
+    foo: Position,
+    #[size]
+    size: Size,
+    bar: Size,
+}
+
 #[test]
 fn bounds() {
     use widgets::geometry::Bounds;
@@ -67,4 +84,18 @@ fn bounds() {
     assert_eq!(e1.get_bounds(), rect);
     assert_eq!(e2.get_bounds(), Rect::new(pos, size));
     assert_eq!(e3.get_bounds(), rect);
+
+    let a1 = TestAttr1 {
+        rect: Default::default(),
+        other: rect,
+    };
+    assert_eq!(a1.get_bounds(), rect);
+
+    let a2 = TestAttr2 {
+        pos,
+        size,
+        foo: Default::default(),
+        bar: Default::default(),
+    };
+    assert_eq!(a2.get_bounds(), Rect::new(pos, size));
 }

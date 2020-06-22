@@ -20,6 +20,13 @@ enum TestEnum {
     Bar { item: TestTuple, val: i32 },
 }
 
+#[derive(ObjectId)]
+struct TestAttr {
+    some_id: WidgetId,
+    #[object_id]
+    other_id: WidgetId,
+}
+
 #[test]
 fn object_id() {
     use widgets::widget::ObjectId;
@@ -43,4 +50,10 @@ fn object_id() {
     assert_eq!(e2.get_id(), ids[1]);
     assert_eq!(e3.get_id(), ids[2]);
     assert_eq!(e4.get_id(), ids[3]);
+
+    let a = TestAttr {
+        some_id: ids[0],
+        other_id: ids[1],
+    };
+    assert_eq!(a.get_id(), ids[1]);
 }
