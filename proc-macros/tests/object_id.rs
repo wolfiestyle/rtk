@@ -14,8 +14,8 @@ struct TestTuple(i32, WidgetId, String);
 
 #[derive(ObjectId)]
 enum TestEnum {
-    Struct { asd: i32, stuff: WidgetId },
-    Tuple(i32, WidgetId),
+    Struct { stuff: WidgetId, asd: i32 },
+    Tuple(WidgetId, i32),
     Foo(TestStruct),
     Bar { item: TestTuple, val: i32 },
 }
@@ -36,7 +36,7 @@ fn object_id() {
 
     let ids = [WidgetId::new(), WidgetId::new(), s.my_id, t.1];
     let e1 = TestEnum::Struct { asd: 42, stuff: ids[0] };
-    let e2 = TestEnum::Tuple(33, ids[1]);
+    let e2 = TestEnum::Tuple(ids[1], 33);
     let e3 = TestEnum::Foo(s);
     let e4 = TestEnum::Bar { item: t, val: 13 };
     assert_eq!(e1.get_id(), ids[0]);

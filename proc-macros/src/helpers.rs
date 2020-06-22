@@ -82,22 +82,23 @@ pub fn find_field_struct(data: &DataStruct, s_name: &Ident, ty_name: Str) -> Res
     }
 }
 
-pub fn find_field_enum(data: &DataEnum, e_name: &Ident, ty_name: Str) -> Result<Vec<TokenStream>, FieldFindError> {
+pub fn find_field_enum(data: &DataEnum, e_name: &Ident) -> Result<Vec<TokenStream>, FieldFindError> {
     data.variants
         .iter()
         .map(|variant| {
             match &variant.fields {
-                Fields::Named(fields) => match find_named_field(fields, ty_name) {
-                    Err(FieldFindError::NotFound(_, _)) => {
-                        let first = fields.named.first().and_then(|f| f.ident.as_ref());
-                        Ok(first.to_token_stream())
+                Fields::Named(fields) => fields
+                    .named
+                    .first()
+                    .map(|first| first.ident.to_token_stream())
+                    .ok_or_else(|| FieldFindError::Empty(fields.brace_token.span)),
+                Fields::Unnamed(fields) => {
+                    if fields.unnamed.is_empty() {
+                        Err(FieldFindError::Empty(fields.paren_token.span))
+                    } else {
+                        Ok(Index::from(0).to_token_stream())
                     }
-                    other => other,
-                },
-                Fields::Unnamed(fields) => match find_unnamed_field(fields, ty_name) {
-                    Err(FieldFindError::NotFound(_, _)) => Ok(Index::from(0).to_token_stream()),
-                    other => other,
-                },
+                }
                 Fields::Unit => Err(FieldFindError::Empty(variant.ident.span())),
             }
             .map(|field| {

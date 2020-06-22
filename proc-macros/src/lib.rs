@@ -16,7 +16,7 @@ pub fn object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         Data::Struct(data) => find_field_struct(data, &name, "WidgetId").map(|field| {
             quote! { self.#field }
         }),
-        Data::Enum(data) => find_field_enum(data, &name, "WidgetId").map(|patterns| {
+        Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
             quote! {
                 match self {
                     #(#patterns => a.get_id(),)*
