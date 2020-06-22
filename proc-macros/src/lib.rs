@@ -55,22 +55,18 @@ pub fn bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                             self.#field.pos
                         }
 
-                        #[inline]
                         fn get_size(&self) -> #path::Size {
                             self.#field.size
                         }
 
-                        #[inline]
                         fn set_position(&mut self, position: #path::Position) {
                             self.#field.pos = position;
                         }
 
-                        #[inline]
                         fn set_size(&mut self, size: #path::Size) {
                             self.#field.size = size;
                         }
 
-                        #[inline]
                         fn get_bounds(&self) -> #path::Rect {
                             self.#field
                         }
@@ -90,17 +86,14 @@ pub fn bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
                                     self.#pos
                                 }
 
-                                #[inline]
                                 fn get_size(&self) -> #path::Size {
                                     self.#size
                                 }
 
-                                #[inline]
                                 fn set_position(&mut self, position: #path::Position) {
                                     self.#pos = position;
                                 }
 
-                                #[inline]
                                 fn set_size(&mut self, size: #path::Size) {
                                     self.#size = size;
                                 }
