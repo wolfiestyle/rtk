@@ -14,12 +14,12 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
     let body = match &input.data {
         Data::Struct(data) => find_field_struct(data, &name, "WidgetId", "object_id").map(|field| {
-            quote! { self.#field }
+            quote! { #path::ObjectId::get_id(&self.#field) }
         }),
         Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
             quote! {
                 match self {
-                    #(#patterns => a.get_id(),)*
+                    #(#patterns => #path::ObjectId::get_id(a),)*
                 }
             }
         }),
@@ -51,23 +51,23 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             Ok(field) => Ok(quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
                     fn get_position(&self) -> #path::Position {
-                        self.#field.pos
+                        #path::Bounds::get_position(&self.#field)
                     }
 
                     fn get_size(&self) -> #path::Size {
-                        self.#field.size
+                        #path::Bounds::get_size(&self.#field)
                     }
 
                     fn set_position(&mut self, position: #path::Position) {
-                        self.#field.pos = position;
+                        #path::Bounds::set_position(&mut self.#field, position)
                     }
 
                     fn set_size(&mut self, size: #path::Size) {
-                        self.#field.size = size;
+                        #path::Bounds::set_size(&mut self.#field, size)
                     }
 
                     fn get_bounds(&self) -> #path::Rect {
-                        self.#field
+                        #path::Bounds::get_bounds(&self.#field)
                     }
                 }
             }),
@@ -106,31 +106,31 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
                     fn get_position(&self) -> #path::Position {
                         match self {
-                            #(#patterns => a.get_position(),)*
+                            #(#patterns => #path::Bounds::get_position(a),)*
                         }
                     }
 
                     fn get_size(&self) -> #path::Size {
                         match self {
-                            #(#patterns => a.get_size(),)*
+                            #(#patterns => #path::Bounds::get_size(a),)*
                         }
                     }
 
                     fn set_position(&mut self, position: #path::Position) {
                         match self {
-                            #(#patterns => a.set_position(position),)*
+                            #(#patterns => #path::Bounds::set_position(a, position),)*
                         }
                     }
 
                     fn set_size(&mut self, size: #path::Size) {
                         match self {
-                            #(#patterns => a.set_size(size),)*
+                            #(#patterns => #path::Bounds::set_size(a, size),)*
                         }
                     }
 
                     fn get_bounds(&self) -> #path::Rect {
                         match self {
-                            #(#patterns => a.get_bounds(),)*
+                            #(#patterns => #path::Bounds::get_bounds(a),)*
                         }
                     }
                 }
