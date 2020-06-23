@@ -102,8 +102,7 @@ impl<T: Widget> TopLevel for Window<T> {
     }
 
     fn push_event(&mut self, event: Event) -> Option<WidgetId> {
-        let parent_vp = self.get_size().into();
-        self.dispatcher.dispatch_event(&mut self.child, event, parent_vp)
+        self.dispatcher.dispatch_event(event, self.get_size(), &mut self.child)
     }
 
     #[inline]

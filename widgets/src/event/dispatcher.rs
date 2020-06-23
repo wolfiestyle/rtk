@@ -1,5 +1,5 @@
 use crate::event::{AxisValue, ButtonState, EvState, Event, EventContext, EventResult, ModState};
-use crate::geometry::{Point, Rect};
+use crate::geometry::{Point, Rect, Size};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
@@ -152,7 +152,7 @@ impl EventDispatcher {
         Default::default()
     }
 
-    pub fn dispatch_event<W: Widget>(&mut self, root: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
+    pub fn dispatch_event<W: Widget>(&mut self, event: Event, parent_size: Size, root: &mut W) -> Option<WidgetId> {
         let ctx = self.make_context();
         self.update_state(&event);
 
@@ -168,7 +168,7 @@ impl EventDispatcher {
                     in_res: Default::default(),
                 };
                 let inside = visitor
-                    .new_context(root, &parent_vp)
+                    .new_context(root, &parent_size.into())
                     .and_then(|vp| root.accept_rev(&mut visitor, vp).err());
                 if inside != self.last_inside {
                     in_res = visitor.in_res.as_opt().and(inside);
@@ -201,14 +201,14 @@ impl EventDispatcher {
             | Event::Destroyed => {
                 let mut visitor = EventDispatchVisitor { event, ctx };
                 visitor
-                    .new_context(root, &parent_vp.pos.cast())
+                    .new_context(root, &Default::default())
                     .and_then(|pos| root.accept_rev(&mut visitor, pos).err())
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 let mut visitor = PositionDispatchVisitor { event, ctx };
                 visitor
-                    .new_context(root, &parent_vp)
+                    .new_context(root, &parent_size.into())
                     .and_then(|vp| root.accept_rev(&mut visitor, vp).err())
             }
             // already handled
