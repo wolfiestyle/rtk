@@ -167,9 +167,7 @@ impl EventDispatcher {
                     last_inside: self.last_inside.unwrap_or_default(),
                     in_res: Default::default(),
                 };
-                let inside = visitor
-                    .new_context(root, &parent_size.into())
-                    .and_then(|vp| root.accept_rev(&mut visitor, vp).err());
+                let inside = visitor.visit_child_rev(root, &parent_size.into()).err();
                 if inside != self.last_inside {
                     in_res = visitor.in_res.as_opt().and(inside);
                     outside_target = self.last_inside;
@@ -200,16 +198,12 @@ impl EventDispatcher {
             | Event::Created
             | Event::Destroyed => {
                 let mut visitor = EventDispatchVisitor { event, ctx };
-                visitor
-                    .new_context(root, &Default::default())
-                    .and_then(|pos| root.accept_rev(&mut visitor, pos).err())
+                visitor.visit_child_rev(root, &Default::default()).err()
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 let mut visitor = PositionDispatchVisitor { event, ctx };
-                visitor
-                    .new_context(root, &parent_size.into())
-                    .and_then(|vp| root.accept_rev(&mut visitor, vp).err())
+                visitor.visit_child_rev(root, &parent_size.into()).err()
             }
             // already handled
             Event::PointerInside(_) => None,
@@ -250,8 +244,8 @@ impl EventDispatcher {
             ctx: self.make_context(),
         };
         visitor
-            .new_context(root, &Default::default())
-            .and_then(|pos| root.accept(&mut visitor, pos).err())
+            .visit_child(root, &Default::default())
+            .err()
             .and_then(EventResult::as_opt)
             .map(|_| target)
     }

@@ -108,13 +108,13 @@ macro_rules! make_widget_enum {
         }
 
         impl $crate::visitor::Visitable for $name {
-            fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
+            fn accept<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                 match self {
                     $($name::$type(a) => a.accept(visitor, ctx),)+
                 }
             }
 
-            fn accept_rev<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: V::Context) -> Result<(), V::Return> {
+            fn accept_rev<V: $crate::visitor::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                 match self {
                     $($name::$type(a) => a.accept_rev(visitor, ctx),)+
                 }
