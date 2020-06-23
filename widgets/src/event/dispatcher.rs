@@ -153,7 +153,6 @@ impl EventDispatcher {
     }
 
     pub fn dispatch_event<W: Widget>(&mut self, root: &mut W, event: Event, parent_vp: Rect) -> Option<WidgetId> {
-        let child_vp = root.get_bounds().clip_inside(parent_vp);
         let ctx = self.make_context();
         self.update_state(&event);
 
@@ -168,7 +167,9 @@ impl EventDispatcher {
                     last_inside: self.last_inside.unwrap_or_default(),
                     in_res: Default::default(),
                 };
-                let inside = child_vp.and_then(|vp| root.accept_rev(&mut visitor, vp).err());
+                let inside = visitor
+                    .new_context(root, &parent_vp)
+                    .and_then(|vp| root.accept_rev(&mut visitor, vp).err());
                 if inside != self.last_inside {
                     in_res = visitor.in_res.as_opt().and(inside);
                     outside_target = self.last_inside;
@@ -198,14 +199,17 @@ impl EventDispatcher {
             | Event::Focused(_)
             | Event::Created
             | Event::Destroyed => {
-                let mut dispatcher = EventDispatchVisitor { event, ctx };
-                let pos = root.get_position().cast();
-                root.accept_rev(&mut dispatcher, pos).err()
+                let mut visitor = EventDispatchVisitor { event, ctx };
+                visitor
+                    .new_context(root, &parent_vp.pos.cast())
+                    .and_then(|pos| root.accept_rev(&mut visitor, pos).err())
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
-                let mut dispatcher = PositionDispatchVisitor { event, ctx };
-                child_vp.and_then(|vp| root.accept_rev(&mut dispatcher, vp).err())
+                let mut visitor = PositionDispatchVisitor { event, ctx };
+                visitor
+                    .new_context(root, &parent_vp)
+                    .and_then(|vp| root.accept_rev(&mut visitor, vp).err())
             }
             // already handled
             Event::PointerInside(_) => None,
@@ -240,14 +244,14 @@ impl EventDispatcher {
 
     /// Dispatch an event to a single widget.
     fn dispatch_targeted<W: Widget>(&self, target: WidgetId, root: &mut W, event: Event) -> Option<WidgetId> {
-        let mut dispatcher = TargetedDispatchVisitor {
+        let mut visitor = TargetedDispatchVisitor {
             target,
             event,
             ctx: self.make_context(),
         };
-        let pos = root.get_position().cast();
-        root.accept(&mut dispatcher, pos)
-            .err()
+        visitor
+            .new_context(root, &Default::default())
+            .and_then(|pos| root.accept(&mut visitor, pos).err())
             .and_then(EventResult::as_opt)
             .map(|_| target)
     }
