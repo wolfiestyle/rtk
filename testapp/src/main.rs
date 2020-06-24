@@ -1,21 +1,22 @@
 use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
-use widgets::geometry::{Bounds, Rect};
+use widgets::geometry::Rect;
 use widgets::widget::{Widget, WidgetId, Window};
 use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug, ObjectId, Bounds, Visitable)]
-struct TestWidget {
+#[impl_generics(T)]
+struct TestWidget<T> {
     bounds: Rect,
     color: Color,
     id: WidgetId,
     hover: bool,
     #[visit_iter]
-    childs: Vec<TestWidget2>,
+    childs: Vec<T>,
 }
 
-impl Widget for TestWidget {
+impl<T: Widget> Widget for TestWidget<T> {
     fn update_layout(&mut self, _parent_rect: Rect) {
         use widgets::layout::{foreach, Layout};
 
@@ -96,7 +97,7 @@ enum TestEnum {
 */
 
 fn main() {
-    let mut widget = TestWidget {
+    let mut widget: TestWidget<TestWidget2> = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::blue(0.25),
         hover: false,

@@ -46,6 +46,14 @@ struct TestAttr2 {
     bar: Size,
 }
 
+#[derive(Bounds)]
+#[impl_generics(T)]
+struct TestGeneric<T> {
+    val: i32,
+    #[bounds]
+    item: T,
+}
+
 #[test]
 fn bounds() {
     use widgets::geometry::Bounds;
@@ -98,4 +106,7 @@ fn bounds() {
         bar: Default::default(),
     };
     assert_eq!(a2.get_bounds(), Rect::new(pos, size));
+
+    let g = TestGeneric { val: 42, item: a1 };
+    assert_eq!(g.get_bounds(), rect);
 }

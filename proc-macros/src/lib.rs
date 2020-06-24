@@ -1,16 +1,20 @@
 use quote::quote;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, parse_quote};
 use syn::{Data, DeriveInput};
 
 mod helpers;
 use helpers::*;
 
-#[proc_macro_derive(ObjectId, attributes(object_id))]
+#[proc_macro_derive(ObjectId, attributes(object_id, impl_generics))]
 pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+    let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let path = quote!(::widgets::widget);
+
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::ObjectId)) {
+        return err.to_compile_error().into();
+    }
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let body = match &input.data {
         Data::Struct(data) => find_field_in_struct(data, &name, "WidgetId", "object_id").map(|field| {
@@ -39,12 +43,16 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     .into()
 }
 
-#[proc_macro_derive(Bounds, attributes(bounds, position, size))]
+#[proc_macro_derive(Bounds, attributes(bounds, position, size, impl_generics))]
 pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+    let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let path = quote!(::widgets::geometry);
+
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Bounds)) {
+        return err.to_compile_error().into();
+    }
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let expanded = match &input.data {
         Data::Struct(data) => match find_field_in_struct(data, &name, "Rect", "bounds") {
@@ -144,12 +152,20 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         .into()
 }
 
-#[proc_macro_derive(Visitable, attributes(visit_child, visit_iter))]
+#[proc_macro_derive(Visitable, attributes(visit_child, visit_iter, impl_generics))]
 pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+    let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let path = quote!(::widgets::visitor);
+
+    if let Err(err) = parse_impl_generics(
+        &input.attrs,
+        &mut input.generics,
+        parse_quote!(::widgets::widget::Widget),
+    ) {
+        return err.to_compile_error().into();
+    }
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
     let expanded = match &input.data {
         Data::Struct(data) => {

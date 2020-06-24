@@ -1,6 +1,9 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use syn::{DataEnum, DataStruct, Error, Fields, FieldsNamed, FieldsUnnamed, Ident, Index, Type};
+use syn::{
+    Attribute, DataEnum, DataStruct, Error, Fields, FieldsNamed, FieldsUnnamed, GenericParam, Generics, Ident, Index,
+    Meta, NestedMeta, Type, TypeParamBound,
+};
 
 type Str = &'static str;
 type FieldFindResult<T> = Result<T, FieldFindError>;
@@ -181,4 +184,63 @@ pub fn match_patterns_for_enum(data: &DataEnum, e_name: &Ident) -> FieldFindResu
             })
         })
         .collect()
+}
+
+pub fn parse_attribute_list(attrs: &[Attribute], tag: Str) -> syn::Result<Vec<NestedMeta>> {
+    let mut found_args = vec![];
+
+    for attr in attrs {
+        if let Some(attr_name) = attr.path.get_ident() {
+            if attr_name == tag {
+                match attr.parse_meta()? {
+                    Meta::Path(path) => {
+                        return Err(Error::new_spanned(path, format!("missing arguments for `{}`", tag)));
+                    }
+                    Meta::List(list) => {
+                        if list.nested.is_empty() {
+                            return Err(Error::new(
+                                list.paren_token.span,
+                                format!("missing arguments for `{}`", tag),
+                            ));
+                        }
+                        for nested in list.nested {
+                            found_args.push(nested);
+                        }
+                    }
+                    Meta::NameValue(val) => {
+                        found_args.push(NestedMeta::Lit(val.lit));
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(found_args)
+}
+
+pub fn add_trait_bounds(generics: &mut Generics, target: Ident, bound: &TypeParamBound) {
+    for param in &mut generics.params {
+        if let GenericParam::Type(ty_param) = param {
+            if ty_param.ident == target {
+                ty_param.bounds.push(bound.clone());
+            }
+        }
+    }
+}
+
+pub fn parse_impl_generics(attrs: &[Attribute], generics: &mut Generics, bound: TypeParamBound) -> syn::Result<()> {
+    let attr_args = parse_attribute_list(attrs, "impl_generics")?;
+
+    for arg in attr_args {
+        if let NestedMeta::Meta(Meta::Path(path)) = arg {
+            let arg_name = path.get_ident().unwrap().clone();
+            add_trait_bounds(generics, arg_name, &bound);
+        } else {
+            return Err(Error::new_spanned(
+                arg,
+                "invalid argument for `impl_generics` attribute",
+            ));
+        }
+    }
+    Ok(())
 }

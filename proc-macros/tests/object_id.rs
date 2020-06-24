@@ -27,6 +27,14 @@ struct TestAttr {
     other_id: WidgetId,
 }
 
+#[derive(ObjectId)]
+#[impl_generics(T)]
+struct TestGeneric<T> {
+    val: i32,
+    #[object_id]
+    item: T,
+}
+
 #[test]
 fn object_id() {
     use widgets::widget::ObjectId;
@@ -56,4 +64,7 @@ fn object_id() {
         other_id: ids[1],
     };
     assert_eq!(a.get_id(), ids[1]);
+
+    let g = TestGeneric { val: 42, item: a };
+    assert_eq!(g.get_id(), ids[1]);
 }
