@@ -116,6 +116,38 @@ pub fn find_unnamed_field(fields: &FieldsUnnamed, name: Str, tag: Str) -> FieldF
         .ok_or(FieldFindError::NotFound(fields.paren_token.span, name))
 }
 
+pub fn find_tagged_fields(fields: &Fields, tag: Str) -> Vec<(usize, TokenStream)> {
+    let mut fields_found = vec![];
+
+    match fields {
+        Fields::Named(fields) => {
+            for (i, field) in fields.named.iter().enumerate() {
+                for attr in &field.attrs {
+                    if let Some(attr_name) = attr.path.segments.iter().last() {
+                        if attr_name.ident == tag {
+                            fields_found.push((i, field.ident.to_token_stream()));
+                        }
+                    }
+                }
+            }
+        }
+        Fields::Unnamed(fields) => {
+            for (i, field) in fields.unnamed.iter().enumerate() {
+                for attr in &field.attrs {
+                    if let Some(attr_name) = attr.path.segments.iter().last() {
+                        if attr_name.ident == tag {
+                            fields_found.push((i, Index::from(i).to_token_stream()));
+                        }
+                    }
+                }
+            }
+        }
+        Fields::Unit => (),
+    }
+
+    fields_found
+}
+
 pub fn find_field_struct(data: &DataStruct, s_name: &Ident, ty_name: Str, tag: Str) -> FieldFindResult<TokenStream> {
     match &data.fields {
         Fields::Named(fields) => find_named_field(fields, ty_name, tag),

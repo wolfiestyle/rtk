@@ -1,21 +1,21 @@
 use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
-use widgets::geometry::Rect;
+use widgets::geometry::{Bounds, Rect};
 use widgets::widget::{Widget, WidgetId, Window};
-use widgets::{implement_visitable, make_widget_enum};
-use widgets_derive::{Bounds, ObjectId};
+use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
 
-#[derive(Debug, ObjectId, Bounds)]
-struct TestWidget<T> {
+#[derive(Debug, ObjectId, Bounds, Visitable)]
+struct TestWidget {
     bounds: Rect,
     color: Color,
     id: WidgetId,
     hover: bool,
-    childs: Vec<T>,
+    #[visit_iter]
+    childs: Vec<TestWidget2>,
 }
 
-impl<T: Widget> Widget for TestWidget<T> {
+impl Widget for TestWidget {
     fn update_layout(&mut self, _parent_rect: Rect) {
         use widgets::layout::{foreach, Layout};
 
@@ -61,9 +61,7 @@ impl<T: Widget> Widget for TestWidget<T> {
     }
 }
 
-implement_visitable!(TestWidget<A: Widget>, childs[]);
-
-#[derive(Debug, ObjectId, Bounds)]
+#[derive(Debug, ObjectId, Bounds, Visitable)]
 struct TestWidget2 {
     id: WidgetId,
     bounds: Rect,
@@ -89,15 +87,13 @@ impl Widget for TestWidget2 {
     }
 }
 
-implement_visitable!(TestWidget2);
-
-make_widget_enum! {
-    #[derive(Debug)]
-    enum Stuff {
-        TestWidget2,
-        Rect,
-    }
+/*
+#[derive(Debug, ObjectId, Bounds, Visitable)]
+enum TestEnum {
+    TestWidget2(TestWidget2),
+    Rect(Rect),
 }
+*/
 
 fn main() {
     let mut widget = TestWidget {
@@ -105,7 +101,7 @@ fn main() {
         color: Color::blue(0.25),
         hover: false,
         id: WidgetId::new(),
-        childs: Vec::<Stuff>::new(),
+        childs: Vec::new(),
     };
 
     let image: ImageRef = Image::from_file("image2.jpg").unwrap().into();
@@ -127,7 +123,7 @@ fn main() {
         }
         .into(),
     );
-    widget.childs.push(Rect::new([0, 0], [10, 10]).into());
+    //widget.childs.push(Rect::new([0, 0], [10, 10]).into());
     widget.childs.push(
         TestWidget2 {
             id: WidgetId::new(),

@@ -143,3 +143,91 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         .unwrap_or_else(|err| err.to_error("Bounds").to_compile_error())
         .into()
 }
+
+#[proc_macro_derive(Visitable, attributes(visit_child, visit_iter))]
+pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let path = quote!(::widgets::visitor);
+
+    let expanded = match &input.data {
+        Data::Struct(data) => {
+            let child_fields = find_tagged_fields(&data.fields, "visit_child");
+            let iter_fields = find_tagged_fields(&data.fields, "visit_iter");
+
+            let mut expanded: Vec<_> = child_fields
+                .iter()
+                .map(|(i, field)| (*i, quote! { visitor.visit_child(&mut self.#field, ctx)?; }))
+                .chain(iter_fields.iter().map(|(i, field)| {
+                    (
+                        *i,
+                        quote! {
+                            for child in &mut self.#field {
+                                visitor.visit_child(child, ctx)?;
+                            }
+                        },
+                    )
+                }))
+                .collect();
+
+            let mut expanded_rev: Vec<_> = child_fields
+                .iter()
+                .map(|(i, field)| (*i, quote! { visitor.visit_child(&mut self.#field, ctx)?; }))
+                .chain(iter_fields.iter().map(|(i, field)| {
+                    (
+                        *i,
+                        quote! {
+                            for child in self.#field.iter_mut().rev() {
+                                visitor.visit_child(child, ctx)?;
+                            }
+                        },
+                    )
+                }))
+                .collect();
+
+            expanded.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+            expanded_rev.sort_unstable_by(|(a, _), (b, _)| b.cmp(a));
+
+            let stmts = expanded.into_iter().map(|(_, s)| s);
+            let stmts_rev = expanded_rev.into_iter().map(|(_, s)| s);
+
+            Ok(quote! {
+                impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
+                    fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        visitor.visit(self, ctx)?;
+                        #(#stmts)*
+                        Ok(())
+                    }
+
+                    fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        #(#stmts_rev)*
+                        visitor.visit(self, ctx)
+                    }
+                }
+            })
+        }
+        Data::Enum(data) => find_field_enum(&data, &name).map(|patterns| {
+            quote! {
+                impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
+                    fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        match self {
+                            #(#patterns => a.accept(visitor, ctx),)*
+                        }
+                    }
+
+                    fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        match self {
+                            #(#patterns => a.accept_rev(visitor, ctx),)*
+                        }
+                    }
+                }
+            }
+        }),
+        Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
+    };
+
+    expanded
+        .unwrap_or_else(|err| err.to_error("Bounds").to_compile_error())
+        .into()
+}
