@@ -148,7 +148,7 @@ pub fn find_tagged_fields(fields: &Fields, tag: Str) -> Vec<(usize, TokenStream)
     fields_found
 }
 
-pub fn find_field_struct(data: &DataStruct, s_name: &Ident, ty_name: Str, tag: Str) -> FieldFindResult<TokenStream> {
+pub fn find_field_in_struct(data: &DataStruct, s_name: &Ident, ty_name: Str, tag: Str) -> FieldFindResult<TokenStream> {
     match &data.fields {
         Fields::Named(fields) => find_named_field(fields, ty_name, tag),
         Fields::Unnamed(fields) => find_unnamed_field(fields, ty_name, tag),
@@ -156,7 +156,7 @@ pub fn find_field_struct(data: &DataStruct, s_name: &Ident, ty_name: Str, tag: S
     }
 }
 
-pub fn find_field_enum(data: &DataEnum, e_name: &Ident) -> FieldFindResult<Vec<TokenStream>> {
+pub fn match_patterns_for_enum(data: &DataEnum, e_name: &Ident) -> FieldFindResult<Vec<TokenStream>> {
     data.variants
         .iter()
         .map(|variant| {

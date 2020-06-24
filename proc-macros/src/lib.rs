@@ -13,10 +13,10 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let path = quote!(::widgets::widget);
 
     let body = match &input.data {
-        Data::Struct(data) => find_field_struct(data, &name, "WidgetId", "object_id").map(|field| {
+        Data::Struct(data) => find_field_in_struct(data, &name, "WidgetId", "object_id").map(|field| {
             quote! { #path::ObjectId::get_id(&self.#field) }
         }),
-        Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
+        Data::Enum(data) => match_patterns_for_enum(data, &name).map(|patterns| {
             quote! {
                 match self {
                     #(#patterns => #path::ObjectId::get_id(a),)*
@@ -47,7 +47,7 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let path = quote!(::widgets::geometry);
 
     let expanded = match &input.data {
-        Data::Struct(data) => match find_field_struct(data, &name, "Rect", "bounds") {
+        Data::Struct(data) => match find_field_in_struct(data, &name, "Rect", "bounds") {
             Ok(field) => Ok(quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
                     fn get_position(&self) -> #path::Position {
@@ -72,8 +72,8 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }),
             Err(FieldFindError::NotFound(rerr, rname)) => {
-                let pos_res = find_field_struct(data, &name, "Position", "position");
-                let size_res = find_field_struct(data, &name, "Size", "size");
+                let pos_res = find_field_in_struct(data, &name, "Position", "position");
+                let size_res = find_field_in_struct(data, &name, "Size", "size");
 
                 match (pos_res, size_res) {
                     (Ok(pos), Ok(size)) => Ok(quote! {
@@ -101,7 +101,7 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             }
             other => other,
         },
-        Data::Enum(data) => find_field_enum(data, &name).map(|patterns| {
+        Data::Enum(data) => match_patterns_for_enum(data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
                     fn get_position(&self) -> #path::Position {
@@ -207,7 +207,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                 }
             })
         }
-        Data::Enum(data) => find_field_enum(&data, &name).map(|patterns| {
+        Data::Enum(data) => match_patterns_for_enum(&data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
