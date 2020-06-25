@@ -247,3 +247,46 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
         .unwrap_or_else(|err| err.to_error("Visitable").to_compile_error())
         .into()
 }
+
+#[proc_macro_derive(Widget, attributes(impl_generics))]
+pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let mut input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+    let path = quote!(::widgets::widget);
+    let crate_ = quote!(::widgets);
+
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Widget)) {
+        return err.to_compile_error().into();
+    }
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    let expanded = match &input.data {
+        Data::Enum(data) => match_patterns_for_enum(&data, &name).map(|patterns| {
+            quote! {
+                impl #impl_generics #path::Widget for #name #ty_generics #where_clause {
+                    fn update_layout(&mut self, parent_rect: #crate_::geometry::Rect) {
+                        match self {
+                            #(#patterns => a.update_layout(parent_rect),)*
+                        }
+                    }
+                    fn draw(&self, dc: #crate_::draw::DrawContext) {
+                        match self {
+                            #(#patterns => a.draw(dc),)*
+                        }
+                    }
+                    fn handle_event(&mut self, event: &#crate_::event::Event, ctx: #crate_::event::EventContext) -> #crate_::event::EventResult {
+                        match self {
+                            #(#patterns => a.handle_event(event, ctx),)*
+                        }
+                    }
+                }
+            }
+        }),
+        Data::Struct(data) => Err(FieldFindError::Unsupported(data.struct_token.span, "struct")),
+        Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
+    };
+
+    expanded
+        .unwrap_or_else(|err| err.to_error("Widget").to_compile_error())
+        .into()
+}
