@@ -244,6 +244,6 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     };
 
     expanded
-        .unwrap_or_else(|err| err.to_error("Bounds").to_compile_error())
+        .unwrap_or_else(|err| err.to_error("Visitable").to_compile_error())
         .into()
 }
