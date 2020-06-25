@@ -5,6 +5,8 @@ use crate::visitor::Visitable;
 
 mod id;
 pub use id::*;
+mod empty;
+pub use empty::*;
 mod window;
 pub use window::*;
 
@@ -19,19 +21,6 @@ pub trait Widget: ObjectId + Bounds + Visitable {
 
     /// Handles an event sent to this widget.
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult;
-}
-
-impl Widget for Rect {
-    #[inline]
-    fn update_layout(&mut self, _parent_rect: Rect) {}
-
-    #[inline]
-    fn draw(&self, _dc: DrawContext) {}
-
-    #[inline]
-    fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
-        EventResult::Pass
-    }
 }
 
 impl<T: Widget> Widget for Box<T> {

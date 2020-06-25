@@ -3,7 +3,7 @@ use widgets::draw::DrawContext;
 use widgets::event::{Event, EventContext, EventResult};
 use widgets::geometry::Rect;
 use widgets::visitor::Visitor;
-use widgets::widget::{Widget, WidgetId};
+use widgets::widget::{Empty, Widget, WidgetId};
 use widgets_derive::{Bounds, ObjectId, Visitable};
 
 #[derive(ObjectId, Bounds, Visitable)]
@@ -71,12 +71,12 @@ fn visitable() {
             TestWidget1 {
                 id: ids[1],
                 bounds: Rect::default(),
-                child: Rect::default(),
+                child: Empty::new(),
             },
             TestWidget1 {
                 id: ids[2],
                 bounds: Rect::default(),
-                child: Rect::default(),
+                child: Empty::new(),
             },
         ],
     };

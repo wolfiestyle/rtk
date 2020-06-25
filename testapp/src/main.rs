@@ -1,7 +1,7 @@
 use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
-use widgets::widget::{Widget, WidgetId, Window};
+use widgets::widget::{Empty, Widget, WidgetId, Window};
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 use widgets_glium::GliumApplication;
 
@@ -91,7 +91,7 @@ impl Widget for TestWidget2 {
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]
 enum TestEnum {
     TestWidget2(TestWidget2),
-    Rect(Rect),
+    Empty(Empty),
 }
 
 impl From<TestWidget2> for TestEnum {
@@ -100,9 +100,9 @@ impl From<TestWidget2> for TestEnum {
     }
 }
 
-impl From<Rect> for TestEnum {
-    fn from(val: Rect) -> Self {
-        TestEnum::Rect(val)
+impl From<Empty> for TestEnum {
+    fn from(val: Empty) -> Self {
+        TestEnum::Empty(val)
     }
 }
 
@@ -134,7 +134,7 @@ fn main() {
         }
         .into(),
     );
-    widget.childs.push(Rect::new([0, 0], [20, 20]).into());
+    widget.childs.push(Empty::with_size([20, 20]).into());
     widget.childs.push(
         TestWidget2 {
             id: WidgetId::new(),
