@@ -62,14 +62,3 @@ impl<T: ObjectId> ObjectId for Box<T> {
         (**self).get_id()
     }
 }
-
-#[macro_export]
-macro_rules! implement_objectid {
-    ($type:tt $(< $($gen:ident $(: $bound:tt)? ),+ >)? , $field:ident) => {
-        impl $(< $($gen $(: $bound)? ),+ >)? $crate::widget::ObjectId for $type $(<$($gen),+>)? {
-            fn get_id(&self) -> $crate::widget::WidgetId {
-                self.$field
-            }
-        }
-    };
-}
