@@ -228,13 +228,13 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         match self {
-                            #(#patterns => a.accept(visitor, ctx),)*
+                            #(#patterns => #path::Visitable::accept(a, visitor, ctx),)*
                         }
                     }
 
                     fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         match self {
-                            #(#patterns => a.accept_rev(visitor, ctx),)*
+                            #(#patterns => #path::Visitable::accept_rev(a, visitor, ctx),)*
                         }
                     }
                 }
@@ -266,17 +266,17 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 impl #impl_generics #path::Widget for #name #ty_generics #where_clause {
                     fn update_layout(&mut self, parent_rect: #crate_::geometry::Rect) {
                         match self {
-                            #(#patterns => a.update_layout(parent_rect),)*
+                            #(#patterns => #path::Widget::update_layout(a, parent_rect),)*
                         }
                     }
                     fn draw(&self, dc: #crate_::draw::DrawContext) {
                         match self {
-                            #(#patterns => a.draw(dc),)*
+                            #(#patterns => #path::Widget::draw(a, dc),)*
                         }
                     }
                     fn handle_event(&mut self, event: &#crate_::event::Event, ctx: #crate_::event::EventContext) -> #crate_::event::EventResult {
                         match self {
-                            #(#patterns => a.handle_event(event, ctx),)*
+                            #(#patterns => #path::Widget::handle_event(a, event, ctx),)*
                         }
                     }
                 }
