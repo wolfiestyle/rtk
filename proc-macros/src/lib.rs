@@ -9,7 +9,7 @@ use helpers::*;
 pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let path = quote!(::widgets::widget);
+    let path = quote!(widgets::widget);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::ObjectId)) {
         return err.to_compile_error().into();
@@ -47,7 +47,7 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let path = quote!(::widgets::geometry);
+    let path = quote!(widgets::geometry);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Bounds)) {
         return err.to_compile_error().into();
@@ -156,7 +156,7 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let path = quote!(::widgets::visitor);
+    let path = quote!(widgets::visitor);
 
     if let Err(err) = parse_impl_generics(
         &input.attrs,
@@ -252,8 +252,8 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let path = quote!(::widgets::widget);
-    let crate_ = quote!(::widgets);
+    let path = quote!(widgets::widget);
+    let crate_ = quote!(widgets);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Widget)) {
         return err.to_compile_error().into();
