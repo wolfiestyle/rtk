@@ -249,7 +249,7 @@ pub enum EventResult {
 impl EventResult {
     #[inline]
     pub fn consumed(self) -> bool {
-        self == EventResult::Consumed
+        matches!(self, EventResult::Consumed)
     }
 
     #[inline]
