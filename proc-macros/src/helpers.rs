@@ -48,10 +48,10 @@ pub fn find_named_field(fields: &FieldsNamed, name: Str, tag: Str) -> FieldFindR
 
     for field in &fields.named {
         for attr in &field.attrs {
-            if let Some(attr_name) = attr.path.segments.iter().last() {
-                if attr_name.ident == tag {
+            if let Some(attr_name) = attr.path.get_ident() {
+                if attr_name == tag {
                     if field_found.is_some() {
-                        return Err(FieldFindError::DuplicateAttr(attr_name.ident.span(), tag));
+                        return Err(FieldFindError::DuplicateAttr(attr_name.span(), tag));
                     }
                     field_found = field.ident.as_ref();
                 }
@@ -88,10 +88,10 @@ pub fn find_unnamed_field(fields: &FieldsUnnamed, name: Str, tag: Str) -> FieldF
 
     for (i, field) in fields.unnamed.iter().enumerate() {
         for attr in &field.attrs {
-            if let Some(attr_name) = attr.path.segments.iter().last() {
-                if attr_name.ident == tag {
+            if let Some(attr_name) = attr.path.get_ident() {
+                if attr_name == tag {
                     if field_found.is_some() {
-                        return Err(FieldFindError::DuplicateAttr(attr_name.ident.span(), tag));
+                        return Err(FieldFindError::DuplicateAttr(attr_name.span(), tag));
                     }
                     field_found = Some(i);
                 }
@@ -126,8 +126,8 @@ pub fn find_tagged_fields(fields: &Fields, tag: Str) -> Vec<(usize, TokenStream)
         Fields::Named(fields) => {
             for (i, field) in fields.named.iter().enumerate() {
                 for attr in &field.attrs {
-                    if let Some(attr_name) = attr.path.segments.iter().last() {
-                        if attr_name.ident == tag {
+                    if let Some(attr_name) = attr.path.get_ident() {
+                        if attr_name == tag {
                             fields_found.push((i, field.ident.to_token_stream()));
                         }
                     }
@@ -137,8 +137,8 @@ pub fn find_tagged_fields(fields: &Fields, tag: Str) -> Vec<(usize, TokenStream)
         Fields::Unnamed(fields) => {
             for (i, field) in fields.unnamed.iter().enumerate() {
                 for attr in &field.attrs {
-                    if let Some(attr_name) = attr.path.segments.iter().last() {
-                        if attr_name.ident == tag {
+                    if let Some(attr_name) = attr.path.get_ident() {
+                        if attr_name == tag {
                             fields_found.push((i, Index::from(i).to_token_stream()));
                         }
                     }
