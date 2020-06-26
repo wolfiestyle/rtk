@@ -2,7 +2,10 @@
 use crate::draw::DrawQueue;
 use crate::event::Event;
 use crate::geometry::Bounds;
-use crate::widget::{WidgetId, WindowAttributes};
+use crate::widget::WidgetId;
+
+mod window;
+pub use window::*;
 
 /// Defines an object that can be a top level window.
 pub trait TopLevel: Bounds {

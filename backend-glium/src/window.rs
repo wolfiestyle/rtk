@@ -10,8 +10,8 @@ use glium::{uniform, Surface};
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
 use widgets::image::{ImageData, ImageWeakRef, PixelFormat};
-use widgets::toplevel::TopLevel;
-use widgets::widget::{WidgetId, WindowAttributes};
+use widgets::toplevel::{TopLevel, WindowAttributes};
+use widgets::widget::WidgetId;
 
 pub struct GliumWindow<T> {
     display: glium::Display,

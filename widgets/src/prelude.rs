@@ -4,4 +4,5 @@ pub use crate::event::{
     Axis, ButtonState, Event, EventContext, EventResult, Key, KeySide, MouseButton, Pressed, Released,
 };
 pub use crate::geometry::{Alignment, HAlign, Point, Position, Rect, Size, VAlign};
+pub use crate::toplevel::Window;
 pub use crate::widget::{Widget, WidgetId};

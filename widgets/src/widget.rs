@@ -8,8 +8,6 @@ mod id;
 pub use id::*;
 mod empty;
 pub use empty::*;
-mod window;
-pub use window::*;
 
 /// Defines an object that can be drawn and viewed inside a window.
 pub trait Widget: ObjectId + Bounds + Visitable {

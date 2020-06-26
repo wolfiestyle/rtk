@@ -15,4 +15,4 @@ pub mod widget;
 #[cfg(feature = "glium")]
 mod glium_ext;
 
-pub use widget::DEFAULT_WINDOW_SIZE;
+pub use toplevel::DEFAULT_WINDOW_SIZE;

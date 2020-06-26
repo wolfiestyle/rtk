@@ -1,6 +1,6 @@
 use widgets::image::{Image, ImageRef};
 use widgets::prelude::*;
-use widgets::widget::{Empty, Window};
+use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 use widgets_glium::GliumApplication;
 
