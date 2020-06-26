@@ -27,6 +27,15 @@ impl<T> Window<T> {
             child,
         }
     }
+
+    /// Creates a new window with the specified attributes.
+    pub fn new_with_attr(child: T, attr: WindowAttributes) -> Self {
+        Window {
+            attr,
+            dispatcher: Default::default(),
+            child,
+        }
+    }
 }
 
 impl<T> ops::Deref for Window<T> {
