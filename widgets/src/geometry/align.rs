@@ -33,6 +33,17 @@ pub enum HAlign {
     Right,
 }
 
+impl HAlign {
+    #[inline]
+    pub fn flip(self) -> Self {
+        match self {
+            HAlign::Left => HAlign::Right,
+            HAlign::Center => HAlign::Center,
+            HAlign::Right => HAlign::Left,
+        }
+    }
+}
+
 impl Default for HAlign {
     #[inline]
     fn default() -> Self {
@@ -46,6 +57,17 @@ pub enum VAlign {
     Top,
     Center,
     Bottom,
+}
+
+impl VAlign {
+    #[inline]
+    pub fn flip(self) -> Self {
+        match self {
+            VAlign::Top => VAlign::Bottom,
+            VAlign::Center => VAlign::Center,
+            VAlign::Bottom => VAlign::Top,
+        }
+    }
 }
 
 impl Default for VAlign {
