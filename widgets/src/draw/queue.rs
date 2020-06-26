@@ -1,5 +1,6 @@
-use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, ImageRef, Primitive, TextDrawMode, Vertex};
+use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, Primitive, TextDrawMode, Vertex};
 use crate::geometry::{Point, Position, Rect};
+use crate::image::ImageRef;
 use std::borrow::Cow;
 use std::fmt;
 

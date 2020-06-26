@@ -2,6 +2,7 @@ use widgets::draw::{Color, DrawContext, Image, ImageRef};
 use widgets::event::{EvState, Event, EventContext, EventResult, MouseButton};
 use widgets::geometry::Rect;
 use widgets::widget::{Empty, Widget, WidgetId, Window};
+use widgets::image::{Image, ImageRef};
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 use widgets_glium::GliumApplication;
 

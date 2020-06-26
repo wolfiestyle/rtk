@@ -1,6 +1,7 @@
 use crate::draw::queue::{DrawError, DrawQueue};
-use crate::draw::{Color, ImageRef, Primitive, TexCoord, TextDrawMode, Vertex};
+use crate::draw::{Color, Primitive, TexCoord, TextDrawMode, Vertex};
 use crate::geometry::{Point, Position, Rect, Size};
+use crate::image::ImageRef;
 use crate::widget::Widget;
 use std::borrow::Cow;
 

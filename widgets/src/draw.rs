@@ -1,4 +1,5 @@
 use crate::geometry::{Position, Rect};
+use crate::image::ImageRef;
 use std::borrow::Cow;
 
 mod color;
@@ -11,8 +12,6 @@ mod queue;
 pub use queue::*;
 mod context;
 pub use context::DrawContext;
-mod image;
-pub use self::image::*;
 
 /// Types of drawing primitives.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

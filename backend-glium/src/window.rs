@@ -8,7 +8,8 @@ use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
 use weak_table::WeakKeyHashMap;
-use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, ImageData, ImageWeakRef, PixelFormat, Primitive};
+use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
+use widgets::image::{ImageData, ImageWeakRef, PixelFormat};
 use widgets::toplevel::TopLevel;
 use widgets::widget::{WidgetId, WindowAttributes};
 
