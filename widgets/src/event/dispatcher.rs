@@ -1,4 +1,4 @@
-use crate::event::{AxisValue, ButtonState, EvState, Event, EventContext, EventResult, ModState};
+use crate::event::{Axis, ButtonState, Event, EventContext, EventResult, KeyModState, MouseButtonsState};
 use crate::geometry::{Point, Rect, Size};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
@@ -141,8 +141,8 @@ impl Visitor for TargetedDispatchVisitor {
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct EventDispatcher {
     last_pos: Point<f64>,
-    mod_state: ModState,
-    button_state: ButtonState,
+    mod_state: KeyModState,
+    button_state: MouseButtonsState,
     last_inside: Option<WidgetId>,
 }
 
@@ -160,7 +160,7 @@ impl EventDispatcher {
         let mut in_res = None;
         let mut outside_target = None;
         match event {
-            Event::MouseMoved(AxisValue::Position(pos)) => {
+            Event::MouseMoved(Axis::Position(pos)) => {
                 let mut visitor = InsideCheckVisitor {
                     pos,
                     ctx,
@@ -215,13 +215,13 @@ impl EventDispatcher {
     /// Update input state.
     fn update_state(&mut self, event: &Event) {
         match *event {
-            Event::MouseMoved(AxisValue::Position(pos)) => {
+            Event::MouseMoved(Axis::Position(pos)) => {
                 self.last_pos = pos;
             }
-            Event::MouseButton(EvState::Pressed, button) => {
+            Event::MouseButton(ButtonState::Pressed, button) => {
                 self.button_state.set(button);
             }
-            Event::MouseButton(EvState::Released, button) => {
+            Event::MouseButton(ButtonState::Released, button) => {
                 self.button_state.unset(button);
             }
             Event::ModifiersChanged(mod_state) => {

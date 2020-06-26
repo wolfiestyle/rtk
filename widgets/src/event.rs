@@ -5,6 +5,8 @@ use std::time::Instant;
 mod dispatcher;
 pub use dispatcher::*;
 
+pub use ButtonState::*;
+
 /// Raw key id from hardware.
 pub type ScanCode = u32;
 
@@ -13,18 +15,18 @@ pub type ScanCode = u32;
 pub enum Event {
     /// Raw keyboard input.
     Keyboard {
-        state: EvState,
+        state: ButtonState,
         key: Key,
         scancode: ScanCode,
     },
     /// Processed keyboard input as an unicode character.
     Character(char),
     /// Keyboard modifier state changed.
-    ModifiersChanged(ModState),
+    ModifiersChanged(KeyModState),
     /// Mouse pointer motion.
-    MouseMoved(AxisValue),
+    MouseMoved(Axis),
     /// Mouse button input.
-    MouseButton(EvState, MouseButton),
+    MouseButton(ButtonState, MouseButton),
     /// Pointer has crossed the window boundaries.
     PointerInside(bool),
     /// A file has been dropped into the window.
@@ -53,15 +55,15 @@ pub struct EventContext {
     /// Last known cursor position, relative to the window.
     pub abs_pos: Point<f64>,
     /// Current mouse button state.
-    pub button_state: ButtonState,
+    pub button_state: MouseButtonsState,
     /// Current keyboard modifier state.
-    pub mod_state: ModState,
+    pub mod_state: KeyModState,
 }
 
 impl EventContext {
     /// Creates a new event context using the specified data.
     #[inline]
-    pub fn new(pointer_pos: Point<f64>, button_state: ButtonState, mod_state: ModState) -> Self {
+    pub fn new(pointer_pos: Point<f64>, button_state: MouseButtonsState, mod_state: KeyModState) -> Self {
         Self {
             timestamp: Instant::now(),
             local_pos: pointer_pos,
@@ -74,15 +76,15 @@ impl EventContext {
 
 /// State of keys or mouse buttons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum EvState {
+pub enum ButtonState {
     Released,
     Pressed,
 }
 
-impl Default for EvState {
+impl Default for ButtonState {
     #[inline]
     fn default() -> Self {
-        EvState::Released
+        ButtonState::Released
     }
 }
 
@@ -121,7 +123,7 @@ impl MouseButton {
 
 /// Axis of movement for mouse pointer.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum AxisValue {
+pub enum Axis {
     Position(Point<f64>),
     Scroll(f32, f32),
     Pressure(f64),
@@ -130,7 +132,7 @@ pub enum AxisValue {
 
 /// Keyboard modifier state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct ModState {
+pub struct KeyModState {
     pub shift: bool,
     pub ctrl: bool,
     pub alt: bool,
@@ -139,9 +141,9 @@ pub struct ModState {
 
 /// Mouse button state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct ButtonState(u64);
+pub struct MouseButtonsState(u64);
 
-impl ButtonState {
+impl MouseButtonsState {
     /// Sets the specificed button as pressed.
     #[inline]
     pub fn set(&mut self, button: MouseButton) {

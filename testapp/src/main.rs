@@ -48,7 +48,7 @@ impl<T: Widget> Widget for TestWidget<T> {
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("TestWidget({:?}): {:?} {:?}", self.id, event, ctx.local_pos);
         match event {
-            Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
+            Event::MouseButton(Pressed, MouseButton::Left) => {
                 println!("TestWidget({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
                 EventResult::Consumed
             }
@@ -78,7 +78,7 @@ impl Widget for TestWidget2 {
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("Window2: {:?}", event);
         match event {
-            Event::MouseButton(EvState::Pressed, MouseButton::Left) => {
+            Event::MouseButton(Pressed, MouseButton::Left) => {
                 println!("TestWidget2({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
                 EventResult::Consumed
             }

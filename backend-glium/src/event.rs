@@ -1,6 +1,6 @@
 use glium::glutin::dpi::{PhysicalPosition, PhysicalSize};
 use glium::glutin::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
-use widgets::event::{AxisValue, EvState, Event, Key, KeySide, ModState};
+use widgets::event::{Axis, ButtonState, Event, Key, KeyModState, KeySide};
 use widgets::geometry::{Point, Size};
 
 pub fn translate_event(event: WindowEvent) -> Option<Event> {
@@ -19,7 +19,7 @@ pub fn translate_event(event: WindowEvent) -> Option<Event> {
             key: translate_keycode(input.virtual_keycode),
             scancode: input.scancode,
         },
-        WindowEvent::ModifiersChanged(mod_state) => ModifiersChanged(ModState {
+        WindowEvent::ModifiersChanged(mod_state) => ModifiersChanged(KeyModState {
             shift: mod_state.shift(),
             ctrl: mod_state.ctrl(),
             alt: mod_state.alt(),
@@ -28,25 +28,25 @@ pub fn translate_event(event: WindowEvent) -> Option<Event> {
         WindowEvent::CursorMoved {
             position: PhysicalPosition { x, y },
             ..
-        } => MouseMoved(AxisValue::Position(Point { x, y })),
+        } => MouseMoved(Axis::Position(Point { x, y })),
         WindowEvent::CursorEntered { .. } => PointerInside(true),
         WindowEvent::CursorLeft { .. } => PointerInside(false),
         WindowEvent::MouseWheel {
             delta: MouseScrollDelta::LineDelta(x, y),
             ..
-        } => MouseMoved(AxisValue::Scroll(x, y)),
+        } => MouseMoved(Axis::Scroll(x, y)),
         WindowEvent::MouseInput { state, button, .. } => MouseButton(translate_state(state), translate_button(button)),
-        WindowEvent::TouchpadPressure { pressure, .. } => MouseMoved(AxisValue::Pressure(pressure as f64)),
+        WindowEvent::TouchpadPressure { pressure, .. } => MouseMoved(Axis::Pressure(pressure as f64)),
         _ => {
             return None;
         }
     })
 }
 
-fn translate_state(state: ElementState) -> EvState {
+fn translate_state(state: ElementState) -> ButtonState {
     match state {
-        ElementState::Pressed => EvState::Pressed,
-        ElementState::Released => EvState::Released,
+        ElementState::Pressed => ButtonState::Pressed,
+        ElementState::Released => ButtonState::Released,
     }
 }
 
