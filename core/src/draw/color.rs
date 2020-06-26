@@ -19,6 +19,7 @@ impl Color {
     pub const YELLOW: Color = Color::yellow(1.0);
 
     /// Creates a new RGBA color.
+    ///
     /// Arguments are in linear space with `[0, 1]` range.
     #[inline]
     pub const fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
@@ -26,6 +27,7 @@ impl Color {
     }
 
     /// Creates a new RGB color with alpha 1.
+    ///
     /// Arguments are in linear space with `[0, 1]` range.
     #[inline]
     pub const fn rgb(r: f32, g: f32, b: f32) -> Self {
@@ -33,6 +35,7 @@ impl Color {
     }
 
     /// Creates a new RGBA color.
+    ///
     /// Arguments are in sRGB space with `[0, 255]` range.
     #[inline]
     pub fn srgba8(r: u8, g: u8, b: u8, a: u8) -> Self {
@@ -45,6 +48,7 @@ impl Color {
     }
 
     /// Creates a new RGB color with alpha 1.
+    ///
     /// Arguments are in sRGB space with `[0, 255]` range.
     #[inline]
     pub fn srgb8(r: u8, g: u8, b: u8) -> Self {
@@ -57,6 +61,7 @@ impl Color {
     }
 
     /// Creates a new RGBA color.
+    ///
     /// Components are in the `0xAARRGGBB` format commonly used in the web.
     #[inline]
     pub fn srgba32(rgb: u32) -> Self {
@@ -69,6 +74,7 @@ impl Color {
     }
 
     /// Creates a new RGB color.
+    ///
     /// Components are in the `0xRRGGBB` format commonly used in the web.
     #[inline]
     pub fn srgb32(rgb: u32) -> Self {
@@ -81,6 +87,7 @@ impl Color {
     }
 
     /// Converts this color into a 8-bit per component sRGBA array.
+    ///
     /// Components are returned as a `[r, g, b, a]` array.
     #[inline]
     pub fn into_srgba8(self) -> [u8; 4] {
@@ -93,6 +100,7 @@ impl Color {
     }
 
     /// Converts this color into a 8-bit per component sRGBA value.
+    ///
     /// Components are returned in the `0xAARRGGBB` format commonly used in the web.
     #[inline]
     pub fn into_srgba32(self) -> u32 {
@@ -227,7 +235,6 @@ impl From<[u8; 3]> for Color {
 
 implement_ops!(Color, f32);
 
-#[inline]
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {
         s / 12.92
@@ -236,7 +243,6 @@ fn srgb_to_linear(s: f32) -> f32 {
     }
 }
 
-#[inline]
 fn linear_to_srgb(l: f32) -> f32 {
     if l <= 0.0031308 {
         l * 12.92
@@ -245,12 +251,10 @@ fn linear_to_srgb(l: f32) -> f32 {
     }
 }
 
-#[inline]
 fn u8_to_linear(srgb: u8) -> f32 {
     srgb_to_linear(srgb as f32 / 255.0)
 }
 
-#[inline]
 fn linear_to_u8(linear: f32) -> u8 {
     (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
 }
