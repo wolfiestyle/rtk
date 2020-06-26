@@ -1,4 +1,4 @@
-//! TopLevel type.
+//! TopLevel type that interfaces with the backend.
 use crate::draw::DrawQueue;
 use crate::event::Event;
 use crate::geometry::Bounds;
