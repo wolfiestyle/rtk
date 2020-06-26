@@ -86,6 +86,14 @@ impl Color {
         }
     }
 
+    /// Creates a new color from HSL components.
+    ///
+    /// Argument `h` is in `[0, 360]` degrees, `s` and `l` in `[0, 1]` range.
+    #[inline]
+    pub fn hsl(h: f32, s: f32, l: f32) -> Self {
+        hsl_to_rgb(h, s, l).into()
+    }
+
     /// Converts this color into a 8-bit per component sRGBA array.
     ///
     /// Components are returned as a `[r, g, b, a]` array.
@@ -257,4 +265,13 @@ fn u8_to_linear(srgb: u8) -> f32 {
 
 fn linear_to_u8(linear: f32) -> u8 {
     (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
+}
+
+fn hsl_to_rgb(h: f32, s: f32, l: f32) -> [f32; 3] {
+    let a = s * l.min(1.0 - l);
+    let f = move |n| {
+        let k = (n + h / 30.0) % 12.0;
+        l - a * f32::max(-1.0, f32::min(k - 3.0, 9.0 - k).min(1.0))
+    };
+    [f(0.0), f(8.0), f(4.0)]
 }
