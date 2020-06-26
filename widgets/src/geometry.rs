@@ -9,5 +9,7 @@ mod border;
 pub use border::Border;
 mod bounds;
 pub use bounds::Bounds;
+mod align;
+pub use align::*;
 
 pub type Position = Point<i32>;
