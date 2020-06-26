@@ -6,6 +6,7 @@ pub mod event;
 pub mod geometry;
 pub mod image;
 pub mod layout;
+pub mod prelude;
 pub mod toplevel;
 pub mod visitor;
 pub mod widget;
