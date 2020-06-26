@@ -60,20 +60,6 @@ pub struct EventContext {
     pub mod_state: KeyModState,
 }
 
-impl EventContext {
-    /// Creates a new event context using the specified data.
-    #[inline]
-    pub fn new(pointer_pos: Point<f64>, button_state: MouseButtonsState, mod_state: KeyModState) -> Self {
-        Self {
-            timestamp: Instant::now(),
-            local_pos: pointer_pos,
-            abs_pos: pointer_pos,
-            button_state,
-            mod_state,
-        }
-    }
-}
-
 /// State of keys or mouse buttons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ButtonState {

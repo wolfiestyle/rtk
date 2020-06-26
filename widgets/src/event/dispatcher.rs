@@ -233,7 +233,13 @@ impl EventDispatcher {
 
     /// Creates an event context
     fn make_context(&self) -> EventContext {
-        EventContext::new(self.last_pos, self.button_state, self.mod_state)
+        EventContext {
+            timestamp: std::time::Instant::now(),
+            local_pos: self.last_pos,
+            abs_pos: self.last_pos,
+            button_state: self.button_state,
+            mod_state: self.mod_state,
+        }
     }
 
     /// Dispatch an event to a single widget.
