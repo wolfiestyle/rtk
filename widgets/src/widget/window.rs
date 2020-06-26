@@ -7,6 +7,7 @@ use std::ops;
 
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
 
+/// Top level Window.
 #[derive(Debug, Clone)]
 pub struct Window<T> {
     /// The window attributes.
@@ -111,6 +112,7 @@ impl<T: Widget> TopLevel for Window<T> {
     }
 }
 
+/// The attributes of a window.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WindowAttributes {
     pub title: Option<String>,

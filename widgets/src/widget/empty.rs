@@ -5,6 +5,7 @@ use crate::visitor::{Visitable, Visitor};
 use crate::widget::{ObjectId, Widget, WidgetId};
 
 /// The empty widget.
+///
 /// It's a "null" widget that does nothing (it only occupies space).
 /// Can be used as a filler.
 #[derive(Debug)]

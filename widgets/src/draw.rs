@@ -1,3 +1,4 @@
+//! Types used to communicate with the drawing backend.
 use crate::geometry::{Position, Rect};
 use crate::image::ImageRef;
 use std::borrow::Cow;
@@ -24,7 +25,7 @@ pub enum Primitive {
     TriangleFan,
 }
 
-/// Draw command primitive detail.
+/// Primitive draw command detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrawCmdPrim {
     /// The primitive to draw.
@@ -39,7 +40,7 @@ pub struct DrawCmdPrim {
     pub viewport: Rect,
 }
 
-/// Draw command text detail.
+/// Text draw command detail.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DrawCmdText {
     pub text: Cow<'static, str>,

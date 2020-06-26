@@ -100,6 +100,7 @@ impl DrawQueue {
     }
 }
 
+/// Error from drawing operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DrawError {
     IndexOutOfBounds { idx: u32, nvert: u32 },

@@ -1,3 +1,4 @@
+//! TopLevel type.
 use crate::draw::DrawQueue;
 use crate::event::Event;
 use crate::geometry::Bounds;

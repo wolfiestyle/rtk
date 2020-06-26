@@ -1,5 +1,7 @@
+//! Helper methods for composing widget layouts.
 use crate::geometry::{Bounds, Rect};
 
+/// Bounds extension for placing widgets relative to others.
 pub trait Layout: Bounds {
     fn left_of<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
         let pos = self

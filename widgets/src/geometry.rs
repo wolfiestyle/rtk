@@ -1,3 +1,4 @@
+//! Geometry related types.
 mod point;
 pub use point::Point;
 mod size;

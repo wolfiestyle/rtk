@@ -1,3 +1,4 @@
+//! Commonly used imports.
 pub use crate::draw::{Color, DrawContext, TexCoord, Vertex};
 pub use crate::event::{
     Axis, ButtonState, Event, EventContext, EventResult, Key, KeySide, MouseButton, Pressed, Released,

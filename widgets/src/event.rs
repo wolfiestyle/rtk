@@ -1,3 +1,4 @@
+//! Input event definitions.
 use crate::geometry::{Point, Position, Size};
 use std::path::PathBuf;
 use std::time::Instant;
@@ -125,7 +126,7 @@ pub struct KeyModState {
     pub meta: bool,
 }
 
-/// Mouse button state.
+/// Mouse button state for all buttons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct MouseButtonsState(u64);
 
@@ -174,6 +175,7 @@ pub enum KeySide {
     Right,
 }
 
+/// Defines if it's a key from the numpad.
 pub type IsNumpad = bool;
 
 /// Symbolic key definition.

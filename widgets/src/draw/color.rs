@@ -1,3 +1,4 @@
+/// A RGB color stored in linear space.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[repr(C)]
 pub struct Color {

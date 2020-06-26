@@ -1,3 +1,4 @@
+//! Widget library.
 #[macro_use]
 mod macros;
 

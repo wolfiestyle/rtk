@@ -1,3 +1,4 @@
+//! Visitor pattern for widgets.
 use crate::widget::Widget;
 
 /// Defines an action that can be executed on a widget tree.

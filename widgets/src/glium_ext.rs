@@ -1,3 +1,4 @@
+//! Adds glium support.
 use crate::draw::{Color, TexCoord, Vertex};
 use crate::geometry::Point;
 use glium::vertex::{Attribute, AttributeType};

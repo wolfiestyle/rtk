@@ -1,3 +1,4 @@
+//! Image type.
 use crate::geometry::Size;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -136,6 +137,7 @@ impl Hash for Image {
     }
 }
 
+/// Contents of an image.
 #[derive(Clone, PartialEq, Eq)]
 pub enum ImageData {
     Empty,
@@ -220,6 +222,7 @@ impl From<&[u16]> for ImageData {
     }
 }
 
+/// Pixel format of an image.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     Luma,
@@ -240,6 +243,7 @@ impl PixelFormat {
     }
 }
 
+/// Unique image id (used for hashing).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct ImageId(usize);
 

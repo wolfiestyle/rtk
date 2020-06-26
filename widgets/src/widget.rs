@@ -1,3 +1,4 @@
+//! Widget type and definitions.
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Rect};
