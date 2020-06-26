@@ -3,9 +3,9 @@ name = "testapp"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"
-build = false
+publish = false
 
 [dependencies]
-widgets = { path = "../widgets", features = ["glium"] }
+widgets = { path = "../core", features = ["glium"] }
 widgets-glium = { path = "../backend-glium" }
 widgets-derive = { path = "../proc-macros" }

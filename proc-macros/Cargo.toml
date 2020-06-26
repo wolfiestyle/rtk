@@ -13,4 +13,4 @@ quote = "1.0.7"
 proc-macro2 = "1.0.18"
 
 [dev-dependencies]
-widgets = { path = "../widgets" }
+widgets = { path = "../core" }
