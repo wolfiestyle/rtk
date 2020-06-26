@@ -37,7 +37,7 @@ impl Border {
         }
     }
 
-    /// The total width or horizontal borders.
+    /// The total width of horizontal borders.
     #[inline]
     pub fn total_width(self) -> u32 {
         self.left + self.right
