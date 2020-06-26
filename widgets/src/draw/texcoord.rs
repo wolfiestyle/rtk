@@ -4,8 +4,8 @@ use crate::geometry::Point;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[repr(C)]
 pub struct TexCoord {
-    u: f32,
-    v: f32,
+    pub u: f32,
+    pub v: f32,
 }
 
 impl TexCoord {

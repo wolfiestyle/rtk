@@ -60,8 +60,8 @@ pub enum DrawCommand {
 /// Defines an object's alignment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Alignment {
-    horizontal: HAlign,
-    vertical: VAlign,
+    pub horizontal: HAlign,
+    pub vertical: VAlign,
 }
 
 impl From<HAlign> for Alignment {
