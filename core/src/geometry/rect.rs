@@ -216,6 +216,22 @@ impl Rect {
     }
 
     #[inline]
+    pub fn merge(self, other: Rect) -> Rect {
+        let top_left = Position {
+            x: i32::min(self.x(), other.x()),
+            y: i32::min(self.y(), other.y()),
+        };
+        let bot_right = Position {
+            x: i32::max(self.x() + self.w() as i32, other.x() + other.w() as i32),
+            y: i32::max(self.y() + self.h() as i32, other.y() + other.h() as i32),
+        };
+        Rect {
+            pos: top_left,
+            size: (bot_right - top_left).as_size(),
+        }
+    }
+
+    #[inline]
     pub fn map_pos<F>(self, f: F) -> Rect
     where
         F: FnOnce(Position) -> Position,
