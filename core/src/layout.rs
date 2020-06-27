@@ -3,34 +3,34 @@ use crate::geometry::Bounds;
 
 /// Bounds extension for placing widgets relative to others.
 pub trait Layout: Bounds {
-    fn left_of<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
+    fn left_of<B: Bounds>(&mut self, other: &B, margin: u32) -> &mut Self {
         let pos = self
             .get_position()
-            .with_x(other.get_position().x - self.get_size().w as i32 - margin);
+            .with_x(other.get_position().x - (self.get_size().w + margin) as i32);
         self.set_position(pos);
         self
     }
 
-    fn right_of<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
+    fn right_of<B: Bounds>(&mut self, other: &B, margin: u32) -> &mut Self {
         let pos = self
             .get_position()
-            .with_x(other.get_position().x + other.get_size().w as i32 + margin);
+            .with_x(other.get_position().x + (other.get_size().w + margin) as i32);
         self.set_position(pos);
         self
     }
 
-    fn above<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
+    fn above<B: Bounds>(&mut self, other: &B, margin: u32) -> &mut Self {
         let pos = self
             .get_position()
-            .with_y(other.get_position().y - self.get_size().h as i32 - margin);
+            .with_y(other.get_position().y - (self.get_size().h + margin) as i32);
         self.set_position(pos);
         self
     }
 
-    fn below<B: Bounds>(&mut self, other: &B, margin: i32) -> &mut Self {
+    fn below<B: Bounds>(&mut self, other: &B, margin: u32) -> &mut Self {
         let pos = self
             .get_position()
-            .with_y(other.get_position().y + other.get_size().h as i32 + margin);
+            .with_y(other.get_position().y + (other.get_size().h + margin) as i32);
         self.set_position(pos);
         self
     }
