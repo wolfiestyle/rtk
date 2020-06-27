@@ -139,12 +139,12 @@ impl Rect {
     }
 
     #[inline]
-    pub fn moved_to(self, pos: Position) -> Self {
+    pub fn with_pos(self, pos: Position) -> Self {
         Rect { pos, size: self.size }
     }
 
     #[inline]
-    pub fn resized(self, size: Size) -> Self {
+    pub fn with_size(self, size: Size) -> Self {
         Rect { pos: self.pos, size }
     }
 
