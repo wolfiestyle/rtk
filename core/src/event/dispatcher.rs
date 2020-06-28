@@ -42,12 +42,11 @@ struct PositionDispatchVisitor {
 
 impl PositionDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
-        let ctx = EventContext {
-            local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
-            ..self.ctx
-        };
-
         if self.ctx.abs_pos.inside(abs_bounds) {
+            let ctx = EventContext {
+                local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
+                ..self.ctx
+            };
             widget.handle_event(&self.event, ctx)
         } else {
             EventResult::Pass
