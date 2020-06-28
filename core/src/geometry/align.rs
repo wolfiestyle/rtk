@@ -42,6 +42,15 @@ impl HAlign {
             HAlign::Right => HAlign::Left,
         }
     }
+
+    #[inline]
+    pub fn value(self) -> f32 {
+        match self {
+            HAlign::Left => 0.0,
+            HAlign::Center => 0.5,
+            HAlign::Right => 1.0,
+        }
+    }
 }
 
 impl Default for HAlign {
@@ -66,6 +75,15 @@ impl VAlign {
             VAlign::Top => VAlign::Bottom,
             VAlign::Center => VAlign::Center,
             VAlign::Bottom => VAlign::Top,
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> f32 {
+        match self {
+            VAlign::Top => 0.0,
+            VAlign::Center => 0.5,
+            VAlign::Bottom => 1.0,
         }
     }
 }

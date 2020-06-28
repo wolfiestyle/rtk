@@ -79,6 +79,20 @@ pub trait Layout: Bounds {
         self
     }
 
+    fn align_hf<B: Bounds>(&mut self, other: &B, val: f32, offset: i32) -> &mut Self {
+        let dx = (other.get_size().w as i32 - self.get_size().w as i32) as f32 * val;
+        let pos = self.get_position().with_x(other.get_position().x + dx as i32 + offset);
+        self.set_position(pos);
+        self
+    }
+
+    fn align_vf<B: Bounds>(&mut self, other: &B, val: f32, offset: i32) -> &mut Self {
+        let dy = (other.get_size().h as i32 - self.get_size().h as i32) as f32 * val;
+        let pos = self.get_position().with_y(other.get_position().y + dy as i32 + offset);
+        self.set_position(pos);
+        self
+    }
+
     fn center_inside<B: Bounds>(&mut self, other: &B) -> &mut Self {
         let b = other.get_bounds();
         self.set_position(b.pos + (b.size.as_position() - self.get_size().as_position()) / 2);
