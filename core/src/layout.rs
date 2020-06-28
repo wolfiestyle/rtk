@@ -98,6 +98,11 @@ pub trait Layout: Bounds {
         self.set_position(b.pos + (b.size.as_position() - self.get_size().as_position()) / 2);
         self
     }
+
+    fn offset(&mut self, dx: i32, dy: i32) -> &mut Self {
+        self.set_position(self.get_position().offset(dx, dy));
+        self
+    }
 }
 
 impl<T: Bounds> Layout for T {}
@@ -139,7 +144,7 @@ where
                     row.pos.y += offset;
                     // displace the previous widgets to the fixed row position
                     for w in &mut row_items {
-                        w.set_position(w.get_position().offset(0, offset));
+                        w.offset(0, offset);
                     }
                 }
                 // place this widget below the current row
@@ -164,7 +169,7 @@ where
         let offset = first.pos.y - row.pos.y;
         if offset > 0 {
             for w in &mut row_items {
-                w.set_position(w.get_position().offset(0, offset));
+                w.offset(0, offset);
             }
         }
     }
