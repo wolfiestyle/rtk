@@ -1,5 +1,5 @@
 //! Helper methods for composing widget layouts.
-use crate::geometry::Bounds;
+use crate::geometry::{Bounds, VAlign};
 
 /// Bounds extension for placing widgets relative to others.
 pub trait Layout: Bounds {
@@ -96,5 +96,66 @@ where
     if let Some(first) = items.next() {
         let first = &*first;
         items.fold(first, |prev, item| f(item, &prev, first));
+    }
+}
+
+/// Places a collection of widgets horizontally in sequence, starting a new row if necessary.
+pub fn flow_horiz<'a, T, I>(items: I, valign: VAlign, max_width: u32, hspacing: u32, vspacing: u32)
+where
+    T: Bounds + 'a,
+    I: IntoIterator<Item = &'a mut T>,
+{
+    let align_f = match valign {
+        VAlign::Top => Layout::align_top,
+        VAlign::Center => Layout::align_vcenter,
+        VAlign::Bottom => Layout::align_bottom,
+    };
+
+    let mut row_items = vec![];
+    let mut iter = items.into_iter();
+
+    if let Some(first_) = iter.next() {
+        let mut first = first_.get_bounds();
+        row_items.push(first_);
+
+        let mut prev = first;
+        let mut row = first;
+        for item in iter {
+            // if we exceeded the max_width, then place this widget on a new row
+            if row.size.w + item.get_size().w + hspacing > max_width {
+                // check if we're overlapping the previous row
+                let offset = first.pos.y - row.pos.y;
+                if offset > 0 {
+                    row.pos.y += offset;
+                    // displace the previous widgets to the fixed row position
+                    for w in &mut row_items {
+                        w.set_position(w.get_position().offset(0, offset));
+                    }
+                }
+                // place this widget below the current row
+                item.below(&row, vspacing).align_left(&first, 0);
+                // start the next row
+                first = item.get_bounds();
+                row_items.clear();
+                row_items.push(item);
+                prev = first;
+                row = first;
+            } else {
+                // place this widget next to the previous one
+                align_f(item.right_of(&prev, hspacing), &prev, 0);
+                // expand the current row with this widget's bounds
+                let item_bounds = item.get_bounds();
+                row_items.push(item);
+                prev = item_bounds;
+                row = row.merge(item_bounds);
+            }
+        }
+        // fix the last row's position if needed
+        let offset = first.pos.y - row.pos.y;
+        if offset > 0 {
+            for w in &mut row_items {
+                w.set_position(w.get_position().offset(0, offset));
+            }
+        }
     }
 }
