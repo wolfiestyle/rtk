@@ -120,12 +120,7 @@ where
     T: Bounds + 'a,
     I: IntoIterator<Item = &'a mut T>,
 {
-    let align_f = match valign {
-        VAlign::Top => Layout::align_top,
-        VAlign::Center => Layout::align_vcenter,
-        VAlign::Bottom => Layout::align_bottom,
-    };
-
+    let align_val = valign.value();
     let mut row_items = vec![];
     let mut iter = items.into_iter();
 
@@ -157,7 +152,7 @@ where
                 row = first;
             } else {
                 // place this widget next to the previous one
-                align_f(item.right_of(&prev, hspacing), &prev, 0);
+                item.right_of(&prev, hspacing).align_vf(&prev, align_val, 0);
                 // expand the current row with this widget's bounds
                 let item_bounds = item.get_bounds();
                 row_items.push(item);
