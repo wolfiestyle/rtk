@@ -1,4 +1,3 @@
-use widgets::image::{Image, ImageRef};
 use widgets::prelude::*;
 use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
@@ -16,20 +15,25 @@ struct TestWidget<T> {
 }
 
 impl<T: Widget> Widget for TestWidget<T> {
-    fn update_layout(&mut self, _parent_rect: Rect) {
-        use widgets::layout::{foreach, Layout};
+    fn update_layout(&mut self, parent_rect: Rect) {
+        use widgets::layout;
 
         for child in &mut self.childs {
             child.update_layout(self.bounds);
         }
 
+        self.bounds.size = parent_rect.size - self.bounds.pos.as_size();
+
         if let Some(first) = self.childs.first_mut() {
-            first.set_position([10, 10].into());
+            first.set_position([0, 0].into());
         }
 
+        /*
         layout::foreach(&mut self.childs, |this, prev, first| {
             this.right_of(prev, 0).align_vcenter(first, 0)
         });
+        */
+        layout::flow_horiz(&mut self.childs, VAlign::Bottom, self.bounds.size.w, 0, 0);
     }
 
     fn draw(&self, mut dc: DrawContext) {
@@ -65,21 +69,21 @@ impl<T: Widget> Widget for TestWidget<T> {
 struct TestWidget2 {
     id: WidgetId,
     bounds: Rect,
-    image: ImageRef,
+    color: Color,
 }
 
 impl Widget for TestWidget2 {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.draw_rect([0, 0], self.bounds.size, Color::WHITE, Some(self.image.clone()));
+        dc.draw_rect([0, 0], self.bounds.size, self.color, None);
     }
 
-    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
+    fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
         //println!("Window2: {:?}", event);
         match event {
             Event::MouseButton(Pressed, MouseButton::Left) => {
-                println!("TestWidget2({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
+                println!("TestWidget2({:?}) clicked! (color={:?})", self.id, self.color);
                 EventResult::Consumed
             }
             _ => EventResult::Pass,
@@ -108,40 +112,25 @@ impl From<Empty> for TestEnum {
 fn main() {
     let mut widget: TestWidget<TestEnum> = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
-        color: Color::blue(0.25),
+        color: Color::BLACK,
         hover: false,
         id: WidgetId::new(),
         childs: Vec::new(),
     };
 
-    let image: ImageRef = Image::from_file("image2.jpg").unwrap().into();
-
-    widget.childs.push(
-        TestWidget2 {
-            id: WidgetId::new(),
-            bounds: Rect::new([10, 20], [100, 100]),
-            image: Image::from_file("image.png").unwrap().into(),
-        }
-        .into(),
-    );
-
-    widget.childs.push(
-        TestWidget2 {
-            id: WidgetId::new(),
-            bounds: Rect::new([0, 0], [64, 64]),
-            image: image.clone(),
-        }
-        .into(),
-    );
-    widget.childs.push(Empty::with_size([20, 20]).into());
-    widget.childs.push(
-        TestWidget2 {
-            id: WidgetId::new(),
-            bounds: Rect::new([0, 0], [45, 30]),
-            image,
-        }
-        .into(),
-    );
+    for i in 0..20 {
+        let v = i as f32 / 19.0;
+        let s = i % 7;
+        widget.childs.push(
+            TestWidget2 {
+                id: WidgetId::new(),
+                bounds: Rect::new([0, 0], [30 + s, 30 + s * 2]),
+                color: Color::hsl(v * 360.0, 1.0, 0.5),
+            }
+            .into(),
+        );
+        //widget.childs.push(Empty::with_size([10, 10]).into());
+    }
 
     let mut window = Window::new(widget);
     window.set_title("awoo");
