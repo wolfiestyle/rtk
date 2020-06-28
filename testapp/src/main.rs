@@ -27,7 +27,7 @@ impl<T: Widget> Widget for TestWidget<T> {
             first.set_position([10, 10].into());
         }
 
-        layout::foreach(self.childs.iter_mut(), |this, prev, first| {
+        layout::foreach(&mut self.childs, |this, prev, first| {
             this.right_of(prev, 0).align_vcenter(first, 0)
         });
     }

@@ -89,13 +89,14 @@ pub trait Layout: Bounds {
 impl<T: Bounds> Layout for T {}
 
 /// Runs a layout expression for a collection of widgets.
-pub fn foreach<'a, T: Bounds + 'a, F>(mut items: impl Iterator<Item = &'a mut T>, mut f: F)
+pub fn foreach<'a, T: Bounds + 'a, F>(items: impl IntoIterator<Item = &'a mut T>, mut f: F)
 where
     F: FnMut(&'a mut T, &T, &T) -> &'a T,
 {
-    if let Some(first) = items.next() {
+    let mut iter = items.into_iter();
+    if let Some(first) = iter.next() {
         let first = &*first;
-        items.fold(first, |prev, item| f(item, &prev, first));
+        iter.fold(first, |prev, item| f(item, &prev, first));
     }
 }
 
