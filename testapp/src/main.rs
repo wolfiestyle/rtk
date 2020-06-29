@@ -63,6 +63,10 @@ impl<T: Widget> Widget for TestWidget<T> {
             _ => EventResult::Pass,
         }
     }
+
+    fn event_consumed(&mut self, wid: WidgetId, event: &Event, _ctx: EventContext) {
+        println!("event consumed by {:?}: {:?}", wid, event);
+    }
 }
 
 #[derive(Debug, ObjectId, Bounds, Visitable)]
@@ -79,16 +83,21 @@ impl Widget for TestWidget2 {
         dc.draw_rect([0, 0], self.bounds.size, self.color, None);
     }
 
-    fn handle_event(&mut self, event: &Event, _ctx: EventContext) -> EventResult {
+    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
         //println!("Window2: {:?}", event);
         match event {
             Event::MouseButton(Pressed, MouseButton::Left) => {
-                println!("TestWidget2({:?}) clicked! (color={:?})", self.id, self.color);
+                println!(
+                    "TestWidget2({:?}) clicked! ({:?}, {:?})",
+                    self.id, self.color, ctx.local_pos
+                );
                 EventResult::Consumed
             }
             _ => EventResult::Pass,
         }
     }
+
+    fn event_consumed(&mut self, _wid: WidgetId, _event: &Event, _ctx: EventContext) {}
 }
 
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]

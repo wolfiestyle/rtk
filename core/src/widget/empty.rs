@@ -89,6 +89,9 @@ impl Widget for Empty {
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
+
+    #[inline]
+    fn event_consumed(&mut self, _wid: WidgetId, _event: &Event, _ctx: EventContext) {}
 }
 
 impl Default for Empty {

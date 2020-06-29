@@ -109,6 +109,34 @@ impl Visitor for TargetedDispatchVisitor {
     }
 }
 
+/// Sends an event consumed notification to every widget in the tree.
+struct ConsumedNotifyVisitor {
+    id: WidgetId,
+    event: Event,
+    ctx: EventContext,
+}
+
+impl ConsumedNotifyVisitor {
+    fn notify_consumed<W: Widget>(root: &mut W, id: WidgetId, event: Event, ctx: EventContext) {
+        let mut visitor = ConsumedNotifyVisitor { id, event, ctx };
+        let _ = visitor.visit_child(root, &Default::default());
+    }
+}
+
+impl Visitor for ConsumedNotifyVisitor {
+    type Return = ();
+    type Context = Point<f64>;
+
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
+        widget.event_consumed(self.id, &self.event, self.ctx.adj_local_pos(*abs_pos));
+        Ok(())
+    }
+
+    fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Option<Self::Context> {
+        child.get_position().cast_checked().map(|pos| *parent_pos + pos)
+    }
+}
+
 /// Helper to dispatch toplevel events into a widget tree.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct EventDispatcher {
@@ -169,17 +197,34 @@ impl EventDispatcher {
             | Event::Focused(_)
             | Event::Created
             | Event::Destroyed => {
-                let mut visitor = EventDispatchVisitor { event, ctx };
+                let mut visitor = EventDispatchVisitor {
+                    event: event.clone(),
+                    ctx,
+                };
                 visitor.visit_child_rev(root, &Default::default()).err()
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
-                let mut visitor = PositionDispatchVisitor { event, ctx };
+                let mut visitor = PositionDispatchVisitor {
+                    event: event.clone(),
+                    ctx,
+                };
                 visitor.visit_child_rev(root, &parent_size.into()).err()
             }
             // already handled
             Event::PointerInside(_) => None,
         };
+
+        // send the event consumed notification
+        if let Some(id) = in_res {
+            ConsumedNotifyVisitor::notify_consumed(root, id, Event::PointerInside(true), ctx)
+        }
+        if let Some(id) = out_res {
+            ConsumedNotifyVisitor::notify_consumed(root, id, Event::PointerInside(false), ctx)
+        }
+        if let Some(id) = res {
+            ConsumedNotifyVisitor::notify_consumed(root, id, event, ctx)
+        }
 
         res.or(in_res).or(out_res)
     }

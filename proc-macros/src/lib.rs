@@ -253,6 +253,7 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let path = quote!(widgets::widget);
+    let pevent = quote!(widgets::event);
     let crate_ = quote!(widgets);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Widget)) {
@@ -269,14 +270,22 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             #(#patterns => #path::Widget::update_layout(a, parent_rect),)*
                         }
                     }
+
                     fn draw(&self, dc: #crate_::draw::DrawContext) {
                         match self {
                             #(#patterns => #path::Widget::draw(a, dc),)*
                         }
                     }
-                    fn handle_event(&mut self, event: &#crate_::event::Event, ctx: #crate_::event::EventContext) -> #crate_::event::EventResult {
+
+                    fn handle_event(&mut self, event: &#pevent::Event, ctx: #pevent::EventContext) -> #pevent::EventResult {
                         match self {
                             #(#patterns => #path::Widget::handle_event(a, event, ctx),)*
+                        }
+                    }
+
+                    fn event_consumed(&mut self, wid: #path::WidgetId, event: &#pevent::Event, ctx: #pevent::EventContext) {
+                        match self {
+                            #(#patterns => #path::Widget::event_consumed(a, wid, event, ctx),)*
                         }
                     }
                 }
