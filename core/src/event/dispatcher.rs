@@ -56,7 +56,7 @@ struct InsideCheckVisitor {
     pos: Point<f64>,
     ctx: EventContext,
     last_inside: WidgetId,
-    in_res: EventResult,
+    in_res: Option<WidgetId>,
 }
 
 impl Visitor for InsideCheckVisitor {
@@ -66,10 +66,12 @@ impl Visitor for InsideCheckVisitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_bounds: &Self::Context) -> Result<(), Self::Return> {
         let inside = self.pos.inside(*abs_bounds);
         if inside && self.last_inside != widget.get_id() {
-            self.in_res = widget.handle_event(
-                &Event::PointerInside(true),
-                self.ctx.adj_local_pos(abs_bounds.pos.cast()),
-            );
+            self.in_res = widget
+                .handle_event(
+                    &Event::PointerInside(true),
+                    self.ctx.adj_local_pos(abs_bounds.pos.cast()),
+                )
+                .then(|| widget.get_id());
         }
         if inside {
             Err(widget.get_id())
@@ -139,7 +141,7 @@ impl EventDispatcher {
                 };
                 let inside = visitor.visit_child_rev(root, &parent_size.into()).err();
                 if inside != self.last_inside {
-                    in_res = visitor.in_res.then_some(()).and(inside);
+                    in_res = visitor.in_res;
                     outside_target = self.last_inside;
                     self.last_inside = inside;
                 }
