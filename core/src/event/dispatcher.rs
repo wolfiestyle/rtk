@@ -16,8 +16,8 @@ impl Visitor for EventDispatchVisitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
         widget
             .handle_event(&self.event, self.ctx.adj_local_pos(*abs_pos))
-            .as_opt()
-            .map_or(Ok(()), |_| Err(widget.get_id()))
+            .then(|| widget.get_id())
+            .map_or(Ok(()), |id| Err(id))
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_pos: &Self::Context) -> Option<Self::Context> {
@@ -39,8 +39,8 @@ impl Visitor for PositionDispatchVisitor {
         if self.ctx.abs_pos.inside(*abs_bounds) {
             widget
                 .handle_event(&self.event, self.ctx.adj_local_pos(abs_bounds.pos.cast()))
-                .as_opt()
-                .map_or(Ok(()), |_| Err(widget.get_id()))
+                .then(|| widget.get_id())
+                .map_or(Ok(()), |id| Err(id))
         } else {
             Ok(())
         }
@@ -139,7 +139,7 @@ impl EventDispatcher {
                 };
                 let inside = visitor.visit_child_rev(root, &parent_size.into()).err();
                 if inside != self.last_inside {
-                    in_res = visitor.in_res.as_opt().and(inside);
+                    in_res = visitor.in_res.then_some(()).and(inside);
                     outside_target = self.last_inside;
                     self.last_inside = inside;
                 }
@@ -222,7 +222,6 @@ impl EventDispatcher {
         visitor
             .visit_child(root, &Default::default())
             .err()
-            .and_then(EventResult::as_opt)
-            .map(|_| target)
+            .and_then(|res| res.then_some(target))
     }
 }
