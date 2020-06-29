@@ -152,8 +152,8 @@ impl EventDispatcher {
     }
 
     pub fn dispatch_event<W: Widget>(&mut self, event: Event, parent_size: Size, root: &mut W) -> Option<WidgetId> {
-        let ctx = self.make_context();
         self.update_state(&event);
+        let ctx = self.make_context();
 
         // check if pointer inside/outside changed, also dispatch inside event
         let mut in_res = None;
