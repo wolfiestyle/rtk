@@ -9,18 +9,13 @@ struct EventDispatchVisitor {
     ctx: EventContext,
 }
 
-impl EventDispatchVisitor {
-    fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_pos: Point<f64>) -> EventResult {
-        widget.handle_event(&self.event, self.ctx.adj_local_pos(abs_pos))
-    }
-}
-
 impl Visitor for EventDispatchVisitor {
     type Return = WidgetId;
     type Context = Point<f64>;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
-        self.dispatch(widget, *abs_pos)
+        widget
+            .handle_event(&self.event, self.ctx.adj_local_pos(*abs_pos))
             .as_opt()
             .map_or(Ok(()), |_| Err(widget.get_id()))
     }
@@ -36,24 +31,19 @@ struct PositionDispatchVisitor {
     ctx: EventContext,
 }
 
-impl PositionDispatchVisitor {
-    fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
-        if self.ctx.abs_pos.inside(abs_bounds) {
-            widget.handle_event(&self.event, self.ctx.adj_local_pos(abs_bounds.pos.cast()))
-        } else {
-            EventResult::Pass
-        }
-    }
-}
-
 impl Visitor for PositionDispatchVisitor {
     type Return = WidgetId;
     type Context = Rect;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        self.dispatch(widget, *viewport)
-            .as_opt()
-            .map_or(Ok(()), |_| Err(widget.get_id()))
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_bounds: &Self::Context) -> Result<(), Self::Return> {
+        if self.ctx.abs_pos.inside(*abs_bounds) {
+            widget
+                .handle_event(&self.event, self.ctx.adj_local_pos(abs_bounds.pos.cast()))
+                .as_opt()
+                .map_or(Ok(()), |_| Err(widget.get_id()))
+        } else {
+            Ok(())
+        }
     }
 
     fn new_context<W: Widget>(&self, child: &W, parent_vp: &Self::Context) -> Option<Self::Context> {
@@ -69,22 +59,19 @@ struct InsideCheckVisitor {
     in_res: EventResult,
 }
 
-impl InsideCheckVisitor {
-    fn check_inside<W: Widget>(&mut self, widget: &mut W, bounds: Rect) -> bool {
-        let inside = self.pos.inside(bounds);
-        if inside && self.last_inside != widget.get_id() {
-            self.in_res = widget.handle_event(&Event::PointerInside(true), self.ctx.adj_local_pos(bounds.pos.cast()));
-        }
-        inside
-    }
-}
-
 impl Visitor for InsideCheckVisitor {
     type Return = WidgetId;
     type Context = Rect;
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, viewport: &Self::Context) -> Result<(), Self::Return> {
-        if self.check_inside(widget, *viewport) {
+    fn visit<W: Widget>(&mut self, widget: &mut W, abs_bounds: &Self::Context) -> Result<(), Self::Return> {
+        let inside = self.pos.inside(*abs_bounds);
+        if inside && self.last_inside != widget.get_id() {
+            self.in_res = widget.handle_event(
+                &Event::PointerInside(true),
+                self.ctx.adj_local_pos(abs_bounds.pos.cast()),
+            );
+        }
+        if inside {
             Err(widget.get_id())
         } else {
             Ok(())
