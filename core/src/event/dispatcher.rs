@@ -92,6 +92,16 @@ struct TargetedDispatchVisitor {
     ctx: EventContext,
 }
 
+impl TargetedDispatchVisitor {
+    fn dispatch_to<W: Widget>(target: WidgetId, root: &mut W, event: Event, ctx: EventContext) -> Option<WidgetId> {
+        let mut visitor = TargetedDispatchVisitor { target, event, ctx };
+        visitor
+            .visit_child(root, &Default::default())
+            .err()
+            .and_then(|res| res.then_some(target))
+    }
+}
+
 impl Visitor for TargetedDispatchVisitor {
     type Return = EventResult;
     type Context = Point<f64>;
@@ -181,8 +191,8 @@ impl EventDispatcher {
             _ => (),
         }
         // dispatch "outside changed" event
-        let out_res =
-            outside_target.and_then(|target| self.dispatch_targeted(target, root, Event::PointerInside(false)));
+        let out_res = outside_target
+            .and_then(|target| TargetedDispatchVisitor::dispatch_to(target, root, Event::PointerInside(false), ctx));
 
         // dispatch other events
         // TODO: keyboard focus, mouse grab
@@ -257,18 +267,5 @@ impl EventDispatcher {
             button_state: self.button_state,
             mod_state: self.mod_state,
         }
-    }
-
-    /// Dispatch an event to a single widget.
-    fn dispatch_targeted<W: Widget>(&self, target: WidgetId, root: &mut W, event: Event) -> Option<WidgetId> {
-        let mut visitor = TargetedDispatchVisitor {
-            target,
-            event,
-            ctx: self.make_context(),
-        };
-        visitor
-            .visit_child(root, &Default::default())
-            .err()
-            .and_then(|res| res.then_some(target))
     }
 }
