@@ -61,6 +61,16 @@ pub struct EventContext {
     pub mod_state: KeyModState,
 }
 
+impl EventContext {
+    #[inline]
+    fn adj_local_pos(self, offset: Point<f64>) -> Self {
+        EventContext {
+            local_pos: self.local_pos - offset,
+            ..self
+        }
+    }
+}
+
 /// State of keys or mouse buttons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ButtonState {

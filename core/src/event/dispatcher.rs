@@ -11,11 +11,7 @@ struct EventDispatchVisitor {
 
 impl EventDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_pos: Point<f64>) -> EventResult {
-        let ctx = EventContext {
-            local_pos: self.ctx.local_pos - abs_pos,
-            ..self.ctx
-        };
-        widget.handle_event(&self.event, ctx)
+        widget.handle_event(&self.event, self.ctx.adj_local_pos(abs_pos))
     }
 }
 
@@ -43,11 +39,7 @@ struct PositionDispatchVisitor {
 impl PositionDispatchVisitor {
     fn dispatch<W: Widget>(&mut self, widget: &mut W, abs_bounds: Rect) -> EventResult {
         if self.ctx.abs_pos.inside(abs_bounds) {
-            let ctx = EventContext {
-                local_pos: self.ctx.local_pos - abs_bounds.pos.cast(),
-                ..self.ctx
-            };
-            widget.handle_event(&self.event, ctx)
+            widget.handle_event(&self.event, self.ctx.adj_local_pos(abs_bounds.pos.cast()))
         } else {
             EventResult::Pass
         }
@@ -81,11 +73,7 @@ impl InsideCheckVisitor {
     fn check_inside<W: Widget>(&mut self, widget: &mut W, bounds: Rect) -> bool {
         let inside = self.pos.inside(bounds);
         if inside && self.last_inside != widget.get_id() {
-            let ctx = EventContext {
-                local_pos: self.pos - bounds.pos.cast(),
-                ..self.ctx
-            };
-            self.in_res = widget.handle_event(&Event::PointerInside(true), ctx);
+            self.in_res = widget.handle_event(&Event::PointerInside(true), self.ctx.adj_local_pos(bounds.pos.cast()));
         }
         inside
     }
@@ -121,11 +109,7 @@ impl Visitor for TargetedDispatchVisitor {
 
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
         if self.target == widget.get_id() {
-            let ctx = EventContext {
-                local_pos: self.ctx.local_pos - *abs_pos,
-                ..self.ctx
-            };
-            Err(widget.handle_event(&self.event, ctx))
+            Err(widget.handle_event(&self.event, self.ctx.adj_local_pos(*abs_pos)))
         } else {
             Ok(())
         }
