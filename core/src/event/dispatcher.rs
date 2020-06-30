@@ -167,29 +167,35 @@ impl EventDispatcher {
         let ctx = self.make_context();
 
         // check if pointer inside/outside changed, also dispatch inside event
-        let mut in_res = None;
-        let mut outside_target = None;
-        match event {
+        let outside_target;
+        let in_res = match event {
             Event::MouseMoved(Axis::Position(pos)) => {
                 let mut visitor = InsideCheckVisitor {
                     pos,
                     ctx,
                     last_inside: self.last_inside.unwrap_or_default(),
-                    in_res: Default::default(),
+                    in_res: None,
                 };
                 let inside = visitor.visit_child_rev(root, &parent_size.into()).err();
                 if inside != self.last_inside {
-                    in_res = visitor.in_res;
                     outside_target = self.last_inside;
                     self.last_inside = inside;
+                    visitor.in_res
+                } else {
+                    outside_target = None;
+                    None
                 }
             }
             Event::PointerInside(false) => {
                 outside_target = self.last_inside;
                 self.last_inside = None;
+                None
             }
-            _ => (),
-        }
+            _ => {
+                outside_target = None;
+                None
+            }
+        };
         // dispatch "outside changed" event
         let out_res = outside_target
             .and_then(|target| TargetedDispatchVisitor::dispatch_to(target, root, Event::PointerInside(false), ctx));
