@@ -42,10 +42,14 @@ impl<T: TopLevel> GliumWindow<T> {
             win_builder = win_builder.with_max_inner_size(PhysicalSize::new(size.w, size.h));
         }
 
-        let ctx = ContextBuilder::new()
+        let mut ctx = ContextBuilder::new()
             .with_gl_profile(GlProfile::Core)
             .with_gl_robustness(Robustness::TryRobustNoResetNotification)
             .with_double_buffer(Some(true));
+        ctx.pf_reqs.hardware_accelerated = None;
+        ctx.pf_reqs.depth_bits = None;
+        ctx.pf_reqs.stencil_bits = None;
+
         let display = glium::Display::new(win_builder, ctx, event_loop).unwrap();
 
         if let Some(pos) = win_attr.position {
