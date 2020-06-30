@@ -53,7 +53,6 @@ impl Visitor for PositionDispatchVisitor {
 
 /// Checks what widget is under the cursor.
 struct InsideCheckVisitor {
-    pos: Point<f64>,
     ctx: EventContext,
     last_inside: WidgetId,
     in_res: Option<WidgetId>,
@@ -64,7 +63,7 @@ impl Visitor for InsideCheckVisitor {
     type Context = Rect;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_bounds: &Self::Context) -> Result<(), Self::Return> {
-        let inside = self.pos.inside(*abs_bounds);
+        let inside = self.ctx.abs_pos.inside(*abs_bounds);
         if inside && self.last_inside != widget.get_id() {
             self.in_res = widget
                 .handle_event(
@@ -169,9 +168,8 @@ impl EventDispatcher {
         // check if pointer inside/outside changed, also dispatch inside event
         let outside_target;
         let in_res = match event {
-            Event::MouseMoved(Axis::Position(pos)) => {
+            Event::MouseMoved(Axis::Position(_)) => {
                 let mut visitor = InsideCheckVisitor {
-                    pos,
                     ctx,
                     last_inside: self.last_inside.unwrap_or_default(),
                     in_res: None,
