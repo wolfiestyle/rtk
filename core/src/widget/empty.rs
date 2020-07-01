@@ -35,7 +35,7 @@ impl Empty {
 impl ObjectId for Empty {
     #[inline]
     fn get_id(&self) -> WidgetId {
-        Default::default()
+        WidgetId::EMPTY
     }
 }
 

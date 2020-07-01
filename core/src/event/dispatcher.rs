@@ -171,7 +171,7 @@ impl EventDispatcher {
             Event::MouseMoved(Axis::Position(_)) => {
                 let mut visitor = InsideCheckVisitor {
                     ctx,
-                    last_inside: self.last_inside.unwrap_or_default(),
+                    last_inside: self.last_inside.unwrap_or(WidgetId::EMPTY),
                     in_res: None,
                 };
                 let inside = visitor.visit_child_rev(root, &parent_size.into()).err();
