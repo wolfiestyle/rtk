@@ -53,10 +53,7 @@ impl<T: TopLevel> GliumWindow<T> {
         let display = glium::Display::new(win_builder, ctx, event_loop).unwrap();
 
         if let Some(pos) = win_attr.position {
-            display
-                .gl_window()
-                .window()
-                .set_outer_position(PhysicalPosition::new(pos.x, pos.y));
+            display.gl_window().window().set_outer_position(PhysicalPosition::new(pos.x, pos.y));
         }
 
         let vert_src = include_str!("widgets.vert.glsl");
@@ -137,46 +134,39 @@ impl<T: TopLevel> GliumWindow<T> {
         self.texture_map.remove_expired();
 
         for cmd in &self.draw_queue.commands {
-            if let DrawCommand::Primitives(DrawCmdPrim {
-                texture: Some(image), ..
-            }) = cmd
-            {
+            if let DrawCommand::Primitives(DrawCmdPrim { texture: Some(image), .. }) = cmd {
                 let display = &self.display;
-                self.texture_map
-                    .entry(image.clone())
-                    .or_insert_with(|| match image.get_data() {
-                        ImageData::Empty => {
-                            SrgbTexture2d::empty(display, image.get_size().w, image.get_size().h).unwrap()
-                        }
-                        ImageData::Bpp8(vec) => {
-                            let img = RawImage2d {
-                                data: std::borrow::Cow::Borrowed(&vec),
-                                width: image.get_size().w,
-                                height: image.get_size().h,
-                                format: match image.get_format() {
-                                    PixelFormat::Luma => ClientFormat::U8,
-                                    PixelFormat::LumaA => ClientFormat::U8U8,
-                                    PixelFormat::Rgb => ClientFormat::U8U8U8,
-                                    PixelFormat::Rgba => ClientFormat::U8U8U8U8,
-                                },
-                            };
-                            SrgbTexture2d::new(display, img).unwrap()
-                        }
-                        ImageData::Bpp16(vec) => {
-                            let img = RawImage2d {
-                                data: std::borrow::Cow::Borrowed(&vec),
-                                width: image.get_size().w,
-                                height: image.get_size().h,
-                                format: match image.get_format() {
-                                    PixelFormat::Luma => ClientFormat::U16,
-                                    PixelFormat::LumaA => ClientFormat::U16U16,
-                                    PixelFormat::Rgb => ClientFormat::U16U16U16,
-                                    PixelFormat::Rgba => ClientFormat::U16U16U16U16,
-                                },
-                            };
-                            SrgbTexture2d::new(display, img).unwrap()
-                        }
-                    });
+                self.texture_map.entry(image.clone()).or_insert_with(|| match image.get_data() {
+                    ImageData::Empty => SrgbTexture2d::empty(display, image.get_size().w, image.get_size().h).unwrap(),
+                    ImageData::Bpp8(vec) => {
+                        let img = RawImage2d {
+                            data: std::borrow::Cow::Borrowed(&vec),
+                            width: image.get_size().w,
+                            height: image.get_size().h,
+                            format: match image.get_format() {
+                                PixelFormat::Luma => ClientFormat::U8,
+                                PixelFormat::LumaA => ClientFormat::U8U8,
+                                PixelFormat::Rgb => ClientFormat::U8U8U8,
+                                PixelFormat::Rgba => ClientFormat::U8U8U8U8,
+                            },
+                        };
+                        SrgbTexture2d::new(display, img).unwrap()
+                    }
+                    ImageData::Bpp16(vec) => {
+                        let img = RawImage2d {
+                            data: std::borrow::Cow::Borrowed(&vec),
+                            width: image.get_size().w,
+                            height: image.get_size().h,
+                            format: match image.get_format() {
+                                PixelFormat::Luma => ClientFormat::U16,
+                                PixelFormat::LumaA => ClientFormat::U16U16,
+                                PixelFormat::Rgb => ClientFormat::U16U16U16,
+                                PixelFormat::Rgba => ClientFormat::U16U16U16U16,
+                            },
+                        };
+                        SrgbTexture2d::new(display, img).unwrap()
+                    }
+                });
             }
         }
     }

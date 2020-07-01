@@ -191,10 +191,7 @@ macro_rules! impl_point_cast {
         impl From<Point<$a>> for Point<$b> {
             #[inline]
             fn from(Point { x, y }: Point<$a>) -> Self {
-                Self {
-                    x: x as $b,
-                    y: y as $b,
-                }
+                Self { x: x as $b, y: y as $b }
             }
         }
     };
@@ -203,10 +200,7 @@ macro_rules! impl_point_cast {
         impl From<[$a; 2]> for Point<$b> {
             #[inline]
             fn from([x, y]: [$a; 2]) -> Self {
-                Self {
-                    x: x as $b,
-                    y: y as $b,
-                }
+                Self { x: x as $b, y: y as $b }
             }
         }
     };
@@ -215,10 +209,7 @@ macro_rules! impl_point_cast {
         impl From<($a, $a)> for Point<$b> {
             #[inline]
             fn from((x, y): ($a, $a)) -> Self {
-                Self {
-                    x: x as $b,
-                    y: y as $b,
-                }
+                Self { x: x as $b, y: y as $b }
             }
         }
     };

@@ -15,11 +15,7 @@ pub type ScanCode = u32;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     /// Raw keyboard input.
-    Keyboard {
-        state: ButtonState,
-        key: Key,
-        scancode: ScanCode,
-    },
+    Keyboard { state: ButtonState, key: Key, scancode: ScanCode },
     /// Processed keyboard input as an unicode character.
     Character(char),
     /// Keyboard modifier state changed.

@@ -55,17 +55,11 @@ impl<'a> DrawContext<'a> {
     /// Draws text.
     #[inline]
     pub fn draw_text(
-        &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>,
-        mode: impl Into<TextDrawMode>, color: impl Into<Color>,
+        &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>, mode: impl Into<TextDrawMode>,
+        color: impl Into<Color>,
     ) {
-        self.queue.push_text(
-            text.into(),
-            font_desc.into(),
-            mode.into(),
-            color.into(),
-            self.viewport,
-            self.offset,
-        )
+        self.queue
+            .push_text(text.into(), font_desc.into(), mode.into(), color.into(), self.viewport, self.offset)
     }
 
     /// Draws a point.
@@ -83,8 +77,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draws a triangle.
     pub fn draw_triangle(
-        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>,
-        color: impl Into<Color>,
+        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>, color: impl Into<Color>,
     ) {
         let color = color.into();
         let verts = [
@@ -96,9 +89,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draws a rectangle with an optional image.
-    pub fn draw_rect(
-        &mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>, image: Option<ImageRef>,
-    ) {
+    pub fn draw_rect(&mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>, image: Option<ImageRef>) {
         let size = size.into();
         if size.is_zero_area() {
             return;
@@ -120,7 +111,6 @@ impl<'a> DrawContext<'a> {
             Vertex::new(bot_right, color, TexCoord::BOTTOM_RIGHT),
             Vertex::new(bot_left, color, TexCoord::BOTTOM_LEFT),
         ];
-        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image)
-            .unwrap()
+        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image).unwrap()
     }
 }

@@ -90,12 +90,7 @@ impl<T: Widget> TopLevel for Window<T> {
             self.child.update_layout(initial);
 
             // set our size to the calculated content size
-            let updated = self
-                .child
-                .get_bounds()
-                .expand_to_origin()
-                .size
-                .nonzero_or(DEFAULT_WINDOW_SIZE);
+            let updated = self.child.get_bounds().expand_to_origin().size.nonzero_or(DEFAULT_WINDOW_SIZE);
             self.set_size(updated);
         } else {
             // we alread have a size, only update child

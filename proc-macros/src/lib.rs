@@ -147,9 +147,7 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
     };
 
-    expanded
-        .unwrap_or_else(|err| err.to_error("Bounds").to_compile_error())
-        .into()
+    expanded.unwrap_or_else(|err| err.to_error("Bounds").to_compile_error()).into()
 }
 
 #[proc_macro_derive(Visitable, attributes(visit_child, visit_iter, impl_generics))]
@@ -158,11 +156,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let name = input.ident;
     let path = quote!(widgets::visitor);
 
-    if let Err(err) = parse_impl_generics(
-        &input.attrs,
-        &mut input.generics,
-        parse_quote!(::widgets::widget::Widget),
-    ) {
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(::widgets::widget::Widget)) {
         return err.to_compile_error().into();
     }
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
@@ -243,9 +237,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
         Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
     };
 
-    expanded
-        .unwrap_or_else(|err| err.to_error("Visitable").to_compile_error())
-        .into()
+    expanded.unwrap_or_else(|err| err.to_error("Visitable").to_compile_error()).into()
 }
 
 #[proc_macro_derive(Widget, attributes(impl_generics))]
@@ -295,7 +287,5 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Data::Union(data) => Err(FieldFindError::Unsupported(data.union_token.span, "union")),
     };
 
-    expanded
-        .unwrap_or_else(|err| err.to_error("Widget").to_compile_error())
-        .into()
+    expanded.unwrap_or_else(|err| err.to_error("Widget").to_compile_error()).into()
 }

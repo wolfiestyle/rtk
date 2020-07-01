@@ -92,9 +92,7 @@ impl Border {
 
         if self.bottom > 0 {
             return_rect(Rect {
-                pos: bounds
-                    .pos
-                    .offset(self.left as i32, (bounds.size.h - self.bottom) as i32),
+                pos: bounds.pos.offset(self.left as i32, (bounds.size.h - self.bottom) as i32),
                 size: Size {
                     w: bounds.size.w - self.left - self.right,
                     h: self.bottom,

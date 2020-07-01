@@ -66,10 +66,7 @@ impl Visitor for InsideCheckVisitor {
         let inside = self.ctx.abs_pos.inside(*abs_bounds);
         if inside && self.last_inside != widget.get_id() {
             self.in_res = widget
-                .handle_event(
-                    &Event::PointerInside(true),
-                    self.ctx.adj_local_pos(abs_bounds.pos.cast()),
-                )
+                .handle_event(&Event::PointerInside(true), self.ctx.adj_local_pos(abs_bounds.pos.cast()))
                 .then(|| widget.get_id());
         }
         if inside {

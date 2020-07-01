@@ -1,8 +1,8 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{
-    Attribute, DataEnum, DataStruct, Error, Fields, FieldsNamed, FieldsUnnamed, GenericParam, Generics, Ident, Index,
-    Meta, NestedMeta, Type, TypeParamBound,
+    Attribute, DataEnum, DataStruct, Error, Fields, FieldsNamed, FieldsUnnamed, GenericParam, Generics, Ident, Index, Meta, NestedMeta,
+    Type, TypeParamBound,
 };
 
 type Str = &'static str;
@@ -19,22 +19,17 @@ pub enum FieldFindError {
 impl FieldFindError {
     pub fn to_error(self, t_name: &str) -> Error {
         match self {
-            FieldFindError::Duplicate(span, name) => Error::new(
-                span,
-                format!("found multiple `{}` typed fields while deriving `{}`", name, t_name),
-            ),
-            FieldFindError::DuplicateAttr(span, name) => Error::new(
-                span,
-                format!("found multiple `{}` attributes while deriving `{}`", name, t_name),
-            ),
-            FieldFindError::NotFound(span, name) => Error::new(
-                span,
-                format!("field with `{}` type not found while deriving `{}`", name, t_name),
-            ),
-            FieldFindError::Empty(span) => Error::new(span, format!("can't derive `{}` on empty type", t_name)),
-            FieldFindError::Unsupported(span, name) => {
-                Error::new(span, format!("can't derive `{}` for `{}`", t_name, name))
+            FieldFindError::Duplicate(span, name) => {
+                Error::new(span, format!("found multiple `{}` typed fields while deriving `{}`", name, t_name))
             }
+            FieldFindError::DuplicateAttr(span, name) => {
+                Error::new(span, format!("found multiple `{}` attributes while deriving `{}`", name, t_name))
+            }
+            FieldFindError::NotFound(span, name) => {
+                Error::new(span, format!("field with `{}` type not found while deriving `{}`", name, t_name))
+            }
+            FieldFindError::Empty(span) => Error::new(span, format!("can't derive `{}` on empty type", t_name)),
+            FieldFindError::Unsupported(span, name) => Error::new(span, format!("can't derive `{}` for `{}`", t_name, name)),
         }
     }
 }
@@ -198,10 +193,7 @@ pub fn parse_attribute_list(attrs: &[Attribute], tag: Str) -> syn::Result<Vec<Ne
                     }
                     Meta::List(list) => {
                         if list.nested.is_empty() {
-                            return Err(Error::new(
-                                list.paren_token.span,
-                                format!("missing arguments for `{}`", tag),
-                            ));
+                            return Err(Error::new(list.paren_token.span, format!("missing arguments for `{}`", tag)));
                         }
                         for nested in list.nested {
                             found_args.push(nested);
@@ -236,10 +228,7 @@ pub fn parse_impl_generics(attrs: &[Attribute], generics: &mut Generics, bound: 
             let arg_name = path.get_ident().unwrap().clone();
             add_trait_bounds(generics, arg_name, &bound);
         } else {
-            return Err(Error::new_spanned(
-                arg,
-                "invalid argument for `impl_generics` attribute",
-            ));
+            return Err(Error::new_spanned(arg, "invalid argument for `impl_generics` attribute"));
         }
     }
     Ok(())

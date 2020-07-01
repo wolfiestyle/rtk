@@ -31,9 +31,7 @@ impl DrawQueue {
     }
 
     /// Checks if the last draw command has the same state of the incoming one.
-    fn get_last_cmd_if_compatible(
-        &mut self, primitive: Primitive, viewport: Rect, texture: &Option<ImageRef>,
-    ) -> Option<&mut DrawCmdPrim> {
+    fn get_last_cmd_if_compatible(&mut self, primitive: Primitive, viewport: Rect, texture: &Option<ImageRef>) -> Option<&mut DrawCmdPrim> {
         if let Some(DrawCommand::Primitives(cmd)) = self.commands.last_mut() {
             if cmd.primitive == primitive && &cmd.texture == texture && cmd.viewport == viewport {
                 return Some(cmd);
@@ -50,8 +48,8 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
-        viewport: Rect, offset: Point<f32>,
+        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
+        offset: Point<f32>,
     ) -> Result<(), DrawError> {
         let nvert = vertices.len() as u32;
         // no vertices means nothing to do
@@ -87,8 +85,8 @@ impl DrawQueue {
     /// Adds a draw text command to the draw queue.
     #[inline]
     pub(crate) fn push_text(
-        &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color,
-        viewport: Rect, offset: Position,
+        &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color, viewport: Rect,
+        offset: Position,
     ) {
         self.commands.push(DrawCommand::Text(DrawCmdText {
             text,
