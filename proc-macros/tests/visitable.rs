@@ -56,7 +56,7 @@ impl Visitor for TestVisitor {
         Ok(())
     }
 
-    fn new_context<W: Widget>(&self, _child: &W, _parent_ctx: &Self::Context) -> Option<Self::Context> {
+    fn new_context<W: Widget>(&self, _child: &W, _parent: WidgetId, _parent_ctx: &Self::Context) -> Option<Self::Context> {
         Some(())
     }
 }
@@ -83,11 +83,11 @@ fn visitable() {
         ],
     };
     let mut visitor = TestVisitor::default();
-    visitor.visit_child(&mut widget, &()).unwrap();
+    visitor.visit_child(&mut widget, WidgetId::EMPTY, &()).unwrap();
     assert_eq!(visitor.ids, ids);
 
     ids.reverse();
     visitor.ids.clear();
-    visitor.visit_child_rev(&mut widget, &()).unwrap();
+    visitor.visit_child_rev(&mut widget, WidgetId::EMPTY, &()).unwrap();
     assert_eq!(visitor.ids, ids);
 }

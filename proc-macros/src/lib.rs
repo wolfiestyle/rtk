@@ -155,6 +155,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let path = quote!(widgets::visitor);
+    let wpath = quote!(widgets::widget);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(::widgets::widget::Widget)) {
         return err.to_compile_error().into();
@@ -168,13 +169,15 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
             let mut expanded: Vec<_> = child_fields
                 .iter()
-                .map(|(i, field)| (*i, quote! { visitor.visit_child(&mut self.#field, ctx)?; }))
+                .map(|(i, field)| (*i, quote! {
+                    visitor.visit_child(&mut self.#field, parent_id, ctx)?;
+                }))
                 .chain(iter_fields.iter().map(|(i, field)| {
                     (
                         *i,
                         quote! {
                             for child in &mut self.#field {
-                                visitor.visit_child(child, ctx)?;
+                                visitor.visit_child(child, parent_id, ctx)?;
                             }
                         },
                     )
@@ -183,13 +186,15 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
             let mut expanded_rev: Vec<_> = child_fields
                 .iter()
-                .map(|(i, field)| (*i, quote! { visitor.visit_child(&mut self.#field, ctx)?; }))
+                .map(|(i, field)| (*i, quote! {
+                    visitor.visit_child(&mut self.#field, parent_id, ctx)?;
+                }))
                 .chain(iter_fields.iter().map(|(i, field)| {
                     (
                         *i,
                         quote! {
                             for child in self.#field.iter_mut().rev() {
-                                visitor.visit_child(child, ctx)?;
+                                visitor.visit_child(child, parent_id, ctx)?;
                             }
                         },
                     )
@@ -205,12 +210,14 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
             Ok(quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        let parent_id = #wpath::ObjectId::get_id(self);
                         visitor.visit(self, ctx)?;
                         #(#stmts)*
                         Ok(())
                     }
 
                     fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                        let parent_id = #wpath::ObjectId::get_id(self);
                         #(#stmts_rev)*
                         visitor.visit(self, ctx)
                     }

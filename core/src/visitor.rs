@@ -1,5 +1,5 @@
 //! Visitor pattern for widgets.
-use crate::widget::Widget;
+use crate::widget::{Widget, WidgetId};
 
 /// Defines an action that can be executed on a widget tree.
 pub trait Visitor {
@@ -10,25 +10,25 @@ pub trait Visitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Return>;
 
     /// Derives a new context for a child widget.
-    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context) -> Option<Self::Context>;
+    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, parent_ctx: &Self::Context) -> Option<Self::Context>;
 
     /// Visits a child widget with a new context (using accept).
     #[inline]
-    fn visit_child<W: Widget>(&mut self, child: &mut W, parent_ctx: &Self::Context) -> Result<(), Self::Return>
+    fn visit_child<W: Widget>(&mut self, child: &mut W, parent: WidgetId, parent_ctx: &Self::Context) -> Result<(), Self::Return>
     where
         Self: Sized,
     {
-        self.new_context(child, parent_ctx)
+        self.new_context(child, parent, parent_ctx)
             .map_or(Ok(()), |ctx| child.accept(self, &ctx))
     }
 
     /// Visits a child widget with a new context (using accept_rev).
     #[inline]
-    fn visit_child_rev<W: Widget>(&mut self, child: &mut W, parent_ctx: &Self::Context) -> Result<(), Self::Return>
+    fn visit_child_rev<W: Widget>(&mut self, child: &mut W, parent: WidgetId, parent_ctx: &Self::Context) -> Result<(), Self::Return>
     where
         Self: Sized,
     {
-        self.new_context(child, parent_ctx)
+        self.new_context(child, parent, parent_ctx)
             .map_or(Ok(()), |ctx| child.accept_rev(self, &ctx))
     }
 }
