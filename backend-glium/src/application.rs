@@ -20,7 +20,7 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     pub fn add_window(&mut self, mut window: T) {
         window.update();
         let mut gl_win = GliumWindow::new(window, &self.event_loop);
-        if gl_win.window.push_event(widgets::event::Event::Created).is_some() {
+        if gl_win.window.push_event(widgets::event::Event::Created) {
             gl_win.window.update();
         }
         self.window_map.insert(gl_win.get_id(), gl_win);
@@ -52,8 +52,8 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
                             _ => (),
                         }
 
-                        let ev_res = window.push_event(event);
-                        if window_changed || ev_res.is_some() {
+                        let ev_consumed = window.push_event(event);
+                        if window_changed || ev_consumed {
                             // event was consumed, update and trigger a redraw
                             window.update();
                             window.redraw();

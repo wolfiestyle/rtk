@@ -11,7 +11,6 @@ use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
 use widgets::image::{ImageData, ImageWeakRef, PixelFormat};
 use widgets::toplevel::{TopLevel, WindowAttributes};
-use widgets::widget::WidgetId;
 
 pub struct GliumWindow<T> {
     display: glium::Display,
@@ -193,22 +192,24 @@ impl<T: TopLevel> GliumWindow<T> {
         self.display.gl_window().window().id()
     }
 
-    pub fn push_event(&mut self, event: WindowEvent) -> Option<WidgetId> {
+    pub fn push_event(&mut self, event: WindowEvent) -> bool {
         use widgets::event::Event;
 
-        translate_event(event).and_then(|event| {
-            match event {
-                Event::Resized(size) => {
-                    self.cur_attr.set_size(size);
-                    self.window.set_size(size);
+        translate_event(event)
+            .map(|event| {
+                match event {
+                    Event::Resized(size) => {
+                        self.cur_attr.set_size(size);
+                        self.window.set_size(size);
+                    }
+                    Event::Moved(pos) => {
+                        self.cur_attr.set_position(pos);
+                        self.window.set_position(pos);
+                    }
+                    _ => (),
                 }
-                Event::Moved(pos) => {
-                    self.cur_attr.set_position(pos);
-                    self.window.set_position(pos);
-                }
-                _ => (),
-            }
-            self.window.push_event(event)
-        })
+                self.window.push_event(event)
+            })
+            .unwrap_or_default()
     }
 }

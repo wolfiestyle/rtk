@@ -2,7 +2,6 @@
 use crate::draw::DrawQueue;
 use crate::event::Event;
 use crate::geometry::Bounds;
-use crate::widget::WidgetId;
 
 mod window;
 pub use window::*;
@@ -13,7 +12,7 @@ pub trait TopLevel: Bounds {
 
     fn draw(&self, dq: &mut DrawQueue);
 
-    fn push_event(&mut self, event: Event) -> Option<WidgetId>;
+    fn push_event(&mut self, event: Event) -> bool;
 
     fn get_window_attributes(&self) -> &WindowAttributes;
 }
@@ -30,7 +29,7 @@ impl<T: TopLevel> TopLevel for Box<T> {
     }
 
     #[inline]
-    fn push_event(&mut self, event: Event) -> Option<WidgetId> {
+    fn push_event(&mut self, event: Event) -> bool {
         (**self).push_event(event)
     }
 

@@ -25,7 +25,7 @@ impl Widget for TestWidget {
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
-    fn event_consumed(&mut self, _wid: WidgetId, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
 }
 
 #[test]

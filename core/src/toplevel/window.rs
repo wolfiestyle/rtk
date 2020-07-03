@@ -2,7 +2,7 @@ use crate::draw::{Color, DrawContext, DrawQueue};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Bounds, Position, Size};
 use crate::toplevel::TopLevel;
-use crate::widget::{Widget, WidgetId};
+use crate::widget::Widget;
 use std::ops;
 
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
@@ -106,7 +106,7 @@ impl<T: Widget> TopLevel for Window<T> {
         dc.draw_child(&self.child);
     }
 
-    fn push_event(&mut self, event: Event) -> Option<WidgetId> {
+    fn push_event(&mut self, event: Event) -> bool {
         self.dispatcher.dispatch_event(event, self.get_size(), &mut self.child)
     }
 

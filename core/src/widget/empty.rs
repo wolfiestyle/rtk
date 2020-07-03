@@ -91,7 +91,7 @@ impl Widget for Empty {
     }
 
     #[inline]
-    fn event_consumed(&mut self, _wid: WidgetId, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
 }
 
 impl Default for Empty {

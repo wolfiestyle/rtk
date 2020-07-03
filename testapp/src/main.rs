@@ -64,8 +64,8 @@ impl<T: Widget> Widget for TestWidget<T> {
         }
     }
 
-    fn event_consumed(&mut self, wid: WidgetId, event: &Event, _ctx: EventContext) {
-        println!("event consumed by {:?}: {:?}", wid, event);
+    fn event_consumed(&mut self, event: &Event, ctx: EventContext) {
+        println!("event consumed by {:?} (parent {:?}): {:?}", ctx.widget, ctx.parent, event);
     }
 }
 
@@ -94,7 +94,7 @@ impl Widget for TestWidget2 {
         }
     }
 
-    fn event_consumed(&mut self, _wid: WidgetId, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
 }
 
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]

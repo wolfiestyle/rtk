@@ -1,5 +1,6 @@
 //! Input event definitions.
 use crate::geometry::{Point, Position, Size};
+use crate::widget::WidgetId;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -42,7 +43,7 @@ pub enum Event {
     Destroyed,
 }
 
-/// Current state associated with an event.
+/// Data associated with an event.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EventContext {
     /// Instant when the event was received.
@@ -55,13 +56,19 @@ pub struct EventContext {
     pub button_state: MouseButtonsState,
     /// Current keyboard modifier state.
     pub mod_state: KeyModState,
+    /// The widget that has received the event.
+    pub widget: WidgetId,
+    /// The receiver widget's parent.
+    pub parent: WidgetId,
 }
 
 impl EventContext {
     #[inline]
-    fn adj_local_pos(self, offset: Point<f64>) -> Self {
+    fn update(self, offset: Point<f64>, widget: WidgetId, parent: WidgetId) -> Self {
         EventContext {
-            local_pos: self.local_pos - offset,
+            local_pos: self.abs_pos - offset,
+            widget,
+            parent,
             ..self
         }
     }

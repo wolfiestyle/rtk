@@ -282,9 +282,9 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
 
-                    fn event_consumed(&mut self, wid: #path::WidgetId, event: &#pevent::Event, ctx: #pevent::EventContext) {
+                    fn event_consumed(&mut self, event: &#pevent::Event, ctx: #pevent::EventContext) {
                         match self {
-                            #(#patterns => #path::Widget::event_consumed(a, wid, event, ctx),)*
+                            #(#patterns => #path::Widget::event_consumed(a, event, ctx),)*
                         }
                     }
                 }
