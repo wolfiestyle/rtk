@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 static WIDGET_ID: AtomicUsize = AtomicUsize::new(1);
 
 /// Unique widget global id.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct WidgetId(usize);
 
 impl WidgetId {
