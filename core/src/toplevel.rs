@@ -8,7 +8,7 @@ pub use window::*;
 
 /// Defines an object that can be a top level window.
 pub trait TopLevel: Bounds {
-    fn update(&mut self);
+    fn update_layout(&mut self);
 
     fn draw(&self, dq: &mut DrawQueue);
 
@@ -19,8 +19,8 @@ pub trait TopLevel: Bounds {
 
 impl<T: TopLevel> TopLevel for Box<T> {
     #[inline]
-    fn update(&mut self) {
-        (**self).update()
+    fn update_layout(&mut self) {
+        (**self).update_layout()
     }
 
     #[inline]

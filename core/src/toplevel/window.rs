@@ -77,7 +77,7 @@ impl<T> Bounds for Window<T> {
 }
 
 impl<T: Widget> TopLevel for Window<T> {
-    fn update(&mut self) {
+    fn update_layout(&mut self) {
         if self.attr.size.is_zero_area() {
             // our size is unset, first try to get the default content size
             let initial = self

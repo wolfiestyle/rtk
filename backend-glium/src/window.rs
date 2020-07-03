@@ -180,7 +180,7 @@ impl<T: TopLevel> GliumWindow<T> {
     }
 
     pub fn update(&mut self) {
-        self.window.update()
+        self.window.update_layout()
         //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
     }
 
