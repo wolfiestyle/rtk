@@ -169,9 +169,14 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
             let mut expanded: Vec<_> = child_fields
                 .iter()
-                .map(|(i, field)| (*i, quote! {
-                    visitor.visit_child(&mut self.#field, parent_id, ctx)?;
-                }))
+                .map(|(i, field)| {
+                    (
+                        *i,
+                        quote! {
+                            visitor.visit_child(&mut self.#field, parent_id, ctx)?;
+                        },
+                    )
+                })
                 .chain(iter_fields.iter().map(|(i, field)| {
                     (
                         *i,
@@ -186,9 +191,14 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
             let mut expanded_rev: Vec<_> = child_fields
                 .iter()
-                .map(|(i, field)| (*i, quote! {
-                    visitor.visit_child(&mut self.#field, parent_id, ctx)?;
-                }))
+                .map(|(i, field)| {
+                    (
+                        *i,
+                        quote! {
+                            visitor.visit_child(&mut self.#field, parent_id, ctx)?;
+                        },
+                    )
+                })
                 .chain(iter_fields.iter().map(|(i, field)| {
                     (
                         *i,
