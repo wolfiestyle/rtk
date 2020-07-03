@@ -58,6 +58,23 @@ struct InsideCheckVisitor {
     in_res: Option<EventContext>,
 }
 
+impl InsideCheckVisitor {
+    fn check_inside<W: Widget>(
+        root: &mut W, last_inside: Option<WidgetId>, parent_size: Size, ctx: EventContext,
+    ) -> (Option<WidgetId>, Option<EventContext>) {
+        let mut visitor = InsideCheckVisitor {
+            ctx,
+            last_inside: last_inside.unwrap_or_default(),
+            in_res: None,
+        };
+        let inside = visitor
+            .visit_child_rev(root, WidgetId::EMPTY, &(parent_size.into(), WidgetId::EMPTY))
+            .err();
+
+        (inside, visitor.in_res)
+    }
+}
+
 impl Visitor for InsideCheckVisitor {
     type Return = WidgetId;
     type Context = (Rect, WidgetId);
@@ -167,35 +184,20 @@ impl EventDispatcher {
         let ctx = self.make_context();
 
         // check if pointer inside/outside changed, also dispatch inside event
-        let outside_target;
-        let in_res = match event {
+        let mut in_res = None;
+        let mut outside_target = None;
+        match event {
             Event::MouseMoved(Axis::Position(_)) => {
-                let mut visitor = InsideCheckVisitor {
-                    ctx,
-                    last_inside: self.last_inside.unwrap_or(WidgetId::EMPTY),
-                    in_res: None,
-                };
-                let inside = visitor
-                    .visit_child_rev(root, WidgetId::EMPTY, &(parent_size.into(), WidgetId::EMPTY))
-                    .err();
+                let (inside, res) = InsideCheckVisitor::check_inside(root, self.last_inside, parent_size, ctx);
                 if inside != self.last_inside {
-                    outside_target = self.last_inside;
-                    self.last_inside = inside;
-                    visitor.in_res
-                } else {
-                    outside_target = None;
-                    None
+                    outside_target = std::mem::replace(&mut self.last_inside, inside);
+                    in_res = res;
                 }
             }
             Event::PointerInside(false) => {
-                outside_target = self.last_inside;
-                self.last_inside = None;
-                None
+                outside_target = self.last_inside.take();
             }
-            _ => {
-                outside_target = None;
-                None
-            }
+            _ => (),
         };
         // dispatch "outside changed" event
         let out_res =
