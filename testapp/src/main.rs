@@ -1,20 +1,19 @@
 use widgets::prelude::*;
-use widgets::widget::Empty;
-use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
+use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug, ObjectId, Bounds, Visitable)]
 #[impl_generics(T)]
-struct TestWidget<T> {
+struct TestWidget {
     bounds: Rect,
     color: Color,
     id: WidgetId,
     hover: bool,
     #[visit_iter]
-    childs: Vec<T>,
+    childs: Vec<TestWidget2>,
 }
 
-impl<T: Widget> Widget for TestWidget<T> {
+impl Widget for TestWidget {
     fn update_layout(&mut self, parent_rect: Rect) {
         use widgets::layout;
 
@@ -65,7 +64,15 @@ impl<T: Widget> Widget for TestWidget<T> {
     }
 
     fn event_consumed(&mut self, event: &Event, ctx: EventContext) {
-        println!("event consumed by {:?} (parent {:?}): {:?}", ctx.widget, ctx.parent, event);
+        if ctx.parent != self.id {
+            return;
+        }
+
+        if let Event::MouseButton(Pressed, _) = event {
+            if let Some(child) = self.childs.iter().find(|w| w.get_id() == ctx.widget) {
+                self.color = child.color;
+            }
+        }
     }
 }
 
@@ -96,7 +103,7 @@ impl Widget for TestWidget2 {
 
     fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
 }
-
+/*
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]
 enum TestEnum {
     TestWidget2(TestWidget2),
@@ -114,9 +121,9 @@ impl From<Empty> for TestEnum {
         TestEnum::Empty(val)
     }
 }
-
+*/
 fn main() {
-    let mut widget: TestWidget<TestEnum> = TestWidget {
+    let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::BLACK,
         hover: false,
@@ -127,14 +134,11 @@ fn main() {
     for i in 0..20 {
         let v = i as f32 / 19.0;
         let s = i % 7;
-        widget.childs.push(
-            TestWidget2 {
-                id: WidgetId::new(),
-                bounds: Rect::new([0, 0], [30 + s, 30 + s * 2]),
-                color: Color::hsl(v * 360.0, 1.0, 0.5),
-            }
-            .into(),
-        );
+        widget.childs.push(TestWidget2 {
+            id: WidgetId::new(),
+            bounds: Rect::new([0, 0], [30 + s, 30 + s * 2]),
+            color: Color::hsl(v * 360.0, 1.0, 0.5),
+        });
         //widget.childs.push(Empty::with_size([10, 10]).into());
     }
 
