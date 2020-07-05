@@ -1,5 +1,5 @@
 use crate::event::{Axis, ButtonState, Event, EventContext, KeyModState, MouseButtonsState};
-use crate::geometry::{Point, Rect, Size};
+use crate::geometry::{Point, Position, Rect, Size};
 use crate::visitor::{ParentData, Visitor};
 use crate::widget::{Widget, WidgetId};
 
@@ -11,15 +11,16 @@ struct EventDispatchVisitor {
 
 impl Visitor for EventDispatchVisitor {
     type Return = EventContext;
-    type Context = (Point<f64>, WidgetId);
+    type Context = (Position, WidgetId);
 
     fn visit<W: Widget>(&mut self, widget: &mut W, &(abs_pos, parent_id): &Self::Context) -> Result<(), Self::Return> {
-        let ctx = self.ctx.update(abs_pos, widget.get_id(), parent_id);
+        let ctx = self.ctx.update(abs_pos.cast(), widget.get_id(), parent_id);
         widget.handle_event(&self.event, ctx).then_some(ctx).map_or(Ok(()), Err)
     }
 
     fn new_context<W: Widget>(&self, child: &W, &(parent_pos, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
-        child.get_position().cast_checked().map(|pos| (parent_pos + pos, pdata.id))
+        let pos = parent_pos - pdata.vp_orig + child.get_position();
+        Some((pos, pdata.id))
     }
 }
 
@@ -45,7 +46,7 @@ impl Visitor for PositionDispatchVisitor {
     fn new_context<W: Widget>(&self, child: &W, &(parent_vp, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
         child
             .get_bounds()
-            .offset(parent_vp.pos)
+            .offset(parent_vp.pos - pdata.vp_orig)
             .clip_inside(parent_vp)
             .map(|vp| (vp, pdata.id))
     }
@@ -95,7 +96,7 @@ impl Visitor for InsideCheckVisitor {
     fn new_context<W: Widget>(&self, child: &W, &(parent_vp, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
         child
             .get_bounds()
-            .offset(parent_vp.pos)
+            .offset(parent_vp.pos - pdata.vp_orig)
             .clip_inside(parent_vp)
             .map(|vp| (vp, pdata.id))
     }
@@ -117,11 +118,11 @@ impl TargetedDispatchVisitor {
 
 impl Visitor for TargetedDispatchVisitor {
     type Return = EventContext;
-    type Context = (Point<f64>, WidgetId);
+    type Context = (Position, WidgetId);
 
     fn visit<W: Widget>(&mut self, widget: &mut W, &(abs_pos, parent): &Self::Context) -> Result<(), Self::Return> {
         if self.target == widget.get_id() {
-            let ctx = self.ctx.update(abs_pos, widget.get_id(), parent);
+            let ctx = self.ctx.update(abs_pos.cast(), widget.get_id(), parent);
             widget.handle_event(&self.event, ctx).then_some(ctx).map_or(Ok(()), Err)
         } else {
             Ok(())
@@ -129,7 +130,8 @@ impl Visitor for TargetedDispatchVisitor {
     }
 
     fn new_context<W: Widget>(&self, child: &W, &(parent_pos, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
-        child.get_position().cast_checked().map(|pos| (parent_pos + pos, pdata.id))
+        let pos = parent_pos - pdata.vp_orig + child.get_position();
+        Some((pos, pdata.id))
     }
 }
 
@@ -148,7 +150,7 @@ impl ConsumedNotifyVisitor {
 
 impl Visitor for ConsumedNotifyVisitor {
     type Return = ();
-    type Context = Point<f64>;
+    type Context = Position;
 
     fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
         let ctx = EventContext {
@@ -159,8 +161,9 @@ impl Visitor for ConsumedNotifyVisitor {
         Ok(())
     }
 
-    fn new_context<W: Widget>(&self, child: &W, &parent_pos: &Self::Context, _pdata: &ParentData) -> Option<Self::Context> {
-        child.get_position().cast_checked().map(|pos| parent_pos + pos)
+    fn new_context<W: Widget>(&self, child: &W, &parent_pos: &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
+        let pos = parent_pos - pdata.vp_orig + child.get_position();
+        Some(pos)
     }
 }
 

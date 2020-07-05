@@ -260,9 +260,9 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
+    let crate_ = quote!(widgets);
     let path = quote!(widgets::widget);
     let pevent = quote!(widgets::event);
-    let crate_ = quote!(widgets);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Widget)) {
         return err.to_compile_error().into();
@@ -294,6 +294,12 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     fn event_consumed(&mut self, event: &#pevent::Event, ctx: #pevent::EventContext) {
                         match self {
                             #(#patterns => #path::Widget::event_consumed(a, event, ctx),)*
+                        }
+                    }
+
+                    fn viewport_origin(&self) -> #crate_::geometry::Position {
+                        match self {
+                            #(#patterns => #path::Widget::viewport_origin(a),)*
                         }
                     }
                 }

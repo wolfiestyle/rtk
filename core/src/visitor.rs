@@ -1,4 +1,5 @@
 //! Visitor pattern for widgets.
+use crate::geometry::Position;
 use crate::widget::{Widget, WidgetId};
 
 /// Defines an action that can be executed on a widget tree.
@@ -92,11 +93,15 @@ impl<T: Visitable> Visitable for Box<T> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct ParentData {
     pub id: WidgetId,
+    pub vp_orig: Position,
 }
 
 impl ParentData {
     #[inline]
     pub fn new<W: Widget>(source: &W) -> Self {
-        ParentData { id: source.get_id() }
+        ParentData {
+            id: source.get_id(),
+            vp_orig: source.viewport_origin(),
+        }
     }
 }

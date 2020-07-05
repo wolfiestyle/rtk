@@ -1,7 +1,7 @@
 //! Widget type and definitions.
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
-use crate::geometry::{Bounds, Rect};
+use crate::geometry::{Bounds, Position, Rect};
 use crate::visitor::Visitable;
 
 mod id;
@@ -23,6 +23,13 @@ pub trait Widget: ObjectId + Bounds + Visitable {
 
     /// Event consumed notification.
     fn event_consumed(&mut self, event: &Event, ctx: EventContext);
+
+    /// Coordinate of the widget's viewport origin (top-left).
+    ///
+    /// The default implementation returns `(0, 0)`.
+    fn viewport_origin(&self) -> Position {
+        Default::default()
+    }
 }
 
 impl<T: Widget> Widget for Box<T> {
@@ -44,5 +51,10 @@ impl<T: Widget> Widget for Box<T> {
     #[inline]
     fn event_consumed(&mut self, event: &Event, ctx: EventContext) {
         (**self).event_consumed(event, ctx)
+    }
+
+    #[inline]
+    fn viewport_origin(&self) -> Position {
+        (**self).viewport_origin()
     }
 }

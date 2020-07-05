@@ -11,6 +11,7 @@ pub struct DrawContext<'a> {
     queue: &'a mut DrawQueue,
     pub(crate) viewport: Rect,
     offset: Position,
+    pub vp_orig: Position,
 }
 
 impl<'a> DrawContext<'a> {
@@ -21,6 +22,7 @@ impl<'a> DrawContext<'a> {
             queue,
             viewport,
             offset: viewport.pos,
+            vp_orig: Default::default(),
         }
     }
 
@@ -34,10 +36,12 @@ impl<'a> DrawContext<'a> {
     pub fn draw_child<W: Widget>(&mut self, child: &W) {
         let child_vp = child.get_bounds().offset(self.offset);
         if let Some(viewport) = child_vp.clip_inside(self.viewport) {
+            let vp_orig = child.viewport_origin();
             let dc = DrawContext {
                 queue: self.queue,
                 viewport,
-                offset: child_vp.pos,
+                offset: child_vp.pos - vp_orig,
+                vp_orig,
             };
             child.draw(dc);
         }
