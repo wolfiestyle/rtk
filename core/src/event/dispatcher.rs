@@ -1,6 +1,6 @@
 use crate::event::{Axis, ButtonState, Event, EventContext, KeyModState, MouseButtonsState};
 use crate::geometry::{Point, Rect, Size};
-use crate::visitor::Visitor;
+use crate::visitor::{ParentData, Visitor};
 use crate::widget::{Widget, WidgetId};
 
 /// Sends an event to all widgets (until consumed).
@@ -18,8 +18,8 @@ impl Visitor for EventDispatchVisitor {
         widget.handle_event(&self.event, ctx).then_some(ctx).map_or(Ok(()), Err)
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, &(parent_pos, _): &Self::Context) -> Option<Self::Context> {
-        child.get_position().cast_checked().map(|pos| (parent_pos + pos, parent))
+    fn new_context<W: Widget>(&self, child: &W, &(parent_pos, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
+        child.get_position().cast_checked().map(|pos| (parent_pos + pos, pdata.id))
     }
 }
 
@@ -42,12 +42,12 @@ impl Visitor for PositionDispatchVisitor {
         }
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, &(parent_vp, _): &Self::Context) -> Option<Self::Context> {
+    fn new_context<W: Widget>(&self, child: &W, &(parent_vp, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
         child
             .get_bounds()
             .offset(parent_vp.pos)
             .clip_inside(parent_vp)
-            .map(|vp| (vp, parent))
+            .map(|vp| (vp, pdata.id))
     }
 }
 
@@ -68,7 +68,7 @@ impl InsideCheckVisitor {
             in_res: None,
         };
         let inside = visitor
-            .visit_child_rev(root, WidgetId::EMPTY, &(parent_size.into(), WidgetId::EMPTY))
+            .visit_child_rev(root, &(parent_size.into(), WidgetId::EMPTY), &Default::default())
             .err();
 
         (inside, visitor.in_res)
@@ -92,12 +92,12 @@ impl Visitor for InsideCheckVisitor {
         }
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, &(parent_vp, _): &Self::Context) -> Option<Self::Context> {
+    fn new_context<W: Widget>(&self, child: &W, &(parent_vp, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
         child
             .get_bounds()
             .offset(parent_vp.pos)
             .clip_inside(parent_vp)
-            .map(|vp| (vp, parent))
+            .map(|vp| (vp, pdata.id))
     }
 }
 
@@ -111,7 +111,7 @@ struct TargetedDispatchVisitor {
 impl TargetedDispatchVisitor {
     fn dispatch_to<W: Widget>(target: WidgetId, root: &mut W, event: Event, ctx: EventContext) -> Option<EventContext> {
         let mut visitor = TargetedDispatchVisitor { target, event, ctx };
-        visitor.visit_child(root, WidgetId::EMPTY, &Default::default()).err()
+        visitor.visit_child(root, &Default::default(), &Default::default()).err()
     }
 }
 
@@ -128,8 +128,8 @@ impl Visitor for TargetedDispatchVisitor {
         }
     }
 
-    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, &(parent_pos, _): &Self::Context) -> Option<Self::Context> {
-        child.get_position().cast_checked().map(|pos| (parent_pos + pos, parent))
+    fn new_context<W: Widget>(&self, child: &W, &(parent_pos, _): &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
+        child.get_position().cast_checked().map(|pos| (parent_pos + pos, pdata.id))
     }
 }
 
@@ -142,7 +142,7 @@ struct ConsumedNotifyVisitor {
 impl ConsumedNotifyVisitor {
     fn notify_consumed<W: Widget>(root: &mut W, event: Event, ctx: EventContext) {
         let mut visitor = ConsumedNotifyVisitor { event, ctx };
-        let _ = visitor.visit_child(root, WidgetId::EMPTY, &Default::default());
+        let _ = visitor.visit_child(root, &Default::default(), &Default::default());
     }
 }
 
@@ -159,7 +159,7 @@ impl Visitor for ConsumedNotifyVisitor {
         Ok(())
     }
 
-    fn new_context<W: Widget>(&self, child: &W, _parent: WidgetId, &parent_pos: &Self::Context) -> Option<Self::Context> {
+    fn new_context<W: Widget>(&self, child: &W, &parent_pos: &Self::Context, _pdata: &ParentData) -> Option<Self::Context> {
         child.get_position().cast_checked().map(|pos| parent_pos + pos)
     }
 }
@@ -217,13 +217,13 @@ impl EventDispatcher {
             | Event::Created
             | Event::Destroyed => {
                 let mut visitor = EventDispatchVisitor { event: event.clone(), ctx };
-                visitor.visit_child_rev(root, WidgetId::EMPTY, &Default::default()).err()
+                visitor.visit_child_rev(root, &Default::default(), &Default::default()).err()
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 let mut visitor = PositionDispatchVisitor { event: event.clone(), ctx };
                 visitor
-                    .visit_child_rev(root, WidgetId::EMPTY, &(parent_size.into(), WidgetId::EMPTY))
+                    .visit_child_rev(root, &(parent_size.into(), WidgetId::EMPTY), &Default::default())
                     .err()
             }
             // already handled

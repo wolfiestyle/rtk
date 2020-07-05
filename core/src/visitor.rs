@@ -10,25 +10,24 @@ pub trait Visitor {
     fn visit<W: Widget>(&mut self, widget: &mut W, ctx: &Self::Context) -> Result<(), Self::Return>;
 
     /// Derives a new context for a child widget.
-    fn new_context<W: Widget>(&self, child: &W, parent: WidgetId, parent_ctx: &Self::Context) -> Option<Self::Context>;
+    fn new_context<W: Widget>(&self, child: &W, parent_ctx: &Self::Context, pdata: &ParentData) -> Option<Self::Context>;
 
     /// Visits a child widget with a new context (using accept).
     #[inline]
-    fn visit_child<W: Widget>(&mut self, child: &mut W, parent: WidgetId, parent_ctx: &Self::Context) -> Result<(), Self::Return>
+    fn visit_child<W: Widget>(&mut self, child: &mut W, pctx: &Self::Context, pdata: &ParentData) -> Result<(), Self::Return>
     where
         Self: Sized,
     {
-        self.new_context(child, parent, parent_ctx)
-            .map_or(Ok(()), |ctx| child.accept(self, &ctx))
+        self.new_context(child, pctx, pdata).map_or(Ok(()), |ctx| child.accept(self, &ctx))
     }
 
     /// Visits a child widget with a new context (using accept_rev).
     #[inline]
-    fn visit_child_rev<W: Widget>(&mut self, child: &mut W, parent: WidgetId, parent_ctx: &Self::Context) -> Result<(), Self::Return>
+    fn visit_child_rev<W: Widget>(&mut self, child: &mut W, pctx: &Self::Context, pdata: &ParentData) -> Result<(), Self::Return>
     where
         Self: Sized,
     {
-        self.new_context(child, parent, parent_ctx)
+        self.new_context(child, pctx, pdata)
             .map_or(Ok(()), |ctx| child.accept_rev(self, &ctx))
     }
 }
@@ -87,5 +86,17 @@ impl<T: Visitable> Visitable for Box<T> {
     #[inline]
     fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
         (**self).accept_rev(visitor, ctx)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct ParentData {
+    pub id: WidgetId,
+}
+
+impl ParentData {
+    #[inline]
+    pub fn new<W: Widget>(source: &W) -> Self {
+        ParentData { id: source.get_id() }
     }
 }
