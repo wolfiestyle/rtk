@@ -42,8 +42,8 @@ impl Widget for TestWidget {
         } else {
             self.color
         };
-        let bg_rect = self.bounds.with_pos(dc.vp_orig);
-        dc.draw_rect(bg_rect.pos, bg_rect.size, color, None);
+
+        dc.clear(color);
 
         for child in &self.childs {
             dc.draw_child(child);
@@ -104,7 +104,7 @@ impl Widget for TestWidget2 {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.draw_rect([0, 0], self.bounds.size, self.color, None);
+        dc.clear(self.color);
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {

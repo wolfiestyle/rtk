@@ -29,7 +29,7 @@ impl<'a> DrawContext<'a> {
     /// Clears the drawing area.
     #[inline]
     pub fn clear(&mut self, color: impl Into<Color>) {
-        self.queue.push_clear(color.into())
+        self.queue.push_clear(color.into(), self.viewport)
     }
 
     /// Draws a child widget.

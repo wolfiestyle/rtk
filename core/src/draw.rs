@@ -53,7 +53,7 @@ pub struct DrawCmdText {
 /// A single draw command.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DrawCommand {
-    Clear(Color),
+    Clear(Color, Rect),
     Primitives(DrawCmdPrim),
     Text(DrawCmdText),
 }

@@ -79,7 +79,12 @@ impl<T: TopLevel> GliumWindow<T> {
 
         for drawcmd in &self.draw_queue.commands {
             match drawcmd {
-                DrawCommand::Clear(color) => target.clear_color(color.r, color.g, color.b, color.a),
+                DrawCommand::Clear(color, viewport) => {
+                    if let Some(vp) = viewport.clip_inside(win_size.into()) {
+                        let rect = to_glium_rect(vp, win_size.h);
+                        target.clear(Some(&rect), Some((color.r, color.g, color.b, color.a)), false, None, None);
+                    }
+                }
                 DrawCommand::Primitives(cmd) => {
                     // clip the viewport against the visible window area
                     if let Some(scissor) = cmd.viewport.clip_inside(win_size.into()) {
@@ -107,12 +112,7 @@ impl<T: TopLevel> GliumWindow<T> {
                         };
                         let draw_params = glium::DrawParameters {
                             blend: glium::Blend::alpha_blending(),
-                            scissor: Some(glium::Rect {
-                                left: scissor.x() as u32,
-                                bottom: win_size.h - scissor.h() - scissor.y() as u32,
-                                width: scissor.w(),
-                                height: scissor.h(),
-                            }),
+                            scissor: Some(to_glium_rect(scissor, win_size.h)),
                             ..Default::default()
                         };
                         // perform the draw command
@@ -211,5 +211,14 @@ impl<T: TopLevel> GliumWindow<T> {
                 self.window.push_event(event)
             })
             .unwrap_or_default()
+    }
+}
+
+fn to_glium_rect(rect: widgets::geometry::Rect, win_height: u32) -> glium::Rect {
+    glium::Rect {
+        left: rect.pos.x as u32,
+        bottom: win_height - rect.size.h - rect.pos.y as u32,
+        width: rect.size.w,
+        height: rect.size.h,
     }
 }

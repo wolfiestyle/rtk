@@ -42,8 +42,8 @@ impl DrawQueue {
 
     /// Adds a clear command to the draw queue.
     #[inline]
-    pub(crate) fn push_clear(&mut self, color: Color) {
-        self.commands.push(DrawCommand::Clear(color))
+    pub(crate) fn push_clear(&mut self, color: Color, viewport: Rect) {
+        self.commands.push(DrawCommand::Clear(color, viewport))
     }
 
     /// Adds raw elements to the draw queue.
