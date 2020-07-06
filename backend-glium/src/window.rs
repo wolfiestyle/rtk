@@ -1,8 +1,6 @@
-use crate::event::translate_event;
-use glium::glutin::dpi::{PhysicalPosition, PhysicalSize};
-use glium::glutin::event::WindowEvent;
+use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
-use glium::glutin::window::{WindowBuilder, WindowId};
+use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
@@ -11,6 +9,7 @@ use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
 use widgets::image::{ImageData, ImageWeakRef, PixelFormat};
 use widgets::toplevel::{TopLevel, WindowAttributes};
+use widgets_winit::{make_win_builder, BackendWindow};
 
 pub struct GliumWindow<T> {
     display: glium::Display,
@@ -25,21 +24,7 @@ pub struct GliumWindow<T> {
 impl<T: TopLevel> GliumWindow<T> {
     pub fn new(window: T, event_loop: &EventLoop<()>) -> Self {
         let win_attr = window.get_window_attributes();
-        let size = win_attr.size.nonzero_or(widgets::DEFAULT_WINDOW_SIZE);
-        let mut win_builder = WindowBuilder::new()
-            .with_title(win_attr.title.clone().unwrap_or_else(|| "Window".into()))
-            .with_inner_size(PhysicalSize::new(size.w, size.h))
-            .with_resizable(win_attr.resizable)
-            .with_maximized(win_attr.maximized)
-            .with_transparent(win_attr.transparent)
-            .with_always_on_top(win_attr.always_on_top)
-            .with_decorations(win_attr.decorations);
-        if let Some(size) = win_attr.min_size.get_nonzero() {
-            win_builder = win_builder.with_min_inner_size(PhysicalSize::new(size.w, size.h));
-        }
-        if let Some(size) = win_attr.max_size.get_nonzero() {
-            win_builder = win_builder.with_max_inner_size(PhysicalSize::new(size.w, size.h));
-        }
+        let win_builder = make_win_builder(win_attr);
 
         let mut ctx = ContextBuilder::new()
             .with_gl_profile(GlProfile::Core)
@@ -169,8 +154,10 @@ impl<T: TopLevel> GliumWindow<T> {
             }
         }
     }
+}
 
-    pub fn draw(&mut self) {
+impl<T: TopLevel> BackendWindow for GliumWindow<T> {
+    fn draw(&mut self) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
         self.load_textures();
@@ -179,38 +166,34 @@ impl<T: TopLevel> GliumWindow<T> {
         target.finish().unwrap();
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         self.window.update_layout()
         //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
     }
 
-    pub fn redraw(&self) {
+    fn redraw(&self) {
         self.display.gl_window().window().request_redraw();
     }
 
-    pub fn get_id(&self) -> WindowId {
+    fn get_id(&self) -> WindowId {
         self.display.gl_window().window().id()
     }
 
-    pub fn push_event(&mut self, event: WindowEvent) -> bool {
+    fn push_event(&mut self, event: widgets::event::Event) -> bool {
         use widgets::event::Event;
 
-        translate_event(event)
-            .map(|event| {
-                match event {
-                    Event::Resized(size) => {
-                        self.cur_attr.set_size(size);
-                        self.window.set_size(size);
-                    }
-                    Event::Moved(pos) => {
-                        self.cur_attr.set_position(pos);
-                        self.window.set_position(pos);
-                    }
-                    _ => (),
-                }
-                self.window.push_event(event)
-            })
-            .unwrap_or_default()
+        match event {
+            Event::Resized(size) => {
+                self.cur_attr.set_size(size);
+                self.window.set_size(size);
+            }
+            Event::Moved(pos) => {
+                self.cur_attr.set_position(pos);
+                self.window.set_position(pos);
+            }
+            _ => (),
+        }
+        self.window.push_event(event)
     }
 }
 

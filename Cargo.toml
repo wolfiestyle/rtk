@@ -2,6 +2,7 @@
 members = [
     "core",
     "proc-macros",
+    "backend-winit",
     "backend-glium",
     "testapp",
 ]

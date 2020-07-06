@@ -8,3 +8,4 @@ edition = "2018"
 glium = "0.27.0"
 weak-table = "0.2.3"
 widgets = { path = "../core", features = ["glium"] }
+widgets-winit = { path = "../backend-winit" }

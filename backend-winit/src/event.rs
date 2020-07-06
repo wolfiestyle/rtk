@@ -1,7 +1,7 @@
-use glium::glutin::dpi::{PhysicalPosition, PhysicalSize};
-use glium::glutin::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
 use widgets::event::{Axis, ButtonState, Event, Key, KeyModState, KeySide};
 use widgets::geometry::{Point, Size};
+use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
 
 pub fn translate_event(event: WindowEvent) -> Option<Event> {
     use widgets::event::Event::*;
