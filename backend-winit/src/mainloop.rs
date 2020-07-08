@@ -44,21 +44,16 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
             match event {
                 Event::WindowEvent { event, window_id } => {
                     if let Some(window) = window_map.get_mut(&window_id) {
-                        let mut is_close_req = false;
-                        let mut window_changed = false;
-                        match event {
-                            WindowEvent::CloseRequested => {
-                                is_close_req = true;
-                            }
+                        let is_close_req = matches!(event, WindowEvent::CloseRequested);
+                        let window_changed = matches!(event,
                             WindowEvent::Moved(_)
                             | WindowEvent::Resized(_)
                             | WindowEvent::Focused(_)
                             | WindowEvent::ScaleFactorChanged { .. }
-                            | WindowEvent::ThemeChanged(_) => window_changed = true,
-                            _ => (),
-                        }
+                            | WindowEvent::ThemeChanged(_)
+                        );
 
-                        let ev_consumed = translate_event(event).map(|ev| window.push_event(ev)).unwrap_or_default();
+                        let ev_consumed = translate_event(event).map_or(false, |ev| window.push_event(ev));
                         if window_changed || ev_consumed {
                             // event was consumed, update and trigger a redraw
                             window.update();
