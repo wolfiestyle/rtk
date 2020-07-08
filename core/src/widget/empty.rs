@@ -8,7 +8,7 @@ use crate::widget::{ObjectId, Widget, WidgetId};
 ///
 /// It's a "null" widget that does nothing (it only occupies space).
 /// Can be used as a filler.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Empty {
     bounds: Rect,
 }
@@ -92,15 +92,6 @@ impl Widget for Empty {
 
     #[inline]
     fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
-}
-
-impl Default for Empty {
-    #[inline]
-    fn default() -> Self {
-        Empty {
-            bounds: Default::default(),
-        }
-    }
 }
 
 impl From<()> for Empty {
