@@ -244,7 +244,7 @@ impl PixelFormat {
 }
 
 /// Unique image id (used for hashing).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ImageId(usize);
 
 static IMAGE_ID: AtomicUsize = AtomicUsize::new(1);

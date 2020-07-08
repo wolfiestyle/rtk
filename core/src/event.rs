@@ -75,7 +75,7 @@ impl EventContext {
 }
 
 /// State of keys or mouse buttons.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ButtonState {
     Released,
     Pressed,
@@ -89,7 +89,7 @@ impl Default for ButtonState {
 }
 
 /// Mouse buttons.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MouseButton {
     Left,
     Middle,
@@ -182,7 +182,7 @@ impl MouseButtonsState {
 }
 
 /// Side for duplicated modifier keys.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum KeySide {
     Left,
     Right,
@@ -192,8 +192,10 @@ pub enum KeySide {
 pub type IsNumpad = bool;
 
 /// Symbolic key definition.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Key {
+    /// unknown key, raw id in scancode
+    Unk,
     /// Number keys
     Num(u8, IsNumpad),
     /// Letters
@@ -248,12 +250,10 @@ pub enum Key {
     LBracket,
     RBracket,
     Equals(IsNumpad),
-    /// unknown key, raw id in scancode
-    Unk,
 }
 
 /// The result of processing an input event.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EventResult {
     /// Event was completely ignored, will propagate.
     Pass,

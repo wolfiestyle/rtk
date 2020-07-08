@@ -26,7 +26,7 @@ impl From<VAlign> for Alignment {
 }
 
 /// Horizontal alignment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HAlign {
     Left,
     Center,
@@ -61,7 +61,7 @@ impl Default for HAlign {
 }
 
 /// Vertical alignment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum VAlign {
     Top,
     Center,
