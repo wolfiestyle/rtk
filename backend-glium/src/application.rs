@@ -2,6 +2,7 @@ use crate::window::GliumWindow;
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;
 
+#[derive(Debug)]
 pub struct GliumApplication<T> {
     main_loop: MainLoop<GliumWindow<T>>,
 }

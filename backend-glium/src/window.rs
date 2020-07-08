@@ -5,6 +5,7 @@ use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d};
 use glium::{uniform, Surface};
+use std::fmt;
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
 use widgets::image::{ImageData, ImageWeakRef, PixelFormat};
@@ -194,6 +195,19 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
             _ => (),
         }
         self.window.push_event(event)
+    }
+}
+
+impl<T: fmt::Debug> fmt::Debug for GliumWindow<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("GliumWindow")
+            .field("program", &self.program)
+            .field("t_white", &self.t_white)
+            .field("texture_map", &self.texture_map)
+            .field("draw_queue", &self.draw_queue)
+            .field("cur_attr", &self.cur_attr)
+            .field("window", &self.window)
+            .finish()
     }
 }
 

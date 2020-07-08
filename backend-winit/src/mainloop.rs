@@ -12,6 +12,7 @@ pub trait BackendWindow {
     fn push_event(&mut self, event: widgets::event::Event) -> bool;
 }
 
+#[derive(Debug)]
 pub struct MainLoop<T> {
     pub event_loop: EventLoop<()>,
     window_map: HashMap<WindowId, T>,
