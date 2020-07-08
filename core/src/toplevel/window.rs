@@ -1,6 +1,6 @@
 use crate::draw::{Color, DrawContext, DrawQueue};
 use crate::event::{Event, EventDispatcher};
-use crate::geometry::{Bounds, Position, Size};
+use crate::geometry::{Position, Size};
 use crate::toplevel::TopLevel;
 use crate::widget::Widget;
 use std::ops;
@@ -38,47 +38,9 @@ impl<T> Window<T> {
     }
 }
 
-impl<T> ops::Deref for Window<T> {
-    type Target = WindowAttributes;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.attr
-    }
-}
-
-impl<T> ops::DerefMut for Window<T> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.attr
-    }
-}
-
-impl<T> Bounds for Window<T> {
-    #[inline]
-    fn get_position(&self) -> Position {
-        self.attr.position.unwrap_or_default()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        self.attr.position = Some(position);
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        self.attr.size
-    }
-
-    #[inline]
-    fn set_size(&mut self, size: Size) {
-        self.attr.size = size;
-    }
-}
-
 impl<T: Widget> TopLevel for Window<T> {
     fn update_layout(&mut self) {
-        if self.attr.size.is_zero_area() {
+        if self.size.is_zero_area() {
             // our size is unset, first try to get the default content size
             let initial = self
                 .child
@@ -94,12 +56,12 @@ impl<T: Widget> TopLevel for Window<T> {
             self.set_size(updated);
         } else {
             // we alread have a size, only update child
-            self.child.update_layout(self.get_size().into());
+            self.child.update_layout(self.size.into());
         }
     }
 
     fn draw(&self, drawq: &mut DrawQueue) {
-        let mut dc = DrawContext::new(drawq, self.get_size().into());
+        let mut dc = DrawContext::new(drawq, self.size.into());
         if let Some(bg) = self.attr.background {
             dc.clear(bg);
         }
@@ -107,12 +69,33 @@ impl<T: Widget> TopLevel for Window<T> {
     }
 
     fn push_event(&mut self, event: Event) -> bool {
-        self.dispatcher.dispatch_event(event, self.get_size(), &mut self.child)
+        self.dispatcher.dispatch_event(event, self.size, &mut self.child)
     }
 
     #[inline]
-    fn get_window_attributes(&self) -> &WindowAttributes {
+    fn get_attr(&self) -> &WindowAttributes {
         &self.attr
+    }
+
+    #[inline]
+    fn get_attr_mut(&mut self) -> &mut WindowAttributes {
+        &mut self.attr
+    }
+}
+
+impl<T> ops::Deref for Window<T> {
+    type Target = WindowAttributes;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.attr
+    }
+}
+
+impl<T> ops::DerefMut for Window<T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.attr
     }
 }
 

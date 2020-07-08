@@ -24,7 +24,7 @@ pub struct GliumWindow<T> {
 
 impl<T: TopLevel> GliumWindow<T> {
     pub fn new(window: T, event_loop: &EventLoop<()>) -> Self {
-        let win_attr = window.get_window_attributes();
+        let win_attr = window.get_attr();
         let win_builder = make_win_builder(win_attr);
 
         let mut ctx = ContextBuilder::new()
@@ -60,7 +60,7 @@ impl<T: TopLevel> GliumWindow<T> {
     }
 
     fn draw_elements(&self, target: &mut glium::Frame) {
-        let win_size = self.window.get_size();
+        let win_size = self.window.get_attr().size;
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.draw_queue.vertices).unwrap();
 
         for drawcmd in &self.draw_queue.commands {
@@ -186,11 +186,11 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
         match event {
             Event::Resized(size) => {
                 self.cur_attr.set_size(size);
-                self.window.set_size(size);
+                self.window.get_attr_mut().set_size(size);
             }
             Event::Moved(pos) => {
                 self.cur_attr.set_position(pos);
-                self.window.set_position(pos);
+                self.window.get_attr_mut().set_position(pos);
             }
             _ => (),
         }
