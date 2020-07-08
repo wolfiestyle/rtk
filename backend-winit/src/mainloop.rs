@@ -36,10 +36,9 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
     pub fn run(self) -> ! {
         use winit::event::Event;
 
-        let event_loop = self.event_loop;
         let mut window_map = self.window_map;
 
-        event_loop.run(move |event, _, cf| {
+        self.event_loop.run(move |event, _, cf| {
             *cf = ControlFlow::Wait;
 
             match event {
