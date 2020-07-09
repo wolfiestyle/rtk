@@ -7,15 +7,15 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Weak};
 
 #[cfg(feature = "image")]
-use image::{DynamicImage, ImageResult};
+use image::{DynamicImage, ImageBuffer, ImageResult, Luma, LumaA, Primitive, Rgb, Rgba};
 
 pub type ImageRef = Arc<Image>;
 pub type ImageWeakRef = Weak<Image>;
 
 /// An image to be used for drawing operations.
-#[derive(Debug, Eq)]
+#[derive(Debug)]
 pub struct Image {
-    data: ImageData,
+    data: Option<ImageData>,
     size: Size,
     format: PixelFormat,
     id: ImageId,
@@ -27,17 +27,25 @@ impl Image {
         let mut data = data.into();
         let size = size.into();
         // make sure the buffer is big enough
-        if !matches!(data, ImageData::Empty) {
-            let data_len = data.len();
-            let expected_len = size.area() * format.num_components();
-            if data_len != expected_len {
-                data.resize(expected_len);
-            }
+        let data_len = data.len();
+        let expected_len = size.area() * format.num_components();
+        if data_len != expected_len {
+            data.resize(expected_len);
         }
 
         Self {
-            data,
+            data: Some(data),
             size,
+            format,
+            id: ImageId::new(),
+        }
+    }
+
+    /// Creates a new empty image.
+    pub fn new_empty(size: impl Into<Size>, format: PixelFormat) -> Self {
+        Self {
+            data: None,
+            size: size.into(),
             format,
             id: ImageId::new(),
         }
@@ -58,7 +66,7 @@ impl Image {
     }
 
     #[inline]
-    pub fn get_data(&self) -> &ImageData {
+    pub fn get_data(&self) -> &Option<ImageData> {
         &self.data
     }
 
@@ -77,49 +85,49 @@ impl Image {
 impl From<DynamicImage> for Image {
     fn from(image: DynamicImage) -> Self {
         match image {
-            DynamicImage::ImageLuma8(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Luma)
-            }
-            DynamicImage::ImageLumaA8(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::LumaA)
-            }
-            DynamicImage::ImageRgb8(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgb)
-            }
-            DynamicImage::ImageRgba8(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgba)
-            }
-            DynamicImage::ImageBgr8(_) => {
-                let buf = image.into_rgb();
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgb)
-            }
-            DynamicImage::ImageBgra8(_) => {
-                let buf = image.into_rgba();
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgba)
-            }
-            DynamicImage::ImageLuma16(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Luma)
-            }
-            DynamicImage::ImageLumaA16(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::LumaA)
-            }
-            DynamicImage::ImageRgb16(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgb)
-            }
-            DynamicImage::ImageRgba16(buf) => {
-                let size = buf.dimensions();
-                Self::new(buf.into_raw(), size, PixelFormat::Rgba)
-            }
+            DynamicImage::ImageLuma8(buf) => buf.into(),
+            DynamicImage::ImageLumaA8(buf) => buf.into(),
+            DynamicImage::ImageRgb8(buf) => buf.into(),
+            DynamicImage::ImageRgba8(buf) => buf.into(),
+            DynamicImage::ImageBgr8(_) => image.into_rgb().into(),
+            DynamicImage::ImageBgra8(_) => image.into_rgba().into(),
+            DynamicImage::ImageLuma16(buf) => buf.into(),
+            DynamicImage::ImageLumaA16(buf) => buf.into(),
+            DynamicImage::ImageRgb16(buf) => buf.into(),
+            DynamicImage::ImageRgba16(buf) => buf.into(),
         }
+    }
+}
+
+#[cfg(feature = "image")]
+impl<T: PixelComponent + Primitive + 'static> From<ImageBuffer<Luma<T>, Vec<T>>> for Image {
+    fn from(buf: ImageBuffer<Luma<T>, Vec<T>>) -> Self {
+        let size = buf.dimensions();
+        Self::new(buf.into_raw(), size, PixelFormat::Luma)
+    }
+}
+
+#[cfg(feature = "image")]
+impl<T: PixelComponent + Primitive + 'static> From<ImageBuffer<LumaA<T>, Vec<T>>> for Image {
+    fn from(buf: ImageBuffer<LumaA<T>, Vec<T>>) -> Self {
+        let size = buf.dimensions();
+        Self::new(buf.into_raw(), size, PixelFormat::LumaA)
+    }
+}
+
+#[cfg(feature = "image")]
+impl<T: PixelComponent + Primitive + 'static> From<ImageBuffer<Rgb<T>, Vec<T>>> for Image {
+    fn from(buf: ImageBuffer<Rgb<T>, Vec<T>>) -> Self {
+        let size = buf.dimensions();
+        Self::new(buf.into_raw(), size, PixelFormat::Rgb)
+    }
+}
+
+#[cfg(feature = "image")]
+impl<T: PixelComponent + Primitive + 'static> From<ImageBuffer<Rgba<T>, Vec<T>>> for Image {
+    fn from(buf: ImageBuffer<Rgba<T>, Vec<T>>) -> Self {
+        let size = buf.dimensions();
+        Self::new(buf.into_raw(), size, PixelFormat::Rgba)
     }
 }
 
@@ -130,6 +138,8 @@ impl PartialEq for Image {
     }
 }
 
+impl Eq for Image {}
+
 impl Hash for Image {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -137,88 +147,64 @@ impl Hash for Image {
     }
 }
 
-/// Contents of an image.
-#[derive(Clone, PartialEq, Eq)]
+/// Raw contents of an image.
+#[derive(Clone, PartialEq)]
 pub enum ImageData {
-    Empty,
-    Bpp8(Vec<u8>),
-    Bpp16(Vec<u16>),
-}
-
-impl fmt::Debug for ImageData {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ImageData::Empty => f.pad("Empty"),
-            ImageData::Bpp8(_) => f.pad("Bpp8([...])"),
-            ImageData::Bpp16(_) => f.pad("Bpp16([...])"),
-        }
-    }
+    U8(Vec<u8>),
+    U16(Vec<u16>),
+    U32(Vec<u32>),
+    F32(Vec<f32>),
 }
 
 impl ImageData {
     fn len(&self) -> usize {
         match self {
-            ImageData::Empty => 0,
-            ImageData::Bpp8(v) => v.len(),
-            ImageData::Bpp16(v) => v.len(),
+            ImageData::U8(v) => v.len(),
+            ImageData::U16(v) => v.len(),
+            ImageData::U32(v) => v.len(),
+            ImageData::F32(v) => v.len(),
         }
     }
 
     fn resize(&mut self, new_len: usize) {
         match self {
-            ImageData::Empty => (),
-            ImageData::Bpp8(v) => v.resize(new_len, 0),
-            ImageData::Bpp16(v) => v.resize(new_len, 0),
+            ImageData::U8(v) => v.resize(new_len, 0),
+            ImageData::U16(v) => v.resize(new_len, 0),
+            ImageData::U32(v) => v.resize(new_len, 0),
+            ImageData::F32(v) => v.resize(new_len, 0.0),
         }
     }
 }
 
-impl From<()> for ImageData {
-    #[inline]
-    fn from(_: ()) -> Self {
-        ImageData::Empty
+impl fmt::Debug for ImageData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ImageData::U8(_) => f.debug_tuple("U8").field(&format_args!("[...]")).finish(),
+            ImageData::U16(_) => f.debug_tuple("U16").field(&format_args!("[...]")).finish(),
+            ImageData::U32(_) => f.debug_tuple("U32").field(&format_args!("[...]")).finish(),
+            ImageData::F32(_) => f.debug_tuple("F32").field(&format_args!("[...]")).finish(),
+        }
     }
 }
 
-impl From<Vec<u8>> for ImageData {
+impl<T: PixelComponent> From<Vec<T>> for ImageData {
     #[inline]
-    fn from(data: Vec<u8>) -> Self {
-        ImageData::Bpp8(data)
+    fn from(data: Vec<T>) -> Self {
+        T::image_data_from(data)
     }
 }
 
-impl From<Vec<u16>> for ImageData {
+impl<T: PixelComponent> From<Box<[T]>> for ImageData {
     #[inline]
-    fn from(data: Vec<u16>) -> Self {
-        ImageData::Bpp16(data)
+    fn from(data: Box<[T]>) -> Self {
+        T::image_data_from(data.into_vec())
     }
 }
 
-impl From<Box<[u8]>> for ImageData {
+impl<T: PixelComponent> From<&[T]> for ImageData {
     #[inline]
-    fn from(data: Box<[u8]>) -> Self {
-        ImageData::Bpp8(data.into_vec())
-    }
-}
-
-impl From<Box<[u16]>> for ImageData {
-    #[inline]
-    fn from(data: Box<[u16]>) -> Self {
-        ImageData::Bpp16(data.into_vec())
-    }
-}
-
-impl From<&[u8]> for ImageData {
-    #[inline]
-    fn from(data: &[u8]) -> Self {
-        ImageData::Bpp8(data.to_vec())
-    }
-}
-
-impl From<&[u16]> for ImageData {
-    #[inline]
-    fn from(data: &[u16]) -> Self {
-        ImageData::Bpp16(data.to_vec())
+    fn from(data: &[T]) -> Self {
+        T::image_data_from(data.to_vec())
     }
 }
 
@@ -240,6 +226,38 @@ impl PixelFormat {
             PixelFormat::Rgb => 3,
             PixelFormat::Rgba => 4,
         }
+    }
+}
+
+pub trait PixelComponent: Copy {
+    fn image_data_from(data: Vec<Self>) -> ImageData;
+}
+
+impl PixelComponent for u8 {
+    #[inline]
+    fn image_data_from(data: Vec<Self>) -> ImageData {
+        ImageData::U8(data)
+    }
+}
+
+impl PixelComponent for u16 {
+    #[inline]
+    fn image_data_from(data: Vec<Self>) -> ImageData {
+        ImageData::U16(data)
+    }
+}
+
+impl PixelComponent for u32 {
+    #[inline]
+    fn image_data_from(data: Vec<Self>) -> ImageData {
+        ImageData::U32(data)
+    }
+}
+
+impl PixelComponent for f32 {
+    #[inline]
+    fn image_data_from(data: Vec<Self>) -> ImageData {
+        ImageData::F32(data)
     }
 }
 
