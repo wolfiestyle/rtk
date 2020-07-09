@@ -91,7 +91,7 @@ impl Widget for Empty {
     }
 
     #[inline]
-    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
 }
 
 impl From<()> for Empty {

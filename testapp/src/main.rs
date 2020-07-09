@@ -76,7 +76,7 @@ impl Widget for TestWidget {
         }
     }
 
-    fn event_consumed(&mut self, event: &Event, ctx: EventContext) {
+    fn event_consumed(&mut self, event: &Event, ctx: &EventContext) {
         if ctx.parent != self.id {
             return;
         }
@@ -118,7 +118,7 @@ impl Widget for TestWidget2 {
         }
     }
 
-    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
 }
 /*
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]

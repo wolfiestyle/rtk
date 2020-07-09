@@ -21,7 +21,7 @@ impl<T: Widget> Widget for TestWidget1<T> {
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
-    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
 }
 
 #[derive(ObjectId, Bounds, Visitable)]
@@ -39,7 +39,7 @@ impl<T: Widget> Widget for TestWidget2<T> {
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
-    fn event_consumed(&mut self, _event: &Event, _ctx: EventContext) {}
+    fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
 }
 
 #[derive(Default)]

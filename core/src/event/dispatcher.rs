@@ -150,20 +150,15 @@ impl ConsumedNotifyVisitor {
 
 impl Visitor for ConsumedNotifyVisitor {
     type Return = ();
-    type Context = Position;
+    type Context = ();
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, abs_pos: &Self::Context) -> Result<(), Self::Return> {
-        let ctx = EventContext {
-            local_pos: self.ctx.abs_pos - abs_pos.cast(),
-            ..self.ctx
-        };
-        widget.event_consumed(&self.event, ctx);
+    fn visit<W: Widget>(&mut self, widget: &mut W, _ctx: &Self::Context) -> Result<(), Self::Return> {
+        widget.event_consumed(&self.event, &self.ctx);
         Ok(())
     }
 
-    fn new_context<W: Widget>(&self, child: &W, &parent_pos: &Self::Context, pdata: &ParentData) -> Option<Self::Context> {
-        let pos = parent_pos - pdata.vp_orig + child.get_position();
-        Some(pos)
+    fn new_context<W: Widget>(&self, _child: &W, _ctx: &Self::Context, _pdata: &ParentData) -> Option<Self::Context> {
+        Some(())
     }
 }
 

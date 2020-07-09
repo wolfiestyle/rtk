@@ -22,7 +22,7 @@ pub trait Widget: ObjectId + Bounds + Visitable {
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult;
 
     /// Event consumed notification.
-    fn event_consumed(&mut self, event: &Event, ctx: EventContext);
+    fn event_consumed(&mut self, event: &Event, ctx: &EventContext);
 
     /// Coordinate of the widget's viewport origin (top-left).
     ///
@@ -49,7 +49,7 @@ impl<T: Widget> Widget for Box<T> {
     }
 
     #[inline]
-    fn event_consumed(&mut self, event: &Event, ctx: EventContext) {
+    fn event_consumed(&mut self, event: &Event, ctx: &EventContext) {
         (**self).event_consumed(event, ctx)
     }
 
