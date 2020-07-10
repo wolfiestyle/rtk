@@ -67,6 +67,15 @@ macro_rules! implement_ops {
             }
         }
 
+        impl std::ops::Mul for $type {
+            type Output = Self;
+
+            #[inline]
+            fn mul(self, rhs: Self) -> Self::Output {
+                self.map2(rhs, std::ops::Mul::mul)
+            }
+        }
+
         impl std::ops::Div<$elem> for $type {
             type Output = Self;
 
@@ -76,12 +85,30 @@ macro_rules! implement_ops {
             }
         }
 
+        impl std::ops::Div for $type {
+            type Output = Self;
+
+            #[inline]
+            fn div(self, rhs: Self) -> Self::Output {
+                self.map2(rhs, std::ops::Div::div)
+            }
+        }
+
         impl std::ops::Rem<$elem> for $type {
             type Output = Self;
 
             #[inline]
             fn rem(self, rhs: $elem) -> Self::Output {
                 self.map(|a| a % rhs)
+            }
+        }
+
+        impl std::ops::Rem for $type {
+            type Output = Self;
+
+            #[inline]
+            fn rem(self, rhs: Self) -> Self::Output {
+                self.map2(rhs, std::ops::Rem::rem)
             }
         }
 
@@ -106,6 +133,13 @@ macro_rules! implement_ops {
             }
         }
 
+        impl std::ops::MulAssign for $type {
+            #[inline]
+            fn mul_assign(&mut self, rhs: Self) {
+                self.map2_mut(rhs, std::ops::MulAssign::mul_assign)
+            }
+        }
+
         impl std::ops::DivAssign<$elem> for $type {
             #[inline]
             fn div_assign(&mut self, rhs: $elem) {
@@ -113,10 +147,24 @@ macro_rules! implement_ops {
             }
         }
 
+        impl std::ops::DivAssign for $type {
+            #[inline]
+            fn div_assign(&mut self, rhs: Self) {
+                self.map2_mut(rhs, std::ops::DivAssign::div_assign)
+            }
+        }
+
         impl std::ops::RemAssign<$elem> for $type {
             #[inline]
             fn rem_assign(&mut self, rhs: $elem) {
                 self.map_mut(|a| *a %= rhs)
+            }
+        }
+
+        impl std::ops::RemAssign for $type {
+            #[inline]
+            fn rem_assign(&mut self, rhs: Self) {
+                self.map2_mut(rhs, std::ops::RemAssign::rem_assign)
             }
         }
     };
