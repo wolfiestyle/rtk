@@ -1,4 +1,4 @@
-use crate::geometry::Point;
+use crate::geometry::{Point, Rect, Size};
 
 /// Texture coordinates (in [0, 1] range).
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -57,3 +57,122 @@ impl From<Point<f32>> for TexCoord {
 }
 
 implement_ops!(TexCoord, f32);
+
+/// Texture coordinates of a rectangle.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TexRect {
+    pub top_left: TexCoord,
+    pub bot_right: TexCoord,
+}
+
+impl TexRect {
+    #[inline]
+    pub const fn new(top_left: TexCoord, bot_right: TexCoord) -> Self {
+        Self { top_left, bot_right }
+    }
+
+    pub fn from_rect(rect: impl Into<Rect>, scale: impl Into<Size>) -> Self {
+        let rect = rect.into();
+        let this = Self {
+            top_left: rect.pos.cast().into(),
+            bot_right: (rect.pos + rect.size.as_position()).cast().into(),
+        };
+        this / TexCoord::from(scale.into().as_pointf())
+    }
+
+    #[inline]
+    pub fn top_right(&self) -> TexCoord {
+        TexCoord {
+            u: self.bot_right.u,
+            v: self.top_left.v,
+        }
+    }
+
+    #[inline]
+    pub fn bot_left(&self) -> TexCoord {
+        TexCoord {
+            u: self.top_left.u,
+            v: self.bot_right.v,
+        }
+    }
+
+    #[inline]
+    pub fn components(self) -> [TexCoord; 2] {
+        [self.top_left, self.bot_right]
+    }
+
+    implement_map!(TexCoord, top_left, bot_right);
+}
+
+impl From<[TexCoord; 2]> for TexRect {
+    #[inline]
+    fn from([top_left, bot_right]: [TexCoord; 2]) -> Self {
+        Self { top_left, bot_right }
+    }
+}
+
+impl From<(TexCoord, TexCoord)> for TexRect {
+    #[inline]
+    fn from((top_left, bot_right): (TexCoord, TexCoord)) -> Self {
+        Self { top_left, bot_right }
+    }
+}
+
+impl Default for TexRect {
+    #[inline]
+    fn default() -> Self {
+        TexRect::new(TexCoord::TOP_LEFT, TexCoord::BOTTOM_RIGHT)
+    }
+}
+
+impl std::ops::Add<TexCoord> for TexRect {
+    type Output = Self;
+
+    fn add(self, rhs: TexCoord) -> Self::Output {
+        self.map(|a| a + rhs)
+    }
+}
+
+impl std::ops::Sub<TexCoord> for TexRect {
+    type Output = Self;
+
+    fn sub(self, rhs: TexCoord) -> Self::Output {
+        self.map(|a| a - rhs)
+    }
+}
+
+impl std::ops::Mul<TexCoord> for TexRect {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: TexCoord) -> Self::Output {
+        self.map(|a| a * rhs)
+    }
+}
+
+impl std::ops::Div<TexCoord> for TexRect {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, rhs: TexCoord) -> Self::Output {
+        self.map(|a| a / rhs)
+    }
+}
+
+impl std::ops::Mul<f32> for TexRect {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: f32) -> Self::Output {
+        self.map(|a| a * rhs)
+    }
+}
+
+impl std::ops::Div<f32> for TexRect {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, rhs: f32) -> Self::Output {
+        self.map(|a| a / rhs)
+    }
+}

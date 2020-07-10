@@ -8,7 +8,7 @@ pub use color::Color;
 mod vertex;
 pub use vertex::Vertex;
 mod texcoord;
-pub use texcoord::TexCoord;
+pub use texcoord::*;
 mod queue;
 pub use queue::*;
 mod context;
