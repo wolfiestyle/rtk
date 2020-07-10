@@ -1,6 +1,6 @@
 use crate::draw::queue::{DrawError, DrawQueue};
-use crate::draw::{Color, Primitive, TexCoord, TextDrawMode, Vertex};
-use crate::geometry::{Point, Position, Rect, Size};
+use crate::draw::{Color, Primitive, TexCoord, TexRect, TextDrawMode, Vertex};
+use crate::geometry::{Point, Position, Rect};
 use crate::image::ImageRef;
 use crate::widget::Widget;
 use std::borrow::Cow;
@@ -92,29 +92,64 @@ impl<'a> DrawContext<'a> {
         self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2], None).unwrap()
     }
 
-    /// Draws a rectangle with an optional image.
-    pub fn draw_rect(&mut self, pos: impl Into<Point<f32>>, size: impl Into<Size>, color: impl Into<Color>, image: Option<ImageRef>) {
-        let size = size.into();
-        if size.is_zero_area() {
-            return;
+    /// Draws a rectangle.
+    pub fn draw_rect(&mut self, rect: impl Into<Rect>, color: impl Into<Color>) {
+        if let Some([top_left, top_right, bot_left, bot_right]) = rect_corners(rect) {
+            let color = color.into();
+            let verts = [
+                Vertex::colored(top_left, color),
+                Vertex::colored(top_right, color),
+                Vertex::colored(bot_right, color),
+                Vertex::colored(bot_left, color),
+            ];
+            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], None).unwrap()
         }
-        let top_left = pos.into();
-        let bot_right = top_left + (size - Size::square(1)).as_pointf();
-        let top_right = Point {
-            x: bot_right.x,
-            y: top_left.y,
-        };
-        let bot_left = Point {
-            x: top_left.x,
-            y: bot_right.y,
-        };
-        let color = color.into();
-        let verts = [
-            Vertex::new(top_left, color, TexCoord::TOP_LEFT),
-            Vertex::new(top_right, color, TexCoord::TOP_RIGHT),
-            Vertex::new(bot_right, color, TexCoord::BOTTOM_RIGHT),
-            Vertex::new(bot_left, color, TexCoord::BOTTOM_LEFT),
-        ];
-        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], image).unwrap()
+    }
+
+    /// Draws an image.
+    pub fn draw_image(&mut self, pos: impl Into<Position>, image: ImageRef) {
+        let rect = Rect::new(pos, image.get_size());
+        if let Some([top_left, top_right, bot_left, bot_right]) = rect_corners(rect) {
+            let verts = [
+                Vertex::textured(top_left, TexCoord::TOP_LEFT),
+                Vertex::textured(top_right, TexCoord::TOP_RIGHT),
+                Vertex::textured(bot_right, TexCoord::BOTTOM_RIGHT),
+                Vertex::textured(bot_left, TexCoord::BOTTOM_LEFT),
+            ];
+            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], Some(image))
+                .unwrap()
+        }
+    }
+
+    /// Draws a rectangle with an image.
+    pub fn draw_image_rect(
+        &mut self, rect: impl Into<Rect>, color: impl Into<Color>, image: ImageRef, image_crop: impl Into<Option<TexRect>>,
+    ) {
+        if let Some([top_left, top_right, bot_left, bot_right]) = rect_corners(rect) {
+            let color = color.into();
+            let tex_rect = image_crop.into().unwrap_or_default();
+            let verts = [
+                Vertex::new(top_left, color, tex_rect.top_left),
+                Vertex::new(top_right, color, tex_rect.top_right()),
+                Vertex::new(bot_right, color, tex_rect.bot_right),
+                Vertex::new(bot_left, color, tex_rect.bot_left()),
+            ];
+            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], Some(image))
+                .unwrap()
+        }
+    }
+}
+
+fn rect_corners(rect: impl Into<Rect>) -> Option<[Point<f32>; 4]> {
+    let rect = rect.into();
+    if !rect.size.is_zero_area() {
+        Some([
+            rect.top_left().cast(),
+            rect.top_right().cast(),
+            rect.bottom_left().cast(),
+            rect.bottom_right().cast(),
+        ])
+    } else {
+        None
     }
 }
