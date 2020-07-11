@@ -68,13 +68,13 @@ impl Bounds for Empty {
 
 impl Visitable for Empty {
     #[inline]
-    fn accept<V: Visitor>(&mut self, _visitor: &mut V, _ctx: &V::Context) -> Result<(), V::Return> {
-        Ok(())
+    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+        visitor.visit(self, ctx)
     }
 
     #[inline]
-    fn accept_rev<V: Visitor>(&mut self, _visitor: &mut V, _ctx: &V::Context) -> Result<(), V::Return> {
-        Ok(())
+    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+        visitor.visit(self, ctx)
     }
 }
 
