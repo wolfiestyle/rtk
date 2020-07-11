@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use std::fmt;
 
 /// Buffer with draw commands to be sent to the backend.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct DrawQueue {
     /// Shared vertex buffer.
     pub vertices: Vec<Vertex>,

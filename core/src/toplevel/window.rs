@@ -8,7 +8,7 @@ use std::ops;
 pub const DEFAULT_WINDOW_SIZE: Size = Size::new(320, 240);
 
 /// Top level Window.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Window<T> {
     /// The window attributes.
     pub attr: WindowAttributes,
