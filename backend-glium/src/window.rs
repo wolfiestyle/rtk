@@ -3,7 +3,7 @@ use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use glium::index::PrimitiveType;
-use glium::texture::{ClientFormat, RawImage2d, SrgbTexture2d, TextureCreationError};
+use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, TextureCreationError};
 use glium::{uniform, Surface};
 use std::borrow::Cow;
 use std::fmt;
@@ -47,7 +47,7 @@ impl<T: TopLevel> GliumWindow<T> {
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let t_white = SrgbTexture2d::new(&display, image).unwrap();
+        let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
 
         Self {
             display,
@@ -95,7 +95,10 @@ impl<T: TopLevel> GliumWindow<T> {
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: win_size.as_pointf().components(),
-                            tex: texture.sampled().minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
+                            tex: texture.sampled()
+                                .wrap_function(glium::uniforms::SamplerWrapFunction::Repeat)
+                                .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
+                                .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
                         };
                         let draw_params = glium::DrawParameters {
                             blend: glium::Blend::alpha_blending(),
@@ -209,7 +212,7 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
                     PixelFormat::Rgba => ClientFormat::U8U8U8U8,
                 },
             };
-            SrgbTexture2d::new(display, img)
+            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
         Some(ImageData::U16(vec)) => {
             let img = RawImage2d {
@@ -223,7 +226,7 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
                     PixelFormat::Rgba => ClientFormat::U16U16U16U16,
                 },
             };
-            SrgbTexture2d::new(display, img)
+            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
         Some(ImageData::U32(vec)) => {
             let img = RawImage2d {
@@ -237,7 +240,7 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
                     PixelFormat::Rgba => ClientFormat::U32U32U32U32,
                 },
             };
-            SrgbTexture2d::new(display, img)
+            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
         Some(ImageData::F32(vec)) => {
             let img = RawImage2d {
@@ -251,7 +254,7 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
                     PixelFormat::Rgba => ClientFormat::F32F32F32F32,
                 },
             };
-            SrgbTexture2d::new(display, img)
+            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
     }
 }
