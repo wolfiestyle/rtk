@@ -1,3 +1,7 @@
+use widgets::draw::{TexCoord, TexRect};
+use widgets::geometry::VAlign;
+use widgets::image::{Image, ImageRef};
+use widgets::layout;
 use widgets::prelude::*;
 use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
@@ -10,19 +14,18 @@ struct TestWidget {
     id: WidgetId,
     hover: bool,
     vp_orig: Position,
+    image: ImageRef,
     #[visit_iter]
     childs: Vec<TestWidget2>,
 }
 
 impl Widget for TestWidget {
-    fn update_layout(&mut self, _parent_rect: Rect) {
-        use widgets::layout;
-
+    fn update_layout(&mut self, parent_rect: Rect) {
         for child in &mut self.childs {
             child.update_layout(self.bounds);
         }
 
-        //self.bounds.size = parent_rect.size - self.bounds.pos.as_size();
+        self.bounds.size = parent_rect.size - self.bounds.pos.as_size();
 
         if let Some(first) = self.childs.first_mut() {
             first.set_position([0, 0].into());
@@ -43,7 +46,9 @@ impl Widget for TestWidget {
             self.color
         };
 
-        dc.clear(color);
+        //dc.clear(color);
+        let crop = TexRect::default() + TexCoord::new(0.1, 0.2);
+        dc.draw_image_rect((dc.vp_orig, self.bounds.size), color, self.image.clone(), crop);
 
         for child in &self.childs {
             dc.draw_child(child);
@@ -55,7 +60,7 @@ impl Widget for TestWidget {
         match event {
             Event::MouseButton(Pressed, MouseButton::Left) => {
                 println!("TestWidget({:?}) clicked! (pos={:?})", self.id, ctx.local_pos);
-                self.color = Color::BLACK;
+                self.color = Color::WHITE;
                 EventResult::Consumed
             }
             Event::Keyboard { state: Pressed, key, .. } => {
@@ -104,7 +109,8 @@ impl Widget for TestWidget2 {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     fn draw(&self, mut dc: DrawContext) {
-        dc.clear(self.color);
+        //dc.clear(self.color);
+        dc.draw_rect((dc.vp_orig, self.bounds.size), self.color);
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
@@ -142,10 +148,11 @@ impl From<Empty> for TestEnum {
 fn main() {
     let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
-        color: Color::BLACK,
+        color: Color::WHITE,
         hover: false,
         vp_orig: Default::default(),
         id: WidgetId::new(),
+        image: Image::from_file("image.jpg").unwrap().into(),
         childs: Vec::new(),
     };
 
