@@ -172,11 +172,6 @@ pub struct EventDispatcher {
 }
 
 impl EventDispatcher {
-    #[inline]
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn dispatch_event<W: Widget>(&mut self, event: Event, parent_size: Size, root: &mut W) -> bool {
         self.update_state(&event);
         let ctx = self.make_context();

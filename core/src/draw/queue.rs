@@ -16,12 +16,6 @@ pub struct DrawQueue {
 }
 
 impl DrawQueue {
-    /// Creates a new draw queue.
-    #[inline]
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     /// Clears all data from the draw queue.
     #[inline]
     pub fn clear(&mut self) {

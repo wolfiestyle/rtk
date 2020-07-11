@@ -54,7 +54,7 @@ impl<T: TopLevel> GliumWindow<T> {
             program,
             t_white,
             texture_map: Default::default(),
-            draw_queue: DrawQueue::new(),
+            draw_queue: Default::default(),
             cur_attr: win_attr.clone(),
             window,
         }
