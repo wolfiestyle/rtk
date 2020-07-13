@@ -33,6 +33,7 @@ pub fn derive_object_id(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     body.map(|body| {
         quote! {
             impl #impl_generics #path::ObjectId for #name #ty_generics #where_clause {
+                #[inline]
                 fn get_id(&self) -> #path::WidgetId {
                     #body
                 }
@@ -58,22 +59,27 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Data::Struct(data) => match find_field_in_struct(data, &name, "Rect", "bounds") {
             Ok(field) => Ok(quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                    #[inline]
                     fn get_position(&self) -> #path::Position {
                         #path::Bounds::get_position(&self.#field)
                     }
 
+                    #[inline]
                     fn get_size(&self) -> #path::Size {
                         #path::Bounds::get_size(&self.#field)
                     }
 
+                    #[inline]
                     fn set_position(&mut self, position: #path::Position) {
                         #path::Bounds::set_position(&mut self.#field, position)
                     }
 
+                    #[inline]
                     fn set_size(&mut self, size: #path::Size) {
                         #path::Bounds::set_size(&mut self.#field, size)
                     }
 
+                    #[inline]
                     fn get_bounds(&self) -> #path::Rect {
                         #path::Bounds::get_bounds(&self.#field)
                     }
@@ -86,18 +92,22 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 match (pos_res, size_res) {
                     (Ok(pos), Ok(size)) => Ok(quote! {
                         impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                            #[inline]
                             fn get_position(&self) -> #path::Position {
                                 self.#pos
                             }
 
+                            #[inline]
                             fn get_size(&self) -> #path::Size {
                                 self.#size
                             }
 
+                            #[inline]
                             fn set_position(&mut self, position: #path::Position) {
                                 self.#pos = position;
                             }
 
+                            #[inline]
                             fn set_size(&mut self, size: #path::Size) {
                                 self.#size = size;
                             }
@@ -112,30 +122,35 @@ pub fn derive_bounds(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Data::Enum(data) => match_patterns_for_enum(data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Bounds for #name #ty_generics #where_clause {
+                    #[inline]
                     fn get_position(&self) -> #path::Position {
                         match self {
                             #(#patterns => #path::Bounds::get_position(a),)*
                         }
                     }
 
+                    #[inline]
                     fn get_size(&self) -> #path::Size {
                         match self {
                             #(#patterns => #path::Bounds::get_size(a),)*
                         }
                     }
 
+                    #[inline]
                     fn set_position(&mut self, position: #path::Position) {
                         match self {
                             #(#patterns => #path::Bounds::set_position(a, position),)*
                         }
                     }
 
+                    #[inline]
                     fn set_size(&mut self, size: #path::Size) {
                         match self {
                             #(#patterns => #path::Bounds::set_size(a, size),)*
                         }
                     }
 
+                    #[inline]
                     fn get_bounds(&self) -> #path::Rect {
                         match self {
                             #(#patterns => #path::Bounds::get_bounds(a),)*
@@ -218,6 +233,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 
             Ok(quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
+                    #[inline]
                     fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         let pdata = #path::ParentData::new(self);
                         visitor.visit(self, ctx)?;
@@ -225,6 +241,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                         Ok(())
                     }
 
+                    #[inline]
                     fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         let pdata = #path::ParentData::new(self);
                         #(#stmts_rev)*
@@ -236,12 +253,14 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
         Data::Enum(data) => match_patterns_for_enum(&data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
+                    #[inline]
                     fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         match self {
                             #(#patterns => #path::Visitable::accept(a, visitor, ctx),)*
                         }
                     }
 
+                    #[inline]
                     fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
                         match self {
                             #(#patterns => #path::Visitable::accept_rev(a, visitor, ctx),)*
@@ -273,30 +292,35 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
         Data::Enum(data) => match_patterns_for_enum(&data, &name).map(|patterns| {
             quote! {
                 impl #impl_generics #path::Widget for #name #ty_generics #where_clause {
+                    #[inline]
                     fn update_layout(&mut self, parent_rect: #crate_::geometry::Rect) {
                         match self {
                             #(#patterns => #path::Widget::update_layout(a, parent_rect),)*
                         }
                     }
 
+                    #[inline]
                     fn draw(&self, dc: #crate_::draw::DrawContext) {
                         match self {
                             #(#patterns => #path::Widget::draw(a, dc),)*
                         }
                     }
 
+                    #[inline]
                     fn handle_event(&mut self, event: &#pevent::Event, ctx: #pevent::EventContext) -> #pevent::EventResult {
                         match self {
                             #(#patterns => #path::Widget::handle_event(a, event, ctx),)*
                         }
                     }
 
+                    #[inline]
                     fn event_consumed(&mut self, event: &#pevent::Event, ctx: &#pevent::EventContext) {
                         match self {
                             #(#patterns => #path::Widget::event_consumed(a, event, ctx),)*
                         }
                     }
 
+                    #[inline]
                     fn viewport_origin(&self) -> #crate_::geometry::Position {
                         match self {
                             #(#patterns => #path::Widget::viewport_origin(a),)*
