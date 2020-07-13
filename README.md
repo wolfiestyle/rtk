@@ -1,3 +1,1 @@
-# Widgets
-
-Work in progress.
+core/README.md
