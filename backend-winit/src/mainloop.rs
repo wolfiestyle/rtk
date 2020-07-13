@@ -8,7 +8,7 @@ pub trait BackendWindow {
     fn get_id(&self) -> WindowId;
     fn update(&mut self);
     fn draw(&mut self);
-    fn redraw(&self);
+    fn request_redraw(&self);
     fn push_event(&mut self, event: widgets::event::Event) -> bool;
 }
 
@@ -57,7 +57,7 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
                         if window_changed || ev_consumed {
                             // event was consumed, update and trigger a redraw
                             window.update();
-                            window.redraw();
+                            window.request_redraw();
                         } else if is_close_req {
                             // CloseRequest wasn't consumed, destroy window
                             window.push_event(widgets::event::Event::Destroyed);

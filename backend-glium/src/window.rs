@@ -9,6 +9,7 @@ use std::borrow::Cow;
 use std::fmt;
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
+use widgets::event::Event;
 use widgets::image::{Image, ImageData, ImageWeakRef, PixelFormat};
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
@@ -134,6 +135,15 @@ impl<T: TopLevel> GliumWindow<T> {
 }
 
 impl<T: TopLevel> BackendWindow for GliumWindow<T> {
+    fn get_id(&self) -> WindowId {
+        self.display.gl_window().window().id()
+    }
+
+    fn update(&mut self) {
+        self.window.update_layout()
+        //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
+    }
+
     fn draw(&mut self) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
@@ -143,22 +153,11 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
         target.finish().unwrap();
     }
 
-    fn update(&mut self) {
-        self.window.update_layout()
-        //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
-    }
-
-    fn redraw(&self) {
+    fn request_redraw(&self) {
         self.display.gl_window().window().request_redraw();
     }
 
-    fn get_id(&self) -> WindowId {
-        self.display.gl_window().window().id()
-    }
-
-    fn push_event(&mut self, event: widgets::event::Event) -> bool {
-        use widgets::event::Event;
-
+    fn push_event(&mut self, event: Event) -> bool {
         match event {
             Event::Resized(size) => {
                 self.cur_attr.set_size(size);
