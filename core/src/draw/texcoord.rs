@@ -128,6 +128,7 @@ impl Default for TexRect {
 impl std::ops::Add<TexCoord> for TexRect {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: TexCoord) -> Self::Output {
         self.map(|a| a + rhs)
     }
@@ -136,6 +137,7 @@ impl std::ops::Add<TexCoord> for TexRect {
 impl std::ops::Sub<TexCoord> for TexRect {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: TexCoord) -> Self::Output {
         self.map(|a| a - rhs)
     }
