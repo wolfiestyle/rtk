@@ -3,6 +3,7 @@ use crate::draw::{Color, Primitive, TexCoord, TexRect, TextDrawMode, Vertex};
 use crate::geometry::{Point, Position, Rect};
 use crate::image::ImageRef;
 use crate::widget::Widget;
+use array_ext::Array;
 use std::borrow::Cow;
 
 /// Draw context attached to a widget.
@@ -49,9 +50,13 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
 
     /// Draws raw elements into the widget area.
     #[inline]
-    pub fn draw_prim(&mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>) -> Result<(), DrawError> {
+    pub fn draw_prim(
+        &mut self, primitive: Primitive, vertices: impl Array<V>, indices: &[u32], texture: Option<ImageRef>,
+    ) -> Result<(), DrawError> {
+        let offset = self.offset.cast();
+        let vertices = vertices.map_(|v| v.translate(offset));
         self.queue
-            .push_prim(primitive, vertices, indices, texture, self.viewport, self.offset.cast())
+            .push_prim(primitive, vertices.as_slice(), indices, texture, self.viewport)
     }
 
     /// Draws text.
@@ -60,21 +65,26 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
         &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>, mode: impl Into<TextDrawMode>,
         color: impl Into<Color>,
     ) {
-        self.queue
-            .push_text(text.into(), font_desc.into(), mode.into(), color.into(), self.viewport, self.offset)
+        self.queue.push_text(
+            text.into(),
+            font_desc.into(),
+            mode.into().offset(self.offset),
+            color.into(),
+            self.viewport,
+        )
     }
 
     /// Draws a point.
     pub fn draw_point(&mut self, p: impl Into<Point<f32>>, color: impl Into<Color>) {
         let verts = [Vertex::colored(p.into(), color.into())];
-        self.draw_prim(Primitive::Points, &verts, &[0], None).unwrap()
+        self.draw_prim(Primitive::Points, verts, &[0], None).unwrap()
     }
 
     /// Draws a line.
     pub fn draw_line(&mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, color: impl Into<Color>) {
         let color = color.into();
         let verts = [Vertex::colored(p0.into(), color), Vertex::colored(p1.into(), color)];
-        self.draw_prim(Primitive::Lines, &verts, &[0, 1], None).unwrap()
+        self.draw_prim(Primitive::Lines, verts, &[0, 1], None).unwrap()
     }
 
     /// Draws a triangle.
@@ -87,7 +97,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
             Vertex::colored(p1.into(), color),
             Vertex::colored(p2.into(), color),
         ];
-        self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2], None).unwrap()
+        self.draw_prim(Primitive::Triangles, verts, &[0, 1, 2], None).unwrap()
     }
 
     /// Draws a rectangle.
@@ -100,7 +110,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
                 Vertex::colored(bot_right, color),
                 Vertex::colored(bot_left, color),
             ];
-            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], None).unwrap()
+            self.draw_prim(Primitive::Triangles, verts, &[0, 1, 2, 2, 3, 0], None).unwrap()
         }
     }
 
@@ -114,7 +124,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
                 Vertex::textured(bot_right, TexCoord::BOTTOM_RIGHT),
                 Vertex::textured(bot_left, TexCoord::BOTTOM_LEFT),
             ];
-            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], Some(image))
+            self.draw_prim(Primitive::Triangles, verts, &[0, 1, 2, 2, 3, 0], Some(image))
                 .unwrap()
         }
     }
@@ -132,7 +142,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
                 Vertex::new(bot_right, color, tex_rect.bot_right),
                 Vertex::new(bot_left, color, tex_rect.bot_left()),
             ];
-            self.draw_prim(Primitive::Triangles, &verts, &[0, 1, 2, 2, 3, 0], Some(image))
+            self.draw_prim(Primitive::Triangles, verts, &[0, 1, 2, 2, 3, 0], Some(image))
                 .unwrap()
         }
     }

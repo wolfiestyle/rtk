@@ -1,5 +1,5 @@
 use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, Primitive, TextDrawMode, Vertex};
-use crate::geometry::{Point, Position, Rect};
+use crate::geometry::Rect;
 use crate::image::ImageRef;
 use std::borrow::Cow;
 use std::fmt;
@@ -42,7 +42,7 @@ impl<V: Vertex> DrawQueue<V> {
 
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect, offset: Point<f32>,
+        &mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
     ) -> Result<(), DrawError> {
         let nvert = vertices.len() as u32;
         // no vertices means nothing to do
@@ -55,7 +55,7 @@ impl<V: Vertex> DrawQueue<V> {
         }
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;
-        self.vertices.extend(vertices.iter().map(|v| v.translate(offset)));
+        self.vertices.extend(vertices);
         // check if the previous draw command can be reused
         if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {
             // we only need to add more indices
@@ -79,12 +79,11 @@ impl<V: Vertex> DrawQueue<V> {
     #[inline]
     pub(crate) fn push_text(
         &mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color, viewport: Rect,
-        offset: Position,
     ) {
         self.commands.push(DrawCommand::Text(DrawCmdText {
             text,
             font_desc,
-            mode: mode.offset(offset),
+            mode,
             color,
             viewport,
         }));
