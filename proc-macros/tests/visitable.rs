@@ -82,12 +82,14 @@ fn visitable() {
             },
         ],
     };
-    let mut visitor = TestVisitor::default();
-    visitor.visit_child(&mut widget, &(), &Default::default()).unwrap();
-    assert_eq!(visitor.ids, ids);
 
-    ids.reverse();
+    let mut visitor = TestVisitor::default();
+    let mut expected = [ids[0], ids[1], WidgetId::EMPTY, ids[2], WidgetId::EMPTY];
+    visitor.visit_child(&mut widget, &(), &Default::default()).unwrap();
+    assert_eq!(visitor.ids, expected);
+
     visitor.ids.clear();
+    expected.reverse();
     visitor.visit_child_rev(&mut widget, &(), &Default::default()).unwrap();
-    assert_eq!(visitor.ids, ids);
+    assert_eq!(visitor.ids, expected);
 }

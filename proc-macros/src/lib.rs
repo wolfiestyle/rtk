@@ -209,7 +209,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                     (
                         *i,
                         quote! {
-                            visitor.visit_child(&mut self.#field, ctx, &pdata)?;
+                            visitor.visit_child_rev(&mut self.#field, ctx, &pdata)?;
                         },
                     )
                 })
@@ -218,7 +218,7 @@ pub fn derive_visitable(input: proc_macro::TokenStream) -> proc_macro::TokenStre
                         *i,
                         quote! {
                             for child in self.#field.iter_mut().rev() {
-                                visitor.visit_child(child, ctx, &pdata)?;
+                                visitor.visit_child_rev(child, ctx, &pdata)?;
                             }
                         },
                     )
