@@ -1,4 +1,4 @@
-use widgets::draw::DrawContext;
+use widgets::draw::{DrawContext, Vertex};
 use widgets::event::{Event, EventContext, EventResult};
 use widgets::geometry::{Bounds, Rect};
 use widgets::widget::{Empty, Widget, WidgetId};
@@ -21,7 +21,7 @@ impl Widget for TestWidget {
     fn update_layout(&mut self, parent_rect: Rect) {
         self.bounds = parent_rect;
     }
-    fn draw(&self, _dc: DrawContext) {}
+    fn draw<V: Vertex>(&self, _dc: DrawContext<V>) {}
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }

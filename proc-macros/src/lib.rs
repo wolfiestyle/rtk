@@ -300,7 +300,7 @@ pub fn derive_widget(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
 
                     #[inline]
-                    fn draw(&self, dc: #crate_::draw::DrawContext) {
+                    fn draw<V: #crate_::draw::Vertex>(&self, dc: #crate_::draw::DrawContext<V>) {
                         match self {
                             #(#patterns => #path::Widget::draw(a, dc),)*
                         }

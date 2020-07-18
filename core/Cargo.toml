@@ -9,5 +9,4 @@ default = ["image"]
 
 [dependencies]
 num-traits = "0.2.11"
-glium = { version = "0.27.0", optional = true }
 image = { version = "0.23.5", optional = true }

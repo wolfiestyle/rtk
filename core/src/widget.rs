@@ -1,5 +1,5 @@
 //! Widget type and definitions.
-use crate::draw::DrawContext;
+use crate::draw::{DrawContext, Vertex};
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Position, Rect};
 use crate::visitor::Visitable;
@@ -16,7 +16,7 @@ pub trait Widget: ObjectId + Bounds + Visitable {
 
     /// Draws the contents of this object.
     //TODO: invalidate mechanics to avoid overdraw
-    fn draw(&self, dc: DrawContext);
+    fn draw<V: Vertex>(&self, dc: DrawContext<V>);
 
     /// Handles an event sent to this widget.
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult;
@@ -39,7 +39,7 @@ impl<T: Widget> Widget for Box<T> {
     }
 
     #[inline]
-    fn draw(&self, dc: DrawContext) {
+    fn draw<V: Vertex>(&self, dc: DrawContext<V>) {
         (**self).draw(dc)
     }
 

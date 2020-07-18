@@ -1,5 +1,5 @@
 //! TopLevel type that interfaces with the backend.
-use crate::draw::DrawQueue;
+use crate::draw::{DrawQueue, Vertex};
 use crate::event::Event;
 
 mod window;
@@ -9,7 +9,7 @@ pub use window::*;
 pub trait TopLevel {
     fn update_layout(&mut self);
 
-    fn draw(&self, dq: &mut DrawQueue);
+    fn draw<V: Vertex>(&self, dq: &mut DrawQueue<V>);
 
     fn push_event(&mut self, event: Event) -> bool;
 
@@ -25,7 +25,7 @@ impl<T: TopLevel> TopLevel for Box<T> {
     }
 
     #[inline]
-    fn draw(&self, dq: &mut DrawQueue) {
+    fn draw<V: Vertex>(&self, dq: &mut DrawQueue<V>) {
         (**self).draw(dq)
     }
 

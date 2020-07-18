@@ -8,18 +8,48 @@ use glium::{uniform, Surface};
 use std::borrow::Cow;
 use std::fmt;
 use weak_table::WeakKeyHashMap;
-use widgets::draw::{DrawCmdPrim, DrawCommand, DrawQueue, Primitive};
+use widgets::draw::{Color, DrawCmdPrim, DrawCommand, DrawQueue, Primitive, TexCoord, Vertex};
 use widgets::event::Event;
+use widgets::geometry::Point;
 use widgets::image::{Image, ImageData, ImageWeakRef, PixelFormat};
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
+
+#[derive(Debug, Clone, Copy, Default)]
+struct GliumVertex {
+    pos: [f32; 2],
+    color: [f32; 4],
+    texc: [f32; 2],
+}
+
+glium::implement_vertex!(GliumVertex, pos, color, texc);
+
+impl Vertex for GliumVertex {
+    #[inline]
+    fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
+        Self {
+            pos: pos.components(),
+            color: color.components(),
+            texc: texc.components(),
+        }
+    }
+
+    #[inline]
+    fn translate(self, offset: Point<f32>) -> Self {
+        Self {
+            pos: (offset + self.pos.into()).components(),
+            color: self.color,
+            texc: self.texc,
+        }
+    }
+}
 
 pub struct GliumWindow<T> {
     display: glium::Display,
     program: glium::Program,
     t_white: SrgbTexture2d,
     texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
-    draw_queue: DrawQueue,
+    draw_queue: DrawQueue<GliumVertex>,
     cur_attr: WindowAttributes,
     pub window: T,
 }

@@ -1,5 +1,5 @@
 //! Commonly used imports.
-pub use crate::draw::{Color, DrawContext};
+pub use crate::draw::{Color, DrawContext, Vertex};
 pub use crate::event::{Axis, ButtonState, Event, EventContext, EventResult, Key, KeySide, MouseButton, Pressed, Released};
 pub use crate::geometry::{Bounds, Position, Rect, Size};
 pub use crate::toplevel::Window;

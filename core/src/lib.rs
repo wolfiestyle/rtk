@@ -12,7 +12,4 @@ pub mod toplevel;
 pub mod visitor;
 pub mod widget;
 
-#[cfg(feature = "glium")]
-mod glium_ext;
-
 pub use toplevel::DEFAULT_WINDOW_SIZE;

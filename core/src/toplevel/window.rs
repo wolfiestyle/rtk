@@ -1,4 +1,4 @@
-use crate::draw::{Color, DrawContext, DrawQueue};
+use crate::draw::{Color, DrawContext, DrawQueue, Vertex};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Position, Size};
 use crate::toplevel::TopLevel;
@@ -60,7 +60,7 @@ impl<T: Widget> TopLevel for Window<T> {
         }
     }
 
-    fn draw(&self, drawq: &mut DrawQueue) {
+    fn draw<V: Vertex>(&self, drawq: &mut DrawQueue<V>) {
         let mut dc = DrawContext::new(drawq, self.size.into());
         if let Some(bg) = self.attr.background {
             dc.clear(bg);

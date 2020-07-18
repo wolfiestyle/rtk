@@ -6,16 +6,16 @@ use std::fmt;
 
 /// Buffer with draw commands to be sent to the backend.
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DrawQueue {
+pub struct DrawQueue<V> {
     /// Shared vertex buffer.
-    pub vertices: Vec<Vertex>,
+    pub vertices: Vec<V>,
     /// Shared index buffer.
     pub indices: Vec<u32>,
     /// List of draw commands to be executed.
     pub commands: Vec<DrawCommand>,
 }
 
-impl DrawQueue {
+impl<V: Vertex> DrawQueue<V> {
     /// Clears all data from the draw queue.
     #[inline]
     pub fn clear(&mut self) {
@@ -42,8 +42,7 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
-        offset: Point<f32>,
+        &mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect, offset: Point<f32>,
     ) -> Result<(), DrawError> {
         let nvert = vertices.len() as u32;
         // no vertices means nothing to do

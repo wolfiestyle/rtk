@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use widgets::draw::DrawContext;
+use widgets::draw::{DrawContext, Vertex};
 use widgets::event::{Event, EventContext, EventResult};
 use widgets::geometry::Rect;
 use widgets::visitor::{ParentData, Visitor};
@@ -17,7 +17,7 @@ struct TestWidget1<T> {
 
 impl<T: Widget> Widget for TestWidget1<T> {
     fn update_layout(&mut self, _parent_rect: Rect) {}
-    fn draw(&self, _dc: DrawContext) {}
+    fn draw<V: Vertex>(&self, _dc: DrawContext<V>) {}
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }
@@ -35,7 +35,7 @@ struct TestWidget2<T> {
 
 impl<T: Widget> Widget for TestWidget2<T> {
     fn update_layout(&mut self, _parent_rect: Rect) {}
-    fn draw(&self, _dc: DrawContext) {}
+    fn draw<V: Vertex>(&self, _dc: DrawContext<V>) {}
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
     }

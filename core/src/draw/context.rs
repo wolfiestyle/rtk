@@ -7,17 +7,17 @@ use std::borrow::Cow;
 
 /// Draw context attached to a widget.
 #[derive(Debug)]
-pub struct DrawContext<'a> {
-    queue: &'a mut DrawQueue,
+pub struct DrawContext<'a, V> {
+    queue: &'a mut DrawQueue<V>,
     pub(crate) viewport: Rect,
     offset: Position,
     pub vp_orig: Position,
 }
 
-impl<'a> DrawContext<'a> {
+impl<'a, V: Vertex> DrawContext<'a, V> {
     /// Creates a new context from the speficied DrawQueue.
     #[inline]
-    pub fn new(queue: &'a mut DrawQueue, viewport: Rect) -> Self {
+    pub fn new(queue: &'a mut DrawQueue<V>, viewport: Rect) -> Self {
         DrawContext {
             queue,
             viewport,
@@ -49,9 +49,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draws raw elements into the widget area.
     #[inline]
-    pub fn draw_prim(
-        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>,
-    ) -> Result<(), DrawError> {
+    pub fn draw_prim(&mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>) -> Result<(), DrawError> {
         self.queue
             .push_prim(primitive, vertices, indices, texture, self.viewport, self.offset.cast())
     }
