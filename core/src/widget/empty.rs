@@ -1,4 +1,4 @@
-use crate::draw::{DrawContext, Vertex};
+use crate::draw::{DrawBackend, DrawContext};
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Position, Rect, Size};
 use crate::visitor::{Visitable, Visitor};
@@ -83,7 +83,7 @@ impl Widget for Empty {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
     #[inline]
-    fn draw<V: Vertex>(&self, _dc: DrawContext<V>) {}
+    fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}
 
     #[inline]
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {

@@ -13,6 +13,8 @@ mod queue;
 pub use queue::*;
 mod context;
 pub use context::DrawContext;
+mod backend;
+pub use backend::*;
 
 /// Types of drawing primitives.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

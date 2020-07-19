@@ -39,7 +39,7 @@ impl Widget for TestWidget {
         layout::flow_horiz(&mut self.childs, VAlign::Bottom, self.bounds.size.w, 0, 0);
     }
 
-    fn draw<V: Vertex>(&self, mut dc: DrawContext<V>) {
+    fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         let color = if self.hover {
             self.color.mix(Color::WHITE, 0.01)
         } else {
@@ -108,7 +108,7 @@ struct TestWidget2 {
 impl Widget for TestWidget2 {
     fn update_layout(&mut self, _parent_rect: Rect) {}
 
-    fn draw<V: Vertex>(&self, mut dc: DrawContext<V>) {
+    fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         //dc.clear(self.color);
         dc.draw_rect((dc.vp_orig, self.bounds.size), self.color);
     }

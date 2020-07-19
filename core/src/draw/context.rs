@@ -1,26 +1,25 @@
-use crate::draw::queue::{DrawError, DrawQueue};
-use crate::draw::{Color, Primitive, TexCoord, TexRect, TextDrawMode, Vertex};
+use crate::draw::queue::DrawError;
+use crate::draw::{Color, DrawBackend, Primitive, TexCoord, TexRect, TextDrawMode, Vertex};
 use crate::geometry::{Point, Position, Rect};
 use crate::image::ImageRef;
 use crate::widget::Widget;
 use array_ext::Array;
-use std::borrow::Cow;
 
 /// Draw context attached to a widget.
 #[derive(Debug)]
-pub struct DrawContext<'a, V> {
-    queue: &'a mut DrawQueue<V>,
+pub struct DrawContext<'a, B> {
+    backend: &'a mut B,
     pub(crate) viewport: Rect,
     offset: Position,
     pub vp_orig: Position,
 }
 
-impl<'a, V: Vertex> DrawContext<'a, V> {
-    /// Creates a new context from the speficied DrawQueue.
+impl<'a, B: DrawBackend> DrawContext<'a, B> {
+    /// Creates a new context from the speficied DrawBackend.
     #[inline]
-    pub fn new(queue: &'a mut DrawQueue<V>, viewport: Rect) -> Self {
+    pub fn new(backend: &'a mut B, viewport: Rect) -> Self {
         DrawContext {
-            queue,
+            backend,
             viewport,
             offset: viewport.pos,
             vp_orig: Default::default(),
@@ -30,7 +29,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
     /// Clears the drawing area.
     #[inline]
     pub fn clear(&mut self, color: impl Into<Color>) {
-        self.queue.push_clear(color.into(), self.viewport)
+        self.backend.clear(color.into(), self.viewport)
     }
 
     /// Draws a child widget.
@@ -39,7 +38,7 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
         if let Some(viewport) = child_vp.clip_inside(self.viewport) {
             let vp_orig = child.viewport_origin();
             let dc = DrawContext {
-                queue: self.queue,
+                backend: self.backend,
                 viewport,
                 offset: child_vp.pos - vp_orig,
                 vp_orig,
@@ -51,21 +50,30 @@ impl<'a, V: Vertex> DrawContext<'a, V> {
     /// Draws raw elements into the widget area.
     #[inline]
     pub fn draw_prim(
-        &mut self, primitive: Primitive, vertices: impl Array<V>, indices: &[u32], texture: Option<ImageRef>,
+        &mut self, primitive: Primitive, vertices: impl Array<B::Vertex>, indices: &[u32], texture: Option<ImageRef>,
     ) -> Result<(), DrawError> {
+        let nvert = vertices.len() as u32;
+        // no vertices means nothing to do
+        if nvert == 0 {
+            return Ok(());
+        }
+        // check if indices are in range
+        if let Some(&idx) = indices.iter().find(|&&i| i >= nvert) {
+            return Err(DrawError::IndexOutOfBounds { idx, nvert });
+        }
+        // apply offset to vertices
         let offset = self.offset.cast();
         let vertices = vertices.map_(|v| v.translate(offset));
-        self.queue
-            .push_prim(primitive, vertices.as_slice(), indices, texture, self.viewport)
+        // send draw command to the backend
+        self.backend
+            .draw_prim(primitive, vertices.as_slice(), indices, texture, self.viewport);
+        Ok(())
     }
 
     /// Draws text.
     #[inline]
-    pub fn draw_text(
-        &mut self, text: impl Into<Cow<'static, str>>, font_desc: impl Into<Cow<'static, str>>, mode: impl Into<TextDrawMode>,
-        color: impl Into<Color>,
-    ) {
-        self.queue.push_text(
+    pub fn draw_text(&mut self, text: &str, font_desc: &str, mode: impl Into<TextDrawMode>, color: impl Into<Color>) {
+        self.backend.draw_text(
             text.into(),
             font_desc.into(),
             mode.into().offset(self.offset),

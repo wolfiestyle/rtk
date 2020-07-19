@@ -1,4 +1,4 @@
-use crate::draw::{Color, DrawCmdPrim, DrawCmdText, DrawCommand, Primitive, TextDrawMode, Vertex};
+use crate::draw::{Color, DrawBackend, DrawCmdPrim, DrawCmdText, DrawCommand, Primitive, TextDrawMode, Vertex};
 use crate::geometry::Rect;
 use crate::image::ImageRef;
 use std::borrow::Cow;
@@ -41,18 +41,7 @@ impl<V: Vertex> DrawQueue<V> {
     }
 
     /// Adds raw elements to the draw queue.
-    pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
-    ) -> Result<(), DrawError> {
-        let nvert = vertices.len() as u32;
-        // no vertices means nothing to do
-        if nvert == 0 {
-            return Ok(());
-        }
-        // check if indices are in range
-        if let Some(&idx) = indices.iter().find(|&&i| i >= nvert) {
-            return Err(DrawError::IndexOutOfBounds { idx, nvert });
-        }
+    pub(crate) fn push_prim(&mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect) {
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;
         self.vertices.extend(vertices);
@@ -72,7 +61,6 @@ impl<V: Vertex> DrawQueue<V> {
         }
         // indices are added with an offset pointing to a single vertex buffer
         self.indices.extend(indices.iter().map(|i| i + base_vert));
-        Ok(())
     }
 
     /// Adds a draw text command to the draw queue.
@@ -87,6 +75,23 @@ impl<V: Vertex> DrawQueue<V> {
             color,
             viewport,
         }));
+    }
+}
+
+//FIXME: temporary impl until we remove DrawQueue
+impl<V: Vertex> DrawBackend for DrawQueue<V> {
+    type Vertex = V;
+
+    fn clear(&mut self, color: Color, viewport: Rect) {
+        self.push_clear(color, viewport)
+    }
+
+    fn draw_prim(&mut self, primitive: Primitive, vertices: &[Self::Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect) {
+        self.push_prim(primitive, vertices, indices, texture, viewport)
+    }
+
+    fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
+        self.push_text(text.to_owned().into(), font_desc.to_owned().into(), mode, color, viewport)
     }
 }
 
