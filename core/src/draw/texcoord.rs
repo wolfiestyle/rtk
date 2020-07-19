@@ -81,6 +81,16 @@ impl TexRect {
     }
 
     #[inline]
+    pub fn top_left(&self) -> TexCoord {
+        self.top_left
+    }
+
+    #[inline]
+    pub fn bot_right(&self) -> TexCoord {
+        self.bot_right
+    }
+
+    #[inline]
     pub fn top_right(&self) -> TexCoord {
         TexCoord {
             u: self.bot_right.u,
