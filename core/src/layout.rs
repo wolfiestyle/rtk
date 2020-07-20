@@ -95,7 +95,7 @@ pub trait Layout: Bounds {
 
     fn center_inside<B: Bounds>(&mut self, other: &B) -> &mut Self {
         let b = other.get_bounds();
-        self.set_position(b.pos + (b.size.as_position() - self.get_size().as_position()) / 2);
+        self.set_position(b.pos + (b.size.as_point() - self.get_size().as_point()) / 2);
         self
     }
 

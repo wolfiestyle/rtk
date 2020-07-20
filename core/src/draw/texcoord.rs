@@ -84,9 +84,9 @@ impl TexRect {
         let rect = rect.into();
         let this = Self {
             top_left: rect.pos.cast().into(),
-            bot_right: (rect.pos + rect.size.as_position()).cast().into(),
+            bot_right: (rect.pos + rect.size.as_point()).cast().into(),
         };
-        this / TexCoord::from(scale.into().as_pointf())
+        this / TexCoord::from(scale.into().as_point())
     }
 
     #[inline]

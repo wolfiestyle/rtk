@@ -92,7 +92,7 @@ impl<T: TopLevel> GliumWindow<T> {
                             .unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
-                            vp_size: <[f32; 2]>::from(win_size.as_pointf()),
+                            vp_size: <[f32; 2]>::from(win_size.as_point()),
                             tex: texture.sampled()
                                 .wrap_function(glium::uniforms::SamplerWrapFunction::Repeat)
                                 .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)

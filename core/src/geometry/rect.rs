@@ -24,7 +24,7 @@ impl Rect {
         let center = center.into();
         let size = size.into();
         Rect {
-            pos: center - size.as_position() / 2,
+            pos: center - size.as_point() / 2,
             size,
         }
     }
@@ -155,7 +155,7 @@ impl Rect {
     pub fn expand_to_origin(self) -> Self {
         Rect {
             pos: Default::default(),
-            size: (self.pos + self.size.as_position()).as_size(),
+            size: (self.pos + self.size.as_point()).as_size(),
         }
     }
 

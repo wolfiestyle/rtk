@@ -1,4 +1,5 @@
-use crate::geometry::{Border, Point, Position};
+use crate::geometry::{Border, Point};
+use num_traits::NumCast;
 
 /// Defines the size of an object.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -96,19 +97,19 @@ impl Size {
     }
 
     #[inline]
-    pub fn as_position(self) -> Position {
-        Position {
-            x: self.w as i32,
-            y: self.h as i32,
+    pub fn as_point<T: NumCast + Default>(self) -> Point<T> {
+        Point {
+            x: num_traits::cast(self.w).unwrap_or_default(),
+            y: num_traits::cast(self.h).unwrap_or_default(),
         }
     }
 
     #[inline]
-    pub fn as_pointf(self) -> Point<f32> {
-        Point {
-            x: self.w as f32,
-            y: self.h as f32,
-        }
+    pub fn as_point_checked<T: NumCast>(self) -> Option<Point<T>> {
+        Some(Point {
+            x: num_traits::cast(self.w)?,
+            y: num_traits::cast(self.h)?,
+        })
     }
 
     implement_map!(u32, w, h);
