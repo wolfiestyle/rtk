@@ -1,8 +1,8 @@
-use crate::draw::{Color, DrawBackend, DrawCmdPrim, DrawCmdText, DrawCommand, Primitive, TextDrawMode, Vertex};
+use crate::draw::{Color, DrawBackend, DrawCmdPrim, DrawCmdText, DrawCommand, FillMode, Primitive, TexCoord, TextDrawMode, Vertex};
+use crate::geometry::Point;
 use crate::geometry::Rect;
 use crate::image::ImageRef;
 use std::borrow::Cow;
-use std::fmt;
 
 /// Buffer with draw commands to be sent to the backend.
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -80,31 +80,32 @@ impl<V: Vertex> DrawQueue<V> {
 
 //FIXME: temporary impl until we remove DrawQueue
 impl<V: Vertex> DrawBackend for DrawQueue<V> {
-    type Vertex = V;
-
     fn clear(&mut self, color: Color, viewport: Rect) {
         self.push_clear(color, viewport)
     }
 
-    fn draw_prim(&mut self, primitive: Primitive, vertices: &[Self::Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect) {
-        self.push_prim(primitive, vertices, indices, texture, viewport)
+    fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
+        let verts = [Vertex::new(pos, fill.color(), texc)];
+        self.push_prim(Primitive::Points, &verts, &[0], fill.texture(), viewport)
+    }
+
+    fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
+        let color = fill.color();
+        let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
+        self.push_prim(Primitive::Lines, &verts, &[0, 1], fill.texture(), viewport)
+    }
+
+    fn draw_triangle(&mut self, pos: [Point<f32>; 3], texc: [TexCoord; 3], fill: FillMode, viewport: Rect) {
+        let color = fill.color();
+        let verts = [
+            Vertex::new(pos[0], color, texc[0]),
+            Vertex::new(pos[1], color, texc[1]),
+            Vertex::new(pos[2], color, texc[2]),
+        ];
+        self.push_prim(Primitive::Triangles, &verts, &[0, 1, 2], fill.texture(), viewport)
     }
 
     fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
         self.push_text(text.to_owned().into(), font_desc.to_owned().into(), mode, color, viewport)
-    }
-}
-
-/// Error from drawing operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DrawError {
-    IndexOutOfBounds { idx: u32, nvert: u32 },
-}
-
-impl fmt::Display for DrawError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            DrawError::IndexOutOfBounds { idx, nvert } => write!(f, "index {} out of bounds ({})", idx, nvert),
-        }
     }
 }

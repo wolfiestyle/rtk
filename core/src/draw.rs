@@ -60,6 +60,46 @@ pub enum DrawCommand {
     Text(DrawCmdText),
 }
 
+/// Drawing fill mode.
+#[derive(Debug, Clone, PartialEq)]
+pub enum FillMode {
+    Color(Color),
+    Texture(ImageRef),
+    ColoredTexture(ImageRef, Color),
+}
+
+impl FillMode {
+    #[inline]
+    pub fn color(&self) -> Color {
+        match self {
+            FillMode::Color(color) | FillMode::ColoredTexture(_, color) => *color,
+            _ => Color::WHITE,
+        }
+    }
+
+    #[inline]
+    pub fn texture(&self) -> Option<ImageRef> {
+        match self {
+            FillMode::Texture(img) | FillMode::ColoredTexture(img, _) => Some(img.clone()),
+            _ => None,
+        }
+    }
+}
+
+impl From<Color> for FillMode {
+    #[inline]
+    fn from(color: Color) -> Self {
+        FillMode::Color(color)
+    }
+}
+
+impl From<ImageRef> for FillMode {
+    #[inline]
+    fn from(img: ImageRef) -> Self {
+        FillMode::Texture(img)
+    }
+}
+
 /// Defines how text should be drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TextDrawMode {
