@@ -1,32 +1,24 @@
 use std::borrow::Cow;
-use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode, Vertex};
+use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
 use widgets::geometry::Point;
 use widgets::geometry::Rect;
 use widgets::image::ImageRef;
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct GliumVertex {
+#[derive(Debug, Clone, Copy)]
+pub struct Vertex {
     pos: [f32; 2],
     color: [f32; 4],
     texc: [f32; 2],
 }
 
-glium::implement_vertex!(GliumVertex, pos, color, texc);
+glium::implement_vertex!(Vertex, pos, color, texc);
 
-impl Vertex for GliumVertex {
+impl Vertex {
     fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
         Self {
             pos: pos.into(),
             color: color.into(),
             texc: texc.into(),
-        }
-    }
-
-    fn translate(self, offset: Point<f32>) -> Self {
-        Self {
-            pos: (offset + self.pos.into()).into(),
-            color: self.color,
-            texc: self.texc,
         }
     }
 }
@@ -76,7 +68,7 @@ pub enum DrawCommand {
 #[derive(Debug, Clone, Default)]
 pub struct DrawQueue {
     /// Shared vertex buffer.
-    pub vertices: Vec<GliumVertex>,
+    pub vertices: Vec<Vertex>,
     /// Shared index buffer.
     pub indices: Vec<u32>,
     /// List of draw commands to be executed.
@@ -110,7 +102,7 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     pub(crate) fn push_prim(
-        &mut self, primitive: Primitive, vertices: &[GliumVertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
+        &mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
     ) {
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;

@@ -4,8 +4,6 @@ use crate::image::ImageRef;
 
 mod color;
 pub use color::Color;
-mod vertex;
-pub use vertex::Vertex;
 mod texcoord;
 pub use texcoord::*;
 mod context;
