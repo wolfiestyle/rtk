@@ -1,7 +1,6 @@
 //! Types used to communicate with the drawing backend.
 use crate::geometry::{Alignment, HAlign, Position, Rect, VAlign};
 use crate::image::ImageRef;
-use std::borrow::Cow;
 
 mod color;
 pub use color::Color;
@@ -9,56 +8,10 @@ mod vertex;
 pub use vertex::Vertex;
 mod texcoord;
 pub use texcoord::*;
-mod queue;
-pub use queue::*;
 mod context;
 pub use context::DrawContext;
 mod backend;
 pub use backend::*;
-
-/// Types of drawing primitives.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Primitive {
-    Points,
-    Lines,
-    LineStrip,
-    Triangles,
-    TriangleStrip,
-    TriangleFan,
-}
-
-/// Primitive draw command detail.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DrawCmdPrim {
-    /// The primitive to draw.
-    pub primitive: Primitive,
-    /// Offset inside the shared index buffer on the draw queue.
-    pub idx_offset: usize,
-    /// Length of the indices slice.
-    pub idx_len: usize,
-    /// Image to use for this draw command.
-    pub texture: Option<ImageRef>,
-    /// Clipping viewport.
-    pub viewport: Rect,
-}
-
-/// Text draw command detail.
-#[derive(Debug, Clone, PartialEq)]
-pub struct DrawCmdText {
-    pub text: Cow<'static, str>,
-    pub font_desc: Cow<'static, str>,
-    pub mode: TextDrawMode,
-    pub color: Color,
-    pub viewport: Rect,
-}
-
-/// A single draw command.
-#[derive(Debug, Clone, PartialEq)]
-pub enum DrawCommand {
-    Clear(Color, Rect),
-    Primitives(DrawCmdPrim),
-    Text(DrawCmdText),
-}
 
 /// Drawing fill mode.
 #[derive(Debug, Clone, PartialEq)]

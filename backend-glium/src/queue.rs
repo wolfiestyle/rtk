@@ -1,21 +1,89 @@
-use crate::draw::{Color, DrawBackend, DrawCmdPrim, DrawCmdText, DrawCommand, FillMode, Primitive, TexCoord, TextDrawMode, Vertex};
-use crate::geometry::Point;
-use crate::geometry::Rect;
-use crate::image::ImageRef;
 use std::borrow::Cow;
+use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode, Vertex};
+use widgets::geometry::Point;
+use widgets::geometry::Rect;
+use widgets::image::ImageRef;
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct GliumVertex {
+    pos: [f32; 2],
+    color: [f32; 4],
+    texc: [f32; 2],
+}
+
+glium::implement_vertex!(GliumVertex, pos, color, texc);
+
+impl Vertex for GliumVertex {
+    fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
+        Self {
+            pos: pos.components(),
+            color: color.components(),
+            texc: texc.components(),
+        }
+    }
+
+    fn translate(self, offset: Point<f32>) -> Self {
+        Self {
+            pos: (offset + self.pos.into()).components(),
+            color: self.color,
+            texc: self.texc,
+        }
+    }
+}
+
+/// Types of drawing primitives.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Primitive {
+    Points,
+    Lines,
+    Triangles,
+}
+
+/// Primitive draw command detail.
+#[derive(Debug, Clone)]
+pub struct DrawCmdPrim {
+    /// The primitive to draw.
+    pub primitive: Primitive,
+    /// Offset inside the shared index buffer on the draw queue.
+    pub idx_offset: usize,
+    /// Length of the indices slice.
+    pub idx_len: usize,
+    /// Image to use for this draw command.
+    pub texture: Option<ImageRef>,
+    /// Clipping viewport.
+    pub viewport: Rect,
+}
+
+/// Text draw command detail.
+#[derive(Debug, Clone)]
+pub struct DrawCmdText {
+    pub text: Cow<'static, str>,
+    pub font_desc: Cow<'static, str>,
+    pub mode: TextDrawMode,
+    pub color: Color,
+    pub viewport: Rect,
+}
+
+/// A single draw command.
+#[derive(Debug, Clone)]
+pub enum DrawCommand {
+    Clear(Color, Rect),
+    Primitives(DrawCmdPrim),
+    Text(DrawCmdText),
+}
 
 /// Buffer with draw commands to be sent to the backend.
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct DrawQueue<V> {
+#[derive(Debug, Clone, Default)]
+pub struct DrawQueue {
     /// Shared vertex buffer.
-    pub vertices: Vec<V>,
+    pub vertices: Vec<GliumVertex>,
     /// Shared index buffer.
     pub indices: Vec<u32>,
     /// List of draw commands to be executed.
     pub commands: Vec<DrawCommand>,
 }
 
-impl<V: Vertex> DrawQueue<V> {
+impl DrawQueue {
     /// Clears all data from the draw queue.
     #[inline]
     pub fn clear(&mut self) {
@@ -41,7 +109,9 @@ impl<V: Vertex> DrawQueue<V> {
     }
 
     /// Adds raw elements to the draw queue.
-    pub(crate) fn push_prim(&mut self, primitive: Primitive, vertices: &[V], indices: &[u32], texture: Option<ImageRef>, viewport: Rect) {
+    pub(crate) fn push_prim(
+        &mut self, primitive: Primitive, vertices: &[GliumVertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect,
+    ) {
         // append vertices to the buffer
         let base_vert = self.vertices.len() as u32;
         self.vertices.extend(vertices);
@@ -78,23 +148,26 @@ impl<V: Vertex> DrawQueue<V> {
     }
 }
 
-//FIXME: temporary impl until we remove DrawQueue
-impl<V: Vertex> DrawBackend for DrawQueue<V> {
+impl DrawBackend for DrawQueue {
+    #[inline]
     fn clear(&mut self, color: Color, viewport: Rect) {
         self.push_clear(color, viewport)
     }
 
+    #[inline]
     fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
         let verts = [Vertex::new(pos, fill.color(), texc)];
         self.push_prim(Primitive::Points, &verts, &[0], fill.texture(), viewport)
     }
 
+    #[inline]
     fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
         let color = fill.color();
         let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
         self.push_prim(Primitive::Lines, &verts, &[0, 1], fill.texture(), viewport)
     }
 
+    #[inline]
     fn draw_triangle(&mut self, pos: [Point<f32>; 3], texc: [TexCoord; 3], fill: FillMode, viewport: Rect) {
         let color = fill.color();
         let verts = [
@@ -105,6 +178,7 @@ impl<V: Vertex> DrawBackend for DrawQueue<V> {
         self.push_prim(Primitive::Triangles, &verts, &[0, 1, 2], fill.texture(), viewport)
     }
 
+    #[inline]
     fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
         self.push_text(text.to_owned().into(), font_desc.to_owned().into(), mode, color, viewport)
     }
