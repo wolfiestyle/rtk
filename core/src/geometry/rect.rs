@@ -119,11 +119,6 @@ impl Rect {
     }
 
     #[inline]
-    pub fn components(self) -> (i32, i32, u32, u32) {
-        (self.pos.x, self.pos.y, self.size.w, self.size.h)
-    }
-
-    #[inline]
     pub fn contains(self, p: Position) -> bool {
         p.x >= self.x() && p.x <= self.end_x() && p.y >= self.y() && p.y <= self.end_y()
     }
@@ -307,5 +302,19 @@ impl From<(i32, i32, u32, u32)> for Rect {
     #[inline]
     fn from((x, y, w, h): (i32, i32, u32, u32)) -> Self {
         Rect::from_components(x, y, w, h)
+    }
+}
+
+impl From<Rect> for (Position, Size) {
+    #[inline]
+    fn from(rect: Rect) -> Self {
+        (rect.pos, rect.size)
+    }
+}
+
+impl From<Rect> for (i32, i32, u32, u32) {
+    #[inline]
+    fn from(rect: Rect) -> Self {
+        (rect.pos.x, rect.pos.y, rect.size.w, rect.size.h)
     }
 }

@@ -16,15 +16,15 @@ glium::implement_vertex!(GliumVertex, pos, color, texc);
 impl Vertex for GliumVertex {
     fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
         Self {
-            pos: pos.components(),
-            color: color.components(),
-            texc: texc.components(),
+            pos: pos.into(),
+            color: color.into(),
+            texc: texc.into(),
         }
     }
 
     fn translate(self, offset: Point<f32>) -> Self {
         Self {
-            pos: (offset + self.pos.into()).components(),
+            pos: (offset + self.pos.into()).into(),
             color: self.color,
             texc: self.texc,
         }

@@ -29,11 +29,6 @@ impl<T> Point<T> {
     }
 
     #[inline]
-    pub fn components(self) -> [T; 2] {
-        [self.x, self.y]
-    }
-
-    #[inline]
     pub fn offset(self, dx: T, dy: T) -> Self
     where
         T: ops::Add<Output = T>,
@@ -183,6 +178,20 @@ impl<T> From<(T, T)> for Point<T> {
     #[inline]
     fn from((x, y): (T, T)) -> Self {
         Self { x, y }
+    }
+}
+
+impl<T> From<Point<T>> for [T; 2] {
+    #[inline]
+    fn from(p: Point<T>) -> Self {
+        [p.x, p.y]
+    }
+}
+
+impl<T> From<Point<T>> for (T, T) {
+    #[inline]
+    fn from(p: Point<T>) -> Self {
+        (p.x, p.y)
     }
 }
 

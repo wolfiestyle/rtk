@@ -117,11 +117,6 @@ impl Color {
     }
 
     #[inline]
-    pub fn components(self) -> [f32; 4] {
-        [self.r, self.g, self.b, self.a]
-    }
-
-    #[inline]
     pub const fn red(r: f32) -> Self {
         Color::rgb(r, 0.0, 0.0)
     }
@@ -238,6 +233,20 @@ impl From<[u8; 3]> for Color {
     #[inline]
     fn from([r, g, b]: [u8; 3]) -> Self {
         Color::srgb8(r, g, b)
+    }
+}
+
+impl From<Color> for [f32; 4] {
+    #[inline]
+    fn from(c: Color) -> Self {
+        [c.r, c.g, c.b, c.a]
+    }
+}
+
+impl From<Color> for (f32, f32, f32, f32) {
+    #[inline]
+    fn from(c: Color) -> Self {
+        (c.r, c.g, c.b, c.a)
     }
 }
 

@@ -111,11 +111,6 @@ impl Size {
         }
     }
 
-    #[inline]
-    pub fn components(self) -> [u32; 2] {
-        [self.w, self.h]
-    }
-
     implement_map!(u32, w, h);
 }
 
@@ -130,6 +125,20 @@ impl From<(u32, u32)> for Size {
     #[inline]
     fn from((w, h): (u32, u32)) -> Self {
         Self { w, h }
+    }
+}
+
+impl From<Size> for [u32; 2] {
+    #[inline]
+    fn from(s: Size) -> Self {
+        [s.w, s.h]
+    }
+}
+
+impl From<Size> for (u32, u32) {
+    #[inline]
+    fn from(s: Size) -> Self {
+        (s.w, s.h)
     }
 }
 

@@ -49,13 +49,6 @@ impl Border {
         self.top + self.bottom
     }
 
-    /// Obtains the components as an array.
-    /// The returned array contains `[left, right, top, bottom]`.
-    #[inline]
-    pub fn components(self) -> [u32; 4] {
-        [self.left, self.right, self.top, self.bottom]
-    }
-
     /// Applies this border definition to the specified Rect.
     ///
     /// This produces up to four non-overlapping rectangles.
@@ -99,5 +92,19 @@ impl Border {
                 },
             });
         }
+    }
+}
+
+impl From<Border> for [u32; 4] {
+    #[inline]
+    fn from(b: Border) -> Self {
+        [b.left, b.right, b.top, b.bottom]
+    }
+}
+
+impl From<Border> for (u32, u32, u32, u32) {
+    #[inline]
+    fn from(b: Border) -> Self {
+        (b.left, b.right, b.top, b.bottom)
     }
 }

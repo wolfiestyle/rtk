@@ -92,7 +92,7 @@ impl<T: TopLevel> GliumWindow<T> {
                             .unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
-                            vp_size: win_size.as_pointf().components(),
+                            vp_size: <[f32; 2]>::from(win_size.as_pointf()),
                             tex: texture.sampled()
                                 .wrap_function(glium::uniforms::SamplerWrapFunction::Repeat)
                                 .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
@@ -193,7 +193,7 @@ fn to_glium_rect(rect: widgets::geometry::Rect, win_height: u32) -> glium::Rect 
 }
 
 fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTexture2d, TextureCreationError> {
-    let [width, height] = image.get_size().components();
+    let (width, height) = image.get_size().into();
     match image.get_data() {
         None => SrgbTexture2d::empty(display, width, height),
         Some(ImageData::U8(vec)) => {

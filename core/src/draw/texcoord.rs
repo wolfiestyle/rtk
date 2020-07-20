@@ -27,11 +27,6 @@ impl TexCoord {
         }
     }
 
-    #[inline]
-    pub fn components(self) -> [f32; 2] {
-        [self.u, self.v]
-    }
-
     implement_map!(f32, u, v);
 }
 
@@ -53,6 +48,20 @@ impl From<Point<f32>> for TexCoord {
     #[inline]
     fn from(Point { x: u, y: v }: Point<f32>) -> Self {
         TexCoord { u, v }
+    }
+}
+
+impl From<TexCoord> for [f32; 2] {
+    #[inline]
+    fn from(t: TexCoord) -> Self {
+        [t.u, t.v]
+    }
+}
+
+impl From<TexCoord> for (f32, f32) {
+    #[inline]
+    fn from(t: TexCoord) -> Self {
+        (t.u, t.v)
     }
 }
 
@@ -106,11 +115,6 @@ impl TexRect {
         }
     }
 
-    #[inline]
-    pub fn components(self) -> [TexCoord; 2] {
-        [self.top_left, self.bot_right]
-    }
-
     implement_map!(TexCoord, top_left, bot_right);
 }
 
@@ -125,6 +129,20 @@ impl From<(TexCoord, TexCoord)> for TexRect {
     #[inline]
     fn from((top_left, bot_right): (TexCoord, TexCoord)) -> Self {
         Self { top_left, bot_right }
+    }
+}
+
+impl From<TexRect> for [TexCoord; 2] {
+    #[inline]
+    fn from(tr: TexRect) -> Self {
+        [tr.top_left, tr.bot_right]
+    }
+}
+
+impl From<TexRect> for (TexCoord, TexCoord) {
+    #[inline]
+    fn from(tr: TexRect) -> Self {
+        (tr.top_left, tr.bot_right)
     }
 }
 
