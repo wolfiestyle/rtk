@@ -60,7 +60,6 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
     fn draw(&mut self) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
-        self.draw_queue.load_textures();
         self.draw_queue.execute(self.cur_attr.size);
     }
 

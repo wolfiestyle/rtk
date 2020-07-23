@@ -4,6 +4,7 @@ use glium::{uniform, Surface};
 use std::borrow::Cow;
 use std::fmt;
 use std::ops::Range;
+use std::sync::Arc;
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
 use widgets::geometry::{Point, Rect, Size};
@@ -44,7 +45,7 @@ struct DrawCmdPrim {
     /// Range inside the shared vertex buffer.
     vert_range: Range<usize>,
     /// Image to use for this draw command.
-    texture: Option<ImageRef>,
+    texture: Option<Arc<SrgbTexture2d>>,
     /// Clipping viewport.
     viewport: Rect,
 }
@@ -74,7 +75,7 @@ pub struct DrawQueue {
     vertices: Vec<Vertex>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
+    texture_map: WeakKeyHashMap<ImageWeakRef, Arc<SrgbTexture2d>>,
     t_white: SrgbTexture2d,
     program: glium::Program,
     pub display: glium::Display,
@@ -104,12 +105,20 @@ impl DrawQueue {
     pub fn clear(&mut self) {
         self.vertices.clear();
         self.commands.clear();
+        self.texture_map.remove_expired();
     }
 
     /// Checks if the last draw command has the same state of the incoming one.
-    fn get_last_cmd_if_compatible(&mut self, primitive: Primitive, viewport: Rect, texture: &Option<ImageRef>) -> Option<&mut DrawCmdPrim> {
+    fn get_last_cmd_if_compatible(
+        &mut self, primitive: Primitive, viewport: Rect, texture: &Option<Arc<SrgbTexture2d>>,
+    ) -> Option<&mut DrawCmdPrim> {
+        use glium::GlObject;
+
         if let Some(DrawCommand::Primitives(cmd)) = self.commands.last_mut() {
-            if cmd.primitive == primitive && &cmd.texture == texture && cmd.viewport == viewport {
+            if cmd.primitive == primitive
+                && cmd.viewport == viewport
+                && cmd.texture.as_ref().map(|t| t.get_id()) == texture.as_ref().map(|t| t.get_id())
+            {
                 return Some(cmd);
             }
         }
@@ -123,7 +132,7 @@ impl DrawQueue {
     }
 
     /// Adds raw elements to the draw queue.
-    fn push_prim(&mut self, primitive: Primitive, vertices: &[Vertex], texture: Option<ImageRef>, viewport: Rect) {
+    fn push_prim(&mut self, primitive: Primitive, vertices: &[Vertex], texture: Option<Arc<SrgbTexture2d>>, viewport: Rect) {
         // check if the previous draw command can be reused
         if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {
             // we only need to add more indices
@@ -154,17 +163,12 @@ impl DrawQueue {
         }));
     }
 
-    pub fn load_textures(&mut self) {
-        self.texture_map.remove_expired();
-
-        for cmd in &self.commands {
-            if let DrawCommand::Primitives(DrawCmdPrim { texture: Some(image), .. }) = cmd {
-                let display = &self.display;
-                self.texture_map
-                    .entry(image.clone())
-                    .or_insert_with(|| to_glium_texture(image, display).unwrap());
-            }
-        }
+    fn load_texture(&mut self, image: &ImageRef) -> Arc<SrgbTexture2d> {
+        let display = &self.display;
+        self.texture_map
+            .entry(image.clone())
+            .or_insert_with(|| to_glium_texture(image, display).unwrap().into())
+            .clone()
     }
 
     /// Runs the stored draw commands.
@@ -191,11 +195,7 @@ impl DrawQueue {
                         // indices reference a single shared vertex buffer
                         let vertices = vertex_buf.slice(cmd.vert_range.clone()).unwrap();
                         // get texture to use
-                        let texture = cmd
-                            .texture
-                            .as_ref()
-                            .and_then(|img| self.texture_map.get(img))
-                            .unwrap_or(&self.t_white);
+                        let texture = cmd.texture.as_ref().map(AsRef::as_ref).unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
@@ -234,26 +234,29 @@ impl DrawBackend for DrawQueue {
 
     #[inline]
     fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
+        let texture = fill.texture().map(|img| self.load_texture(&img));
         let verts = [Vertex::new(pos, fill.color(), texc)];
-        self.push_prim(Primitive::Points, &verts, fill.texture(), viewport)
+        self.push_prim(Primitive::Points, &verts, texture, viewport)
     }
 
     #[inline]
     fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
         let color = fill.color();
+        let texture = fill.texture().map(|img| self.load_texture(&img));
         let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
-        self.push_prim(Primitive::Lines, &verts, fill.texture(), viewport)
+        self.push_prim(Primitive::Lines, &verts, texture, viewport)
     }
 
     #[inline]
     fn draw_triangle(&mut self, pos: [Point<f32>; 3], texc: [TexCoord; 3], fill: FillMode, viewport: Rect) {
         let color = fill.color();
+        let texture = fill.texture().map(|img| self.load_texture(&img));
         let verts = [
             Vertex::new(pos[0], color, texc[0]),
             Vertex::new(pos[1], color, texc[1]),
             Vertex::new(pos[2], color, texc[2]),
         ];
-        self.push_prim(Primitive::Triangles, &verts, fill.texture(), viewport)
+        self.push_prim(Primitive::Triangles, &verts, texture, viewport)
     }
 
     #[inline]
