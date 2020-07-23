@@ -3,6 +3,7 @@ use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Tex
 use glium::{uniform, Surface};
 use std::borrow::Cow;
 use std::fmt;
+use std::ops::Range;
 use weak_table::WeakKeyHashMap;
 use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
 use widgets::geometry::{Point, Rect, Size};
@@ -40,10 +41,8 @@ pub enum Primitive {
 struct DrawCmdPrim {
     /// The primitive to draw.
     primitive: Primitive,
-    /// Offset inside the shared index buffer on the draw queue.
-    idx_offset: usize,
-    /// Length of the indices slice.
-    idx_len: usize,
+    /// Range inside the shared vertex buffer.
+    vert_range: Range<usize>,
     /// Image to use for this draw command.
     texture: Option<ImageRef>,
     /// Clipping viewport.
@@ -73,8 +72,6 @@ enum DrawCommand {
 pub struct DrawQueue {
     /// Shared vertex buffer.
     vertices: Vec<Vertex>,
-    /// Shared index buffer.
-    indices: Vec<u32>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
     texture_map: WeakKeyHashMap<ImageWeakRef, SrgbTexture2d>,
@@ -94,7 +91,6 @@ impl DrawQueue {
 
         Self {
             vertices: Default::default(),
-            indices: Default::default(),
             commands: Default::default(),
             program,
             texture_map: Default::default(),
@@ -107,7 +103,6 @@ impl DrawQueue {
     #[inline]
     pub fn clear(&mut self) {
         self.vertices.clear();
-        self.indices.clear();
         self.commands.clear();
     }
 
@@ -128,26 +123,23 @@ impl DrawQueue {
     }
 
     /// Adds raw elements to the draw queue.
-    fn push_prim(&mut self, primitive: Primitive, vertices: &[Vertex], indices: &[u32], texture: Option<ImageRef>, viewport: Rect) {
-        // append vertices to the buffer
-        let base_vert = self.vertices.len() as u32;
-        self.vertices.extend(vertices);
+    fn push_prim(&mut self, primitive: Primitive, vertices: &[Vertex], texture: Option<ImageRef>, viewport: Rect) {
         // check if the previous draw command can be reused
         if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {
             // we only need to add more indices
-            cmd.idx_len += indices.len();
+            cmd.vert_range.end += vertices.len();
         } else {
             // state change, we need to create a new draw command
+            let base_vert = self.vertices.len();
             self.commands.push(DrawCommand::Primitives(DrawCmdPrim {
                 primitive,
-                idx_offset: self.indices.len(),
-                idx_len: indices.len(),
+                vert_range: base_vert..base_vert + vertices.len(),
                 texture,
                 viewport,
             }));
         }
-        // indices are added with an offset pointing to a single vertex buffer
-        self.indices.extend(indices.iter().map(|i| i + base_vert));
+        // append vertices to the buffer
+        self.vertices.extend(vertices);
     }
 
     /// Adds a draw text command to the draw queue.
@@ -197,8 +189,7 @@ impl DrawQueue {
                             Primitive::Triangles => PrimitiveType::TrianglesList,
                         };
                         // indices reference a single shared vertex buffer
-                        let indices = &self.indices[cmd.idx_offset..cmd.idx_offset + cmd.idx_len];
-                        let index_buf = glium::IndexBuffer::new(&self.display, mode, indices).unwrap();
+                        let vertices = vertex_buf.slice(cmd.vert_range.clone()).unwrap();
                         // get texture to use
                         let texture = cmd
                             .texture
@@ -220,7 +211,7 @@ impl DrawQueue {
                         };
                         // perform the draw command
                         target
-                            .draw(&vertex_buf, &index_buf, &self.program, &uniforms, &draw_params)
+                            .draw(vertices, &glium::index::NoIndices(mode), &self.program, &uniforms, &draw_params)
                             .unwrap();
                     }
                 }
@@ -244,14 +235,14 @@ impl DrawBackend for DrawQueue {
     #[inline]
     fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
         let verts = [Vertex::new(pos, fill.color(), texc)];
-        self.push_prim(Primitive::Points, &verts, &[0], fill.texture(), viewport)
+        self.push_prim(Primitive::Points, &verts, fill.texture(), viewport)
     }
 
     #[inline]
     fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
         let color = fill.color();
         let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
-        self.push_prim(Primitive::Lines, &verts, &[0, 1], fill.texture(), viewport)
+        self.push_prim(Primitive::Lines, &verts, fill.texture(), viewport)
     }
 
     #[inline]
@@ -262,7 +253,7 @@ impl DrawBackend for DrawQueue {
             Vertex::new(pos[1], color, texc[1]),
             Vertex::new(pos[2], color, texc[2]),
         ];
-        self.push_prim(Primitive::Triangles, &verts, &[0, 1, 2], fill.texture(), viewport)
+        self.push_prim(Primitive::Triangles, &verts, fill.texture(), viewport)
     }
 
     #[inline]
@@ -275,7 +266,6 @@ impl fmt::Debug for DrawQueue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("GliumWindow")
             .field("vertices", &self.vertices)
-            .field("indices", &self.indices)
             .field("commands", &self.commands)
             .field("texture_map", &self.texture_map)
             .field("t_white", &self.t_white)
