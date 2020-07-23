@@ -50,22 +50,11 @@ struct DrawCmdPrim {
     viewport: Rect,
 }
 
-/// Text draw command detail.
-#[derive(Debug, Clone)]
-struct DrawCmdText {
-    text: Cow<'static, str>,
-    font_desc: Cow<'static, str>,
-    mode: TextDrawMode,
-    color: Color,
-    viewport: Rect,
-}
-
 /// A single draw command.
 #[derive(Debug, Clone)]
 enum DrawCommand {
     Clear(Color, Rect),
     Primitives(DrawCmdPrim),
-    Text(DrawCmdText),
 }
 
 /// Buffer with draw commands to be sent to the backend.
@@ -151,18 +140,6 @@ impl DrawQueue {
         self.vertices.extend(vertices);
     }
 
-    /// Adds a draw text command to the draw queue.
-    #[inline]
-    fn push_text(&mut self, text: Cow<'static, str>, font_desc: Cow<'static, str>, mode: TextDrawMode, color: Color, viewport: Rect) {
-        self.commands.push(DrawCommand::Text(DrawCmdText {
-            text,
-            font_desc,
-            mode,
-            color,
-            viewport,
-        }));
-    }
-
     fn load_texture(&mut self, image: &ImageRef) -> Arc<SrgbTexture2d> {
         let display = &self.display;
         self.texture_map
@@ -215,10 +192,6 @@ impl DrawQueue {
                             .unwrap();
                     }
                 }
-                DrawCommand::Text(cmd) => {
-                    //TODO: implement text drawing
-                    dbg!(cmd);
-                }
             }
         }
 
@@ -259,9 +232,10 @@ impl DrawBackend for DrawQueue {
         self.push_prim(Primitive::Triangles, &verts, texture, viewport)
     }
 
+    #[allow(unused_variables)]
     #[inline]
     fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
-        self.push_text(text.to_owned().into(), font_desc.to_owned().into(), mode, color, viewport)
+        todo!() //TODO: implement text drawing
     }
 }
 
