@@ -1,6 +1,6 @@
 //! Types used to communicate with the drawing backend.
 use crate::geometry::{Alignment, HAlign, Position, Rect, VAlign};
-use crate::image::ImageRef;
+use crate::image::Image;
 
 mod color;
 pub use color::Color;
@@ -13,13 +13,13 @@ pub use backend::*;
 
 /// Drawing fill mode.
 #[derive(Debug, Clone, PartialEq)]
-pub enum FillMode {
+pub enum FillMode<'a> {
     Color(Color),
-    Texture(ImageRef),
-    ColoredTexture(ImageRef, Color),
+    Texture(&'a Image),
+    ColoredTexture(&'a Image, Color),
 }
 
-impl FillMode {
+impl FillMode<'_> {
     #[inline]
     pub fn color(&self) -> Color {
         match self {
@@ -29,24 +29,24 @@ impl FillMode {
     }
 
     #[inline]
-    pub fn texture(&self) -> Option<ImageRef> {
+    pub fn texture(&self) -> Option<&Image> {
         match self {
-            FillMode::Texture(img) | FillMode::ColoredTexture(img, _) => Some(img.clone()),
+            FillMode::Texture(img) | FillMode::ColoredTexture(img, _) => Some(img),
             _ => None,
         }
     }
 }
 
-impl From<Color> for FillMode {
+impl From<Color> for FillMode<'_> {
     #[inline]
     fn from(color: Color) -> Self {
         FillMode::Color(color)
     }
 }
 
-impl From<ImageRef> for FillMode {
+impl<'a> From<&'a Image> for FillMode<'a> {
     #[inline]
-    fn from(img: ImageRef) -> Self {
+    fn from(img: &'a Image) -> Self {
         FillMode::Texture(img)
     }
 }

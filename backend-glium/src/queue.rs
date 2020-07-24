@@ -2,13 +2,13 @@ use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, TextureCreationError};
 use glium::{uniform, Surface};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
 use std::sync::Arc;
-use weak_table::WeakKeyHashMap;
 use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
 use widgets::geometry::{Point, Rect, Size};
-use widgets::image::{Image, ImageData, ImageRef, ImageWeakRef, PixelFormat};
+use widgets::image::{Image, ImageData, ImageId, PixelFormat};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
@@ -64,7 +64,7 @@ pub struct DrawQueue {
     vertices: Vec<Vertex>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    texture_map: WeakKeyHashMap<ImageWeakRef, Arc<SrgbTexture2d>>,
+    texture_map: HashMap<ImageId, Arc<SrgbTexture2d>>,
     t_white: SrgbTexture2d,
     program: glium::Program,
     pub display: glium::Display,
@@ -94,7 +94,7 @@ impl DrawQueue {
     pub fn clear(&mut self) {
         self.vertices.clear();
         self.commands.clear();
-        self.texture_map.remove_expired();
+        //self.texture_map.remove_expired();  //TODO: GC old textures
     }
 
     /// Checks if the last draw command has the same state of the incoming one.
@@ -140,10 +140,10 @@ impl DrawQueue {
         self.vertices.extend(vertices);
     }
 
-    fn load_texture(&mut self, image: &ImageRef) -> Arc<SrgbTexture2d> {
+    fn load_texture(&mut self, image: &Image) -> Arc<SrgbTexture2d> {
         let display = &self.display;
         self.texture_map
-            .entry(image.clone())
+            .entry(image.get_id())
             .or_insert_with(|| to_glium_texture(image, display).unwrap().into())
             .clone()
     }
@@ -207,7 +207,7 @@ impl DrawBackend for DrawQueue {
 
     #[inline]
     fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
-        let texture = fill.texture().map(|img| self.load_texture(&img));
+        let texture = fill.texture().map(|img| self.load_texture(img));
         let verts = [Vertex::new(pos, fill.color(), texc)];
         self.push_prim(Primitive::Points, &verts, texture, viewport)
     }
@@ -215,7 +215,7 @@ impl DrawBackend for DrawQueue {
     #[inline]
     fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
         let color = fill.color();
-        let texture = fill.texture().map(|img| self.load_texture(&img));
+        let texture = fill.texture().map(|img| self.load_texture(img));
         let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
         self.push_prim(Primitive::Lines, &verts, texture, viewport)
     }
@@ -223,7 +223,7 @@ impl DrawBackend for DrawQueue {
     #[inline]
     fn draw_triangle(&mut self, pos: [Point<f32>; 3], texc: [TexCoord; 3], fill: FillMode, viewport: Rect) {
         let color = fill.color();
-        let texture = fill.texture().map(|img| self.load_texture(&img));
+        let texture = fill.texture().map(|img| self.load_texture(img));
         let verts = [
             Vertex::new(pos[0], color, texc[0]),
             Vertex::new(pos[1], color, texc[1]),

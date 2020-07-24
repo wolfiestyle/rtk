@@ -1,6 +1,6 @@
 use widgets::draw::{TexCoord, TexRect};
 use widgets::geometry::VAlign;
-use widgets::image::{Image, ImageRef};
+use widgets::image::Image;
 use widgets::layout;
 use widgets::prelude::*;
 use widgets_derive::{Bounds, ObjectId, Visitable};
@@ -14,7 +14,7 @@ struct TestWidget {
     id: WidgetId,
     hover: bool,
     vp_orig: Position,
-    image: ImageRef,
+    image: Image,
     #[visit_iter]
     childs: Vec<TestWidget2>,
 }
@@ -48,7 +48,7 @@ impl Widget for TestWidget {
 
         //dc.clear(color);
         let crop = TexRect::default() + TexCoord::new(0.1, 0.2);
-        dc.draw_image_rect((dc.vp_orig, self.bounds.size), color, self.image.clone(), crop);
+        dc.draw_image_rect((dc.vp_orig, self.bounds.size), color, &self.image, crop);
 
         for child in &self.childs {
             dc.draw_child(child);
@@ -152,7 +152,7 @@ fn main() {
         hover: false,
         vp_orig: Default::default(),
         id: WidgetId::new(),
-        image: Image::from_file("image.jpg").unwrap().into(),
+        image: Image::from_file("image.jpg").unwrap(),
         childs: Vec::new(),
     };
 

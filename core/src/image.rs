@@ -4,13 +4,9 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Weak};
 
 #[cfg(feature = "image")]
 use image::{DynamicImage, ImageBuffer, ImageResult, Luma, LumaA, Primitive, Rgb, Rgba};
-
-pub type ImageRef = Arc<Image>;
-pub type ImageWeakRef = Weak<Image>;
 
 /// An image to be used for drawing operations.
 #[derive(Debug)]
@@ -78,6 +74,11 @@ impl Image {
     #[inline]
     pub fn get_format(&self) -> PixelFormat {
         self.format
+    }
+
+    #[inline]
+    pub fn get_id(&self) -> ImageId {
+        self.id
     }
 }
 
@@ -263,7 +264,7 @@ impl PixelComponent for f32 {
 
 /// Unique image id (used for hashing).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct ImageId(usize);
+pub struct ImageId(usize);
 
 static IMAGE_ID: AtomicUsize = AtomicUsize::new(1);
 

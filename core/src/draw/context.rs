@@ -1,6 +1,6 @@
 use crate::draw::{Color, DrawBackend, FillMode, TexRect, TextDrawMode};
 use crate::geometry::{Point, Position, Rect};
-use crate::image::ImageRef;
+use crate::image::Image;
 use crate::widget::Widget;
 use array_ext::Array;
 
@@ -96,7 +96,7 @@ impl<'a, B: DrawBackend> DrawContext<'a, B> {
 
     /// Draws an image.
     #[inline]
-    pub fn draw_image(&mut self, pos: impl Into<Position>, image: ImageRef) {
+    pub fn draw_image(&mut self, pos: impl Into<Position>, image: &Image) {
         let rect = Rect::new(pos.into() + self.offset, image.get_size());
         self.backend
             .draw_rect(rect, Default::default(), FillMode::Texture(image), self.viewport)
@@ -105,7 +105,7 @@ impl<'a, B: DrawBackend> DrawContext<'a, B> {
     /// Draws a rectangle with an image.
     #[inline]
     pub fn draw_image_rect(
-        &mut self, rect: impl Into<Rect>, color: impl Into<Color>, image: ImageRef, image_crop: impl Into<Option<TexRect>>,
+        &mut self, rect: impl Into<Rect>, color: impl Into<Color>, image: &Image, image_crop: impl Into<Option<TexRect>>,
     ) {
         let rect = rect.into().offset(self.offset);
         self.backend.draw_rect(
