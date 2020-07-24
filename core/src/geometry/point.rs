@@ -1,5 +1,5 @@
 use crate::geometry::{Rect, Size};
-use num_traits::{Float, NumCast, PrimInt};
+use num_traits::{AsPrimitive, Float, NumCast, PrimInt};
 use std::ops;
 
 /// Defines a position in 2D cartesian coordinates.
@@ -94,12 +94,12 @@ impl<T> Point<T> {
     #[inline]
     pub fn cast<R>(self) -> Point<R>
     where
-        T: NumCast,
-        R: NumCast + Default,
+        T: AsPrimitive<R>,
+        R: Copy + 'static,
     {
         Point {
-            x: num_traits::cast(self.x).unwrap_or_default(),
-            y: num_traits::cast(self.y).unwrap_or_default(),
+            x: self.x.as_(),
+            y: self.y.as_(),
         }
     }
 
@@ -116,12 +116,12 @@ impl<T> Point<T> {
     }
 }
 
-impl<T: PrimInt> Point<T> {
+impl<T: PrimInt + AsPrimitive<u32>> Point<T> {
     #[inline]
     pub fn as_size(self) -> Size {
         Size {
-            w: self.x.max(T::zero()).to_u32().unwrap_or(u32::MAX),
-            h: self.y.max(T::zero()).to_u32().unwrap_or(u32::MAX),
+            w: self.x.max(T::zero()).as_(),
+            h: self.y.max(T::zero()).as_(),
         }
     }
 }

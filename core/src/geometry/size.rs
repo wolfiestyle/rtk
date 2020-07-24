@@ -1,5 +1,5 @@
 use crate::geometry::{Border, Point};
-use num_traits::NumCast;
+use num_traits::{AsPrimitive, NumCast};
 
 /// Defines the size of an object.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -97,10 +97,14 @@ impl Size {
     }
 
     #[inline]
-    pub fn as_point<T: NumCast + Default>(self) -> Point<T> {
+    pub fn as_point<T>(self) -> Point<T>
+    where
+        T: Copy + 'static,
+        u32: AsPrimitive<T>,
+    {
         Point {
-            x: num_traits::cast(self.w).unwrap_or_default(),
-            y: num_traits::cast(self.h).unwrap_or_default(),
+            x: self.w.as_(),
+            y: self.h.as_(),
         }
     }
 
