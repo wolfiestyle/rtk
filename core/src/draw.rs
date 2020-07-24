@@ -51,6 +51,20 @@ impl<'a> From<&'a Image> for FillMode<'a> {
     }
 }
 
+impl<'a> From<(Color, &'a Image)> for FillMode<'a> {
+    #[inline]
+    fn from((color, img): (Color, &'a Image)) -> Self {
+        FillMode::ColoredTexture(img, color)
+    }
+}
+
+impl<'a> From<(&'a Image, Color)> for FillMode<'a> {
+    #[inline]
+    fn from((img, color): (&'a Image, Color)) -> Self {
+        FillMode::ColoredTexture(img, color)
+    }
+}
+
 /// Defines how text should be drawn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TextDrawMode {
