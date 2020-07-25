@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
 use std::sync::Arc;
-use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
+use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TexRect, TextDrawMode};
 use widgets::geometry::{Point, Rect, Size};
 use widgets::image::{Image, ImageData, ImageId, PixelFormat};
 
@@ -232,6 +232,24 @@ impl DrawBackend for DrawQueue {
         self.push_prim(Primitive::Triangles, &verts, texture, viewport)
     }
 
+    #[inline]
+    fn draw_rect(&mut self, rect: Rect, texr: TexRect, fill: FillMode, viewport: Rect) {
+        if let Some([top_left, top_right, bot_right, bot_left]) = rect_corners(rect) {
+            self.draw_triangle(
+                [top_left, top_right, bot_right],
+                [texr.top_left(), texr.top_right(), texr.bot_right()],
+                fill.clone(),
+                viewport,
+            );
+            self.draw_triangle(
+                [bot_right, bot_left, top_left],
+                [texr.bot_right(), texr.bot_left(), texr.top_left()],
+                fill,
+                viewport,
+            );
+        }
+    }
+
     #[allow(unused_variables)]
     #[inline]
     fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
@@ -320,5 +338,18 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
             };
             SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
+    }
+}
+
+fn rect_corners(rect: Rect) -> Option<[Point<f32>; 4]> {
+    if !rect.size.is_zero_area() {
+        Some([
+            rect.top_left().cast(),
+            rect.top_right().cast(),
+            rect.bottom_right().cast(),
+            rect.bottom_left().cast(),
+        ])
+    } else {
+        None
     }
 }
