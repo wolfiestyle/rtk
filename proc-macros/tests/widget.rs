@@ -1,7 +1,5 @@
-use widgets::draw::{DrawBackend, DrawContext};
-use widgets::event::{Event, EventContext, EventResult};
-use widgets::geometry::{Bounds, Rect};
-use widgets::widget::{Empty, Widget, WidgetId};
+use widgets::prelude::*;
+use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 
 #[derive(ObjectId, Bounds, Visitable, Widget)]

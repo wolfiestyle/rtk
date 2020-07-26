@@ -1,8 +1,10 @@
 use widgets::draw::{TexCoord, TexRect};
+use widgets::event::*;
 use widgets::geometry::VAlign;
 use widgets::image::Image;
 use widgets::layout;
 use widgets::prelude::*;
+use widgets::toplevel::Window;
 use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
 

@@ -1,9 +1,6 @@
-#![allow(dead_code)]
-use widgets::draw::{DrawBackend, DrawContext};
-use widgets::event::{Event, EventContext, EventResult};
-use widgets::geometry::Rect;
+use widgets::prelude::*;
 use widgets::visitor::{ParentData, Visitor};
-use widgets::widget::{Empty, Widget, WidgetId};
+use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable};
 
 #[derive(ObjectId, Bounds, Visitable)]
