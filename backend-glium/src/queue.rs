@@ -238,7 +238,7 @@ impl DrawBackend for DrawQueue {
             self.draw_triangle(
                 [top_left, top_right, bot_right],
                 [texr.top_left(), texr.top_right(), texr.bot_right()],
-                fill.clone(),
+                fill,
                 viewport,
             );
             self.draw_triangle(
