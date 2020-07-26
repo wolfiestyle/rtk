@@ -341,13 +341,16 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
     }
 }
 
+#[inline]
 fn rect_corners(rect: Rect) -> Option<[Point<f32>; 4]> {
     if !rect.size.is_zero_area() {
+        let top_left = rect.pos.cast();
+        let bot_right = top_left + rect.size.as_point();
         Some([
-            rect.top_left().cast(),
-            rect.top_right().cast(),
-            rect.bottom_right().cast(),
-            rect.bottom_left().cast(),
+            top_left,
+            top_left.with_x(bot_right.x), // top right
+            bot_right,
+            top_left.with_y(bot_right.y), // bottom left
         ])
     } else {
         None
