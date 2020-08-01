@@ -1,10 +1,10 @@
-use crate::draw::{Color, FillMode, TexCoord, TextDrawMode};
+use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextDrawMode};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
 
 /// Drawing interface implemented by the backend.
 pub trait DrawBackend {
-    type Vertex: Copy + From<(Point<f32>, Color, TexCoord)>;
+    type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
 
     fn clear(&mut self, color: Color, viewport: Rect);
 

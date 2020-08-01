@@ -3,7 +3,7 @@ use crate::geometry::{Alignment, HAlign, Position, Rect, VAlign};
 use crate::image::Image;
 
 mod color;
-pub use color::Color;
+pub use color::*;
 mod texcoord;
 pub use texcoord::*;
 mod context;
@@ -16,15 +16,16 @@ pub use backend::*;
 pub enum FillMode<'a> {
     Color(Color),
     Texture(&'a Image, TexRect),
-    ColoredTexture(Color, &'a Image, TexRect),
+    ColoredTexture(ColorOp, &'a Image, TexRect),
 }
 
 impl FillMode<'_> {
     #[inline]
-    pub fn color(&self) -> Color {
+    pub fn color(&self) -> ColorOp {
         match self {
-            FillMode::Color(color) | FillMode::ColoredTexture(color, _, _) => *color,
-            _ => Color::WHITE,
+            FillMode::Color(color) => color.clone().into(),
+            FillMode::ColoredTexture(color, _, _) => *color,
+            _ => Default::default(),
         }
     }
 
@@ -69,6 +70,13 @@ impl<'a> From<(&'a Image, TexRect)> for FillMode<'a> {
 impl<'a> From<(Color, &'a Image)> for FillMode<'a> {
     #[inline]
     fn from((color, img): (Color, &'a Image)) -> Self {
+        FillMode::ColoredTexture(color.into(), img, Default::default())
+    }
+}
+
+impl<'a> From<(ColorOp, &'a Image)> for FillMode<'a> {
+    #[inline]
+    fn from((color, img): (ColorOp, &'a Image)) -> Self {
         FillMode::ColoredTexture(color, img, Default::default())
     }
 }
@@ -76,6 +84,13 @@ impl<'a> From<(Color, &'a Image)> for FillMode<'a> {
 impl<'a> From<(Color, &'a Image, TexRect)> for FillMode<'a> {
     #[inline]
     fn from((color, img, texr): (Color, &'a Image, TexRect)) -> Self {
+        FillMode::ColoredTexture(color.into(), img, texr)
+    }
+}
+
+impl<'a> From<(ColorOp, &'a Image, TexRect)> for FillMode<'a> {
+    #[inline]
+    fn from((color, img, texr): (ColorOp, &'a Image, TexRect)) -> Self {
         FillMode::ColoredTexture(color, img, texr)
     }
 }

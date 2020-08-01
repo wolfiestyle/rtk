@@ -252,6 +252,104 @@ impl From<Color> for (f32, f32, f32, f32) {
 
 implement_ops!(Color, f32);
 
+/// Color operation applied over a texture value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(C)]
+pub struct ColorOp {
+    /// Multiplicative component.
+    pub mul: Color,
+    /// Additive component.
+    pub add: Color,
+}
+
+impl ColorOp {
+    /// Creates a new ColorOp from components.
+    #[inline]
+    pub fn new(mul: impl Into<Color>, add: impl Into<Color>) -> Self {
+        Self {
+            mul: mul.into(),
+            add: add.into(),
+        }
+    }
+
+    /// Creates a multiplicative ColorOp.
+    #[inline]
+    pub fn mul(val: impl Into<Color>) -> Self {
+        Self {
+            mul: val.into(),
+            add: Default::default(),
+        }
+    }
+
+    /// Creates and additive ColorOp.
+    #[inline]
+    pub fn add(val: impl Into<Color>) -> Self {
+        Self {
+            mul: Color::WHITE,
+            add: val.into(),
+        }
+    }
+
+    /// Sets the multiplicative component.
+    #[inline]
+    pub fn with_mul(self, mul: Color) -> Self {
+        Self { mul, add: self.add }
+    }
+
+    /// Sets the additive component.
+    #[inline]
+    pub fn with_add(self, add: Color) -> Self {
+        Self { mul: self.mul, add }
+    }
+
+    implement_map!(Color, mul, add);
+}
+
+impl From<[Color; 2]> for ColorOp {
+    #[inline]
+    fn from([mul, add]: [Color; 2]) -> Self {
+        ColorOp { mul, add }
+    }
+}
+
+impl From<(Color, Color)> for ColorOp {
+    #[inline]
+    fn from((mul, add): (Color, Color)) -> Self {
+        ColorOp { mul, add }
+    }
+}
+
+impl From<Color> for ColorOp {
+    #[inline]
+    fn from(color: Color) -> Self {
+        ColorOp::mul(color)
+    }
+}
+
+impl From<ColorOp> for [Color; 2] {
+    #[inline]
+    fn from(c: ColorOp) -> Self {
+        [c.mul, c.add]
+    }
+}
+
+impl From<ColorOp> for (Color, Color) {
+    #[inline]
+    fn from(c: ColorOp) -> Self {
+        (c.mul, c.add)
+    }
+}
+
+impl Default for ColorOp {
+    #[inline]
+    fn default() -> Self {
+        ColorOp {
+            mul: Color::WHITE,
+            add: Default::default(),
+        }
+    }
+}
+
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {
         s / 12.92

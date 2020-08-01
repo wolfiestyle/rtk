@@ -1,4 +1,4 @@
-use widgets::draw::{TexCoord, TexRect};
+use widgets::draw::{ColorOp, TexCoord, TexRect};
 use widgets::event::*;
 use widgets::geometry::VAlign;
 use widgets::image::Image;
@@ -42,10 +42,9 @@ impl Widget for TestWidget {
     }
 
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
-        let color = if self.hover {
-            self.color.mix(Color::WHITE, 0.01)
-        } else {
-            self.color
+        let color = ColorOp {
+            mul: self.color,
+            add: if self.hover { Color::gray(0.05) } else { Default::default() },
         };
 
         //dc.clear(color);
