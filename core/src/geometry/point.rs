@@ -167,17 +167,17 @@ impl<T: Float> Point<T> {
     }
 }
 
-impl<T> From<[T; 2]> for Point<T> {
+impl<T: Copy + 'static, S: AsPrimitive<T>> From<[S; 2]> for Point<T> {
     #[inline]
-    fn from([x, y]: [T; 2]) -> Self {
-        Self { x, y }
+    fn from([x, y]: [S; 2]) -> Self {
+        Self { x: x.as_(), y: y.as_() }
     }
 }
 
-impl<T> From<(T, T)> for Point<T> {
+impl<T: Copy + 'static, S: AsPrimitive<T>> From<(S, S)> for Point<T> {
     #[inline]
-    fn from((x, y): (T, T)) -> Self {
-        Self { x, y }
+    fn from((x, y): (S, S)) -> Self {
+        Self { x: x.as_(), y: y.as_() }
     }
 }
 
@@ -201,48 +201,6 @@ impl<T: Default> From<()> for Point<T> {
         Default::default()
     }
 }
-
-macro_rules! impl_point_cast {
-    ($a:ty, $b:ty) => {
-        impl From<Point<$a>> for Point<$b> {
-            #[inline]
-            fn from(Point { x, y }: Point<$a>) -> Self {
-                Self { x: x as $b, y: y as $b }
-            }
-        }
-    };
-
-    (@arr $a:ty, $b:ty) => {
-        impl From<[$a; 2]> for Point<$b> {
-            #[inline]
-            fn from([x, y]: [$a; 2]) -> Self {
-                Self { x: x as $b, y: y as $b }
-            }
-        }
-    };
-
-    (@tup $a:ty, $b:ty) => {
-        impl From<($a, $a)> for Point<$b> {
-            #[inline]
-            fn from((x, y): ($a, $a)) -> Self {
-                Self { x: x as $b, y: y as $b }
-            }
-        }
-    };
-}
-
-impl_point_cast!(i8, f32);
-impl_point_cast!(i16, f32);
-impl_point_cast!(i32, f32);
-impl_point_cast!(i64, f32);
-impl_point_cast!(@arr i8, f32);
-impl_point_cast!(@arr i16, f32);
-impl_point_cast!(@arr i32, f32);
-impl_point_cast!(@arr i64, f32);
-impl_point_cast!(@tup i8, f32);
-impl_point_cast!(@tup i16, f32);
-impl_point_cast!(@tup i32, f32);
-impl_point_cast!(@tup i64, f32);
 
 impl<T> ops::Add for Point<T>
 where
