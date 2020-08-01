@@ -9,12 +9,12 @@ Some of the things featured:
   used in popular GUI toolkits. Things are done with just structs and traits.
 - No predefined containers: There are no things like `RelativeLayout` where you create a
   container object and add widgets into it. Any regular struct can be made a container.
-- Immediate layout: the layout process is made in a immediate way with just function calls.
+- Immediate layout: the layout process is made in an immediate way with just function calls.
   All widgets have position and size that is updated in the `update_layout` method.
 - Derivable traits: You can easily create new widgets by deriving most of the required
   traits. It's aimed to be an easy DIY widget toolkit.
 - Automatic event dispatch: event propagation in custom widgets is fully handled by the
-  library using visitors. Just derive `Visitor` and it's done.
+  library using visitors. Just derive `Visitable` and it's done.
 - Fully static dispatched: There is no dyn trait used at all. Everything is done statically
   using generics and the visitor pattern. If you need dynamic dispatch, you can derive enum
   dispatch types.
