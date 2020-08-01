@@ -15,15 +15,15 @@ pub use backend::*;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FillMode<'a> {
     Color(Color),
-    Texture(&'a Image),
-    ColoredTexture(&'a Image, Color),
+    Texture(&'a Image, TexRect),
+    ColoredTexture(Color, &'a Image, TexRect),
 }
 
 impl FillMode<'_> {
     #[inline]
     pub fn color(&self) -> Color {
         match self {
-            FillMode::Color(color) | FillMode::ColoredTexture(_, color) => *color,
+            FillMode::Color(color) | FillMode::ColoredTexture(color, _, _) => *color,
             _ => Color::WHITE,
         }
     }
@@ -31,8 +31,16 @@ impl FillMode<'_> {
     #[inline]
     pub fn texture(&self) -> Option<&Image> {
         match self {
-            FillMode::Texture(img) | FillMode::ColoredTexture(img, _) => Some(img),
+            FillMode::Texture(img, _) | FillMode::ColoredTexture(_, img, _) => Some(img),
             _ => None,
+        }
+    }
+
+    #[inline]
+    pub fn texrect(&self) -> TexRect {
+        match self {
+            FillMode::Texture(_, texr) | FillMode::ColoredTexture(_, _, texr) => *texr,
+            _ => Default::default(),
         }
     }
 }
@@ -47,21 +55,28 @@ impl From<Color> for FillMode<'_> {
 impl<'a> From<&'a Image> for FillMode<'a> {
     #[inline]
     fn from(img: &'a Image) -> Self {
-        FillMode::Texture(img)
+        FillMode::Texture(img, Default::default())
+    }
+}
+
+impl<'a> From<(&'a Image, TexRect)> for FillMode<'a> {
+    #[inline]
+    fn from((img, texr): (&'a Image, TexRect)) -> Self {
+        FillMode::Texture(img, texr)
     }
 }
 
 impl<'a> From<(Color, &'a Image)> for FillMode<'a> {
     #[inline]
     fn from((color, img): (Color, &'a Image)) -> Self {
-        FillMode::ColoredTexture(img, color)
+        FillMode::ColoredTexture(color, img, Default::default())
     }
 }
 
-impl<'a> From<(&'a Image, Color)> for FillMode<'a> {
+impl<'a> From<(Color, &'a Image, TexRect)> for FillMode<'a> {
     #[inline]
-    fn from((img, color): (&'a Image, Color)) -> Self {
-        FillMode::ColoredTexture(img, color)
+    fn from((color, img, texr): (Color, &'a Image, TexRect)) -> Self {
+        FillMode::ColoredTexture(color, img, texr)
     }
 }
 

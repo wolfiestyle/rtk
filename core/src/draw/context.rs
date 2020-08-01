@@ -1,8 +1,7 @@
-use crate::draw::{Color, DrawBackend, FillMode, TexCoord, TexRect, TextDrawMode};
+use crate::draw::{Color, DrawBackend, FillMode, TexCoord, TextDrawMode};
 use crate::geometry::{Point, Position, Rect};
 use crate::image::Image;
 use crate::widget::Widget;
-use array_ext::Array;
 
 /// Draw context attached to a widget.
 #[derive(Debug)]
@@ -53,52 +52,61 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         self.backend.clear(color.into(), self.viewport)
     }
 
-    /// Draws a point.
+    /// Draws a single triangle.
     #[inline]
-    pub fn draw_point<'a>(&mut self, p: impl Into<Point<f32>>, texc: impl Into<Option<TexCoord>>, fill: impl Into<FillMode<'a>>) {
-        let pos = p.into() + self.offset.cast();
-        self.backend
-            .draw_point(pos, texc.into().unwrap_or_default(), fill.into(), self.viewport)
-    }
-
-    /// Draws a line.
-    #[inline]
-    pub fn draw_line<'a>(
-        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, texc: impl Into<Option<[TexCoord; 2]>>,
-        fill: impl Into<FillMode<'a>>,
+    pub fn draw_triangle(
+        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>, color: impl Into<Color>,
     ) {
         let offset = self.offset.cast();
-        let verts = [p0.into(), p1.into()].map_(|p| p + offset);
+        let color = color.into();
+        let verts = [
+            (p0.into() + offset, color, Default::default()).into(),
+            (p1.into() + offset, color, Default::default()).into(),
+            (p2.into() + offset, color, Default::default()).into(),
+        ];
+        let indices = [0, 1, 2];
         self.backend
-            .draw_line(verts, texc.into().unwrap_or_default(), fill.into(), self.viewport)
+            .draw_triangles(verts.iter().copied(), indices.iter().copied(), None, self.viewport)
     }
 
-    /// Draws a triangle.
+    /// Draws triangles from vertices and indices.
     #[inline]
-    pub fn draw_triangle<'a>(
-        &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>, texc: impl Into<Option<[TexCoord; 3]>>,
-        fill: impl Into<FillMode<'a>>,
-    ) {
+    pub fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, color: impl Into<Color>)
+    where
+        V: IntoIterator<Item = Point<f32>>,
+        I: IntoIterator<Item = u32>,
+    {
         let offset = self.offset.cast();
-        let verts = [p0.into(), p1.into(), p2.into()].map_(|p| p + offset);
-        self.backend
-            .draw_triangle(verts, texc.into().unwrap_or_default(), fill.into(), self.viewport)
+        let color = color.into();
+        let verts = vertices.into_iter().map(|p| (p + offset, color, Default::default()).into());
+        self.backend.draw_triangles(verts, indices, None, self.viewport)
+    }
+
+    /// Draws textured triangles from vertices and indices.
+    #[inline]
+    pub fn draw_triangles_uv<V, I>(&mut self, vertices: V, indices: I, color: impl Into<Color>, image: &Image)
+    where
+        V: IntoIterator<Item = (Point<f32>, TexCoord)>,
+        I: IntoIterator<Item = u32>,
+    {
+        let offset = self.offset.cast();
+        let color = color.into();
+        let verts = vertices.into_iter().map(|(pos, texc)| (pos + offset, color, texc).into());
+        self.backend.draw_triangles(verts, indices, Some(image), self.viewport)
     }
 
     /// Draws a rectangle.
     #[inline]
-    pub fn draw_rect<'a>(&mut self, rect: impl Into<Rect>, texr: impl Into<Option<TexRect>>, fill: impl Into<FillMode<'a>>) {
+    pub fn draw_rect<'a>(&mut self, rect: impl Into<Rect>, fill: impl Into<FillMode<'a>>) {
         let rect = rect.into().offset(self.offset);
-        self.backend
-            .draw_rect(rect, texr.into().unwrap_or_default(), fill.into(), self.viewport)
+        self.backend.draw_rect(rect, fill.into(), self.viewport)
     }
 
     /// Draws an image.
     #[inline]
     pub fn draw_image(&mut self, pos: impl Into<Position>, image: &Image) {
         let rect = Rect::new(pos.into() + self.offset, image.get_size());
-        self.backend
-            .draw_rect(rect, Default::default(), FillMode::Texture(image), self.viewport)
+        self.backend.draw_rect(rect, image.into(), self.viewport)
     }
 
     /// Draws text.

@@ -50,7 +50,8 @@ impl Widget for TestWidget {
 
         //dc.clear(color);
         let crop = TexRect::default() + TexCoord::new(0.1, 0.2);
-        dc.draw_rect((dc.origin(), self.bounds.size), crop, (color, &self.image));
+        dc.draw_rect((dc.origin(), self.bounds.size), (color, &self.image, crop));
+        dc.draw_triangle([10, 110], [100, 150], [50, 200], Color::BLUE.with_alpha(0.5));
 
         for child in &self.childs {
             dc.draw_child(child);
@@ -112,7 +113,7 @@ impl Widget for TestWidget2 {
 
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         //dc.clear(self.color);
-        dc.draw_rect((dc.origin(), self.bounds.size), None, self.color);
+        dc.draw_rect((dc.origin(), self.bounds.size), self.color);
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {

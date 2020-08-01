@@ -1,70 +1,51 @@
+use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
 use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, TextureCreationError};
+use glium::GlObject;
 use glium::{uniform, Surface};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
-use std::sync::Arc;
-use widgets::draw::{Color, DrawBackend, FillMode, TexCoord, TexRect, TextDrawMode};
-use widgets::geometry::{Point, Rect, Size};
+use std::rc::Rc;
+use widgets::draw::{Color, DrawBackend, TextDrawMode};
+use widgets::geometry::{Rect, Size};
 use widgets::image::{Image, ImageData, ImageId, PixelFormat};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Vertex {
-    pos: [f32; 2],
-    color: [f32; 4],
-    texc: [f32; 2],
-}
-
-glium::implement_vertex!(Vertex, pos, color, texc);
-
-impl Vertex {
-    fn new(pos: Point<f32>, color: Color, texc: TexCoord) -> Self {
-        Self {
-            pos: pos.into(),
-            color: color.into(),
-            texc: texc.into(),
-        }
-    }
-}
-
-/// Types of drawing primitives.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Primitive {
-    Points,
-    Lines,
-    Triangles,
-}
-
-/// Primitive draw command detail.
+/// Draw command detail.
 #[derive(Debug, Clone)]
-struct DrawCmdPrim {
-    /// The primitive to draw.
-    primitive: Primitive,
+struct DrawCmdData {
     /// Range inside the shared vertex buffer.
-    vert_range: Range<usize>,
+    idx_range: Range<usize>,
     /// Image to use for this draw command.
-    texture: Option<Arc<SrgbTexture2d>>,
+    texture: Option<Rc<SrgbTexture2d>>,
     /// Clipping viewport.
     viewport: Rect,
+}
+
+impl DrawCmdData {
+    #[inline]
+    fn compatible_with(&self, viewport: Rect, texture: &Option<Rc<SrgbTexture2d>>) -> bool {
+        self.viewport == viewport && self.texture.as_ref().map(|t| t.get_id()) == texture.as_ref().map(|t| t.get_id())
+    }
 }
 
 /// A single draw command.
 #[derive(Debug, Clone)]
 enum DrawCommand {
     Clear(Color, Rect),
-    Primitives(DrawCmdPrim),
+    Triangles(DrawCmdData),
 }
 
 /// Buffer with draw commands to be sent to the backend.
-//#[derive(Debug)]
 pub struct DrawQueue {
     /// Shared vertex buffer.
     vertices: Vec<Vertex>,
+    /// Shared index buffer.
+    indices: Vec<u32>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    texture_map: HashMap<ImageId, Arc<SrgbTexture2d>>,
+    texture_map: HashMap<ImageId, Rc<SrgbTexture2d>>,
     t_white: SrgbTexture2d,
     program: glium::Program,
     pub display: glium::Display,
@@ -81,6 +62,7 @@ impl DrawQueue {
 
         Self {
             vertices: Default::default(),
+            indices: Default::default(),
             commands: Default::default(),
             program,
             texture_map: Default::default(),
@@ -97,23 +79,6 @@ impl DrawQueue {
         //self.texture_map.remove_expired();  //TODO: GC old textures
     }
 
-    /// Checks if the last draw command has the same state of the incoming one.
-    fn get_last_cmd_if_compatible(
-        &mut self, primitive: Primitive, viewport: Rect, texture: &Option<Arc<SrgbTexture2d>>,
-    ) -> Option<&mut DrawCmdPrim> {
-        use glium::GlObject;
-
-        if let Some(DrawCommand::Primitives(cmd)) = self.commands.last_mut() {
-            if cmd.primitive == primitive
-                && cmd.viewport == viewport
-                && cmd.texture.as_ref().map(|t| t.get_id()) == texture.as_ref().map(|t| t.get_id())
-            {
-                return Some(cmd);
-            }
-        }
-        None
-    }
-
     /// Adds a clear command to the draw queue.
     #[inline]
     fn push_clear(&mut self, color: Color, viewport: Rect) {
@@ -121,26 +86,37 @@ impl DrawQueue {
     }
 
     /// Adds raw elements to the draw queue.
-    fn push_prim(&mut self, primitive: Primitive, vertices: &[Vertex], texture: Option<Arc<SrgbTexture2d>>, viewport: Rect) {
-        // check if the previous draw command can be reused
-        if let Some(cmd) = self.get_last_cmd_if_compatible(primitive, viewport, &texture) {
-            // we only need to add more indices
-            cmd.vert_range.end += vertices.len();
-        } else {
-            // state change, we need to create a new draw command
-            let base_vert = self.vertices.len();
-            self.commands.push(DrawCommand::Primitives(DrawCmdPrim {
-                primitive,
-                vert_range: base_vert..base_vert + vertices.len(),
-                texture,
-                viewport,
-            }));
-        }
+    #[inline]
+    fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<Rc<SrgbTexture2d>>, viewport: Rect)
+    where
+        V: Iterator<Item = Vertex>,
+        I: Iterator<Item = u32>,
+    {
         // append vertices to the buffer
+        let base_vert = self.vertices.len() as u32;
         self.vertices.extend(vertices);
+        // indices are added with an offset pointing to a single vertex buffer
+        let base_idx = self.indices.len();
+        self.indices.extend(indices.map(|i| i + base_vert));
+
+        // check if the last draw command has the same state of the incoming one
+        match self.commands.last_mut() {
+            Some(DrawCommand::Triangles(cmd)) if cmd.compatible_with(viewport, &texture) => {
+                // ..then we only need to add more indices
+                cmd.idx_range.end = self.indices.len();
+            }
+            _ => {
+                // state change, we need to create a new draw command
+                self.commands.push(DrawCommand::Triangles(DrawCmdData {
+                    idx_range: base_idx..self.indices.len(),
+                    texture,
+                    viewport,
+                }));
+            }
+        }
     }
 
-    fn load_texture(&mut self, image: &Image) -> Arc<SrgbTexture2d> {
+    fn load_texture(&mut self, image: &Image) -> Rc<SrgbTexture2d> {
         let display = &self.display;
         self.texture_map
             .entry(image.get_id())
@@ -150,8 +126,14 @@ impl DrawQueue {
 
     /// Runs the stored draw commands.
     pub fn execute(&self, win_size: Size) {
-        let mut target = self.display.draw();
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
+        let index_buf = glium::index::IndexBuffer::new(&self.display, PrimitiveType::TrianglesList, &self.indices).unwrap();
+        let mut draw_params = glium::DrawParameters {
+            blend: glium::Blend::alpha_blending(),
+            ..Default::default()
+        };
+
+        let mut target = self.display.draw();
 
         for drawcmd in &self.commands {
             match drawcmd {
@@ -161,18 +143,13 @@ impl DrawQueue {
                         target.clear(Some(&rect), Some((color.r, color.g, color.b, color.a)), false, None, None);
                     }
                 }
-                DrawCommand::Primitives(cmd) => {
+                DrawCommand::Triangles(cmd) => {
                     // clip the viewport against the visible window area
                     if let Some(scissor) = cmd.viewport.clip_inside(win_size.into()) {
-                        let mode = match cmd.primitive {
-                            Primitive::Points => PrimitiveType::Points,
-                            Primitive::Lines => PrimitiveType::LinesList,
-                            Primitive::Triangles => PrimitiveType::TrianglesList,
-                        };
                         // indices reference a single shared vertex buffer
-                        let vertices = vertex_buf.slice(cmd.vert_range.clone()).unwrap();
+                        let indices = index_buf.slice(cmd.idx_range.clone()).unwrap();
                         // get texture to use
-                        let texture = cmd.texture.as_ref().map(AsRef::as_ref).unwrap_or(&self.t_white);
+                        let texture = cmd.texture.as_deref().unwrap_or(&self.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
@@ -181,15 +158,9 @@ impl DrawQueue {
                                 .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
                                 .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest)
                         };
-                        let draw_params = glium::DrawParameters {
-                            blend: glium::Blend::alpha_blending(),
-                            scissor: Some(to_glium_rect(scissor, win_size.h)),
-                            ..Default::default()
-                        };
+                        draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
                         // perform the draw command
-                        target
-                            .draw(vertices, &glium::index::NoIndices(mode), &self.program, &uniforms, &draw_params)
-                            .unwrap();
+                        target.draw(&vertex_buf, indices, &self.program, &uniforms, &draw_params).unwrap();
                     }
                 }
             }
@@ -200,54 +171,21 @@ impl DrawQueue {
 }
 
 impl DrawBackend for DrawQueue {
+    type Vertex = Vertex;
+
     #[inline]
     fn clear(&mut self, color: Color, viewport: Rect) {
         self.push_clear(color, viewport)
     }
 
     #[inline]
-    fn draw_point(&mut self, pos: Point<f32>, texc: TexCoord, fill: FillMode, viewport: Rect) {
-        let texture = fill.texture().map(|img| self.load_texture(img));
-        let verts = [Vertex::new(pos, fill.color(), texc)];
-        self.push_prim(Primitive::Points, &verts, texture, viewport)
-    }
-
-    #[inline]
-    fn draw_line(&mut self, pos: [Point<f32>; 2], texc: [TexCoord; 2], fill: FillMode, viewport: Rect) {
-        let color = fill.color();
-        let texture = fill.texture().map(|img| self.load_texture(img));
-        let verts = [Vertex::new(pos[0], color, texc[0]), Vertex::new(pos[1], color, texc[1])];
-        self.push_prim(Primitive::Lines, &verts, texture, viewport)
-    }
-
-    #[inline]
-    fn draw_triangle(&mut self, pos: [Point<f32>; 3], texc: [TexCoord; 3], fill: FillMode, viewport: Rect) {
-        let color = fill.color();
-        let texture = fill.texture().map(|img| self.load_texture(img));
-        let verts = [
-            Vertex::new(pos[0], color, texc[0]),
-            Vertex::new(pos[1], color, texc[1]),
-            Vertex::new(pos[2], color, texc[2]),
-        ];
-        self.push_prim(Primitive::Triangles, &verts, texture, viewport)
-    }
-
-    #[inline]
-    fn draw_rect(&mut self, rect: Rect, texr: TexRect, fill: FillMode, viewport: Rect) {
-        if let Some([top_left, top_right, bot_right, bot_left]) = rect_corners(rect) {
-            self.draw_triangle(
-                [top_left, top_right, bot_right],
-                [texr.top_left(), texr.top_right(), texr.bot_right()],
-                fill,
-                viewport,
-            );
-            self.draw_triangle(
-                [bot_right, bot_left, top_left],
-                [texr.bot_right(), texr.bot_left(), texr.top_left()],
-                fill,
-                viewport,
-            );
-        }
+    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, image: Option<&Image>, viewport: Rect)
+    where
+        V: IntoIterator<Item = Self::Vertex>,
+        I: IntoIterator<Item = u32>,
+    {
+        let texture = image.map(|img| self.load_texture(img));
+        self.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
     }
 
     #[allow(unused_variables)]
@@ -261,6 +199,7 @@ impl fmt::Debug for DrawQueue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("GliumWindow")
             .field("vertices", &self.vertices)
+            .field("indices", &self.indices)
             .field("commands", &self.commands)
             .field("texture_map", &self.texture_map)
             .field("t_white", &self.t_white)
@@ -338,21 +277,5 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
             };
             SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
-    }
-}
-
-#[inline]
-fn rect_corners(rect: Rect) -> Option<[Point<f32>; 4]> {
-    if !rect.size.is_zero_area() {
-        let top_left = rect.pos.cast();
-        let bot_right = top_left + rect.size.as_point();
-        Some([
-            top_left,
-            top_left.with_x(bot_right.x), // top right
-            bot_right,
-            top_left.with_y(bot_right.y), // bottom left
-        ])
-    } else {
-        None
     }
 }
