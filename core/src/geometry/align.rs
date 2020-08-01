@@ -25,6 +25,8 @@ impl From<VAlign> for Alignment {
     }
 }
 
+impl_from_unit_default!(Alignment);
+
 /// Horizontal alignment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HAlign {

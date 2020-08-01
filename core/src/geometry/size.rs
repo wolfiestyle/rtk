@@ -148,3 +148,4 @@ impl From<Size> for (u32, u32) {
 }
 
 implement_ops!(Size, u32);
+impl_from_unit_default!(Size);

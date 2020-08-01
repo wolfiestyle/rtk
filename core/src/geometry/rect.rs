@@ -318,3 +318,5 @@ impl From<Rect> for (i32, i32, u32, u32) {
         (rect.pos.x, rect.pos.y, rect.size.w, rect.size.h)
     }
 }
+
+impl_from_unit_default!(Rect);

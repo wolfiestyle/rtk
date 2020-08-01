@@ -169,3 +169,14 @@ macro_rules! implement_ops {
         }
     };
 }
+
+macro_rules! impl_from_unit_default {
+    ($type:tt) => {
+        impl From<()> for $type {
+            #[inline]
+            fn from(_: ()) -> Self {
+                Default::default()
+            }
+        }
+    };
+}

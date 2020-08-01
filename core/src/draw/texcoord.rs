@@ -66,6 +66,7 @@ impl From<TexCoord> for (f32, f32) {
 }
 
 implement_ops!(TexCoord, f32);
+impl_from_unit_default!(TexCoord);
 
 /// Texture coordinates of a rectangle.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -152,6 +153,8 @@ impl Default for TexRect {
         TexRect::new(TexCoord::TOP_LEFT, TexCoord::BOTTOM_RIGHT)
     }
 }
+
+impl_from_unit_default!(TexRect);
 
 impl std::ops::Add<TexCoord> for TexRect {
     type Output = Self;

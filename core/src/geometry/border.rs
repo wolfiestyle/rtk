@@ -108,3 +108,5 @@ impl From<Border> for (u32, u32, u32, u32) {
         (b.left, b.right, b.top, b.bottom)
     }
 }
+
+impl_from_unit_default!(Border);

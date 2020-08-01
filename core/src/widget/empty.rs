@@ -94,13 +94,6 @@ impl Widget for Empty {
     fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
 }
 
-impl From<()> for Empty {
-    #[inline]
-    fn from(_: ()) -> Self {
-        Empty::new()
-    }
-}
-
 impl From<Rect> for Empty {
     #[inline]
     fn from(bounds: Rect) -> Self {
@@ -114,3 +107,5 @@ impl From<Size> for Empty {
         Empty::with_size(size)
     }
 }
+
+impl_from_unit_default!(Empty);

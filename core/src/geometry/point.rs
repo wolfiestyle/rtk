@@ -195,6 +195,13 @@ impl<T> From<Point<T>> for (T, T) {
     }
 }
 
+impl<T: Default> From<()> for Point<T> {
+    #[inline]
+    fn from(_: ()) -> Self {
+        Default::default()
+    }
+}
+
 macro_rules! impl_point_cast {
     ($a:ty, $b:ty) => {
         impl From<Point<$a>> for Point<$b> {

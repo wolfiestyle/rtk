@@ -251,6 +251,7 @@ impl From<Color> for (f32, f32, f32, f32) {
 }
 
 implement_ops!(Color, f32);
+impl_from_unit_default!(Color);
 
 /// Color operation applied over a texture value.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -349,6 +350,8 @@ impl Default for ColorOp {
         }
     }
 }
+
+impl_from_unit_default!(ColorOp);
 
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {
