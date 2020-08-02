@@ -1,3 +1,7 @@
+use crate::draw::FillMode;
+use crate::image::Image;
+use std::ops;
+
 /// A RGB color stored in linear space.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[repr(C)]
@@ -250,6 +254,60 @@ impl From<Color> for (f32, f32, f32, f32) {
     }
 }
 
+impl ops::Mul<ColorOp> for Color {
+    type Output = ColorOp;
+
+    #[inline]
+    fn mul(self, rhs: ColorOp) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl ops::Add<ColorOp> for Color {
+    type Output = ColorOp;
+
+    #[inline]
+    fn add(self, rhs: ColorOp) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl<'a> ops::Mul<&'a Image> for Color {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn mul(self, rhs: &'a Image) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl<'a> ops::Add<&'a Image> for Color {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn add(self, rhs: &'a Image) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl<'a> ops::Mul<FillMode<'a>> for Color {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn mul(self, rhs: FillMode<'a>) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl<'a> ops::Add<FillMode<'a>> for Color {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn add(self, rhs: FillMode<'a>) -> Self::Output {
+        rhs + self
+    }
+}
+
 implement_ops!(Color, f32);
 impl_from_unit_default!(Color);
 
@@ -352,6 +410,30 @@ impl Default for ColorOp {
 }
 
 impl_from_unit_default!(ColorOp);
+
+impl ops::Mul<Color> for ColorOp {
+    type Output = Self;
+
+    #[inline]
+    fn mul(self, rhs: Color) -> Self::Output {
+        Self {
+            mul: self.mul * rhs,
+            add: self.add,
+        }
+    }
+}
+
+impl ops::Add<Color> for ColorOp {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Color) -> Self::Output {
+        Self {
+            mul: self.mul,
+            add: self.add + rhs,
+        }
+    }
+}
 
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {

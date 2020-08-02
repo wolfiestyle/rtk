@@ -1,7 +1,9 @@
 //! Image type.
+use crate::draw::{Color, ColorOp, FillMode};
 use crate::geometry::Size;
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::ops;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -145,6 +147,24 @@ impl Hash for Image {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.id.hash(state);
+    }
+}
+
+impl<'a> ops::Mul<Color> for &'a Image {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn mul(self, rhs: Color) -> Self::Output {
+        FillMode::ColoredTexture(ColorOp::mul(rhs), self, Default::default())
+    }
+}
+
+impl<'a> ops::Add<Color> for &'a Image {
+    type Output = FillMode<'a>;
+
+    #[inline]
+    fn add(self, rhs: Color) -> Self::Output {
+        FillMode::ColoredTexture(ColorOp::add(rhs), self, Default::default())
     }
 }
 

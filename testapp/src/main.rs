@@ -1,4 +1,3 @@
-use widgets::draw::{ColorOp, TexCoord, TexRect};
 use widgets::event::*;
 use widgets::geometry::VAlign;
 use widgets::image::Image;
@@ -42,14 +41,9 @@ impl Widget for TestWidget {
     }
 
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
-        let color = ColorOp {
-            mul: self.color,
-            add: if self.hover { Color::gray(0.05) } else { Default::default() },
-        };
+        let hover = if self.hover { Color::gray(0.05) } else { Default::default() };
 
-        //dc.clear(color);
-        let crop = TexRect::default() + TexCoord::new(0.1, 0.2);
-        dc.draw_rect((dc.origin(), self.bounds.size), (color, &self.image, crop));
+        dc.draw_rect((dc.origin(), self.bounds.size), &self.image * self.color + hover);
         dc.draw_triangle([10, 110], [100, 150], [50, 200], Color::BLUE.with_alpha(0.5));
 
         for child in &self.childs {

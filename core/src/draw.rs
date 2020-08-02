@@ -1,6 +1,7 @@
 //! Types used to communicate with the drawing backend.
 use crate::geometry::{Alignment, HAlign, Position, Rect, VAlign};
 use crate::image::Image;
+use std::ops;
 
 mod color;
 pub use color::*;
@@ -67,31 +68,29 @@ impl<'a> From<(&'a Image, TexRect)> for FillMode<'a> {
     }
 }
 
-impl<'a> From<(Color, &'a Image)> for FillMode<'a> {
+impl<'a> ops::Mul<Color> for FillMode<'a> {
+    type Output = Self;
+
     #[inline]
-    fn from((color, img): (Color, &'a Image)) -> Self {
-        FillMode::ColoredTexture(color.into(), img, Default::default())
+    fn mul(self, rhs: Color) -> Self::Output {
+        match self {
+            FillMode::Color(color) => FillMode::Color(color * rhs),
+            FillMode::Texture(img, texr) => FillMode::ColoredTexture(ColorOp::mul(rhs), img, texr),
+            FillMode::ColoredTexture(op, img, texr) => FillMode::ColoredTexture(op * rhs, img, texr),
+        }
     }
 }
 
-impl<'a> From<(ColorOp, &'a Image)> for FillMode<'a> {
-    #[inline]
-    fn from((color, img): (ColorOp, &'a Image)) -> Self {
-        FillMode::ColoredTexture(color, img, Default::default())
-    }
-}
+impl<'a> ops::Add<Color> for FillMode<'a> {
+    type Output = Self;
 
-impl<'a> From<(Color, &'a Image, TexRect)> for FillMode<'a> {
     #[inline]
-    fn from((color, img, texr): (Color, &'a Image, TexRect)) -> Self {
-        FillMode::ColoredTexture(color.into(), img, texr)
-    }
-}
-
-impl<'a> From<(ColorOp, &'a Image, TexRect)> for FillMode<'a> {
-    #[inline]
-    fn from((color, img, texr): (ColorOp, &'a Image, TexRect)) -> Self {
-        FillMode::ColoredTexture(color, img, texr)
+    fn add(self, rhs: Color) -> Self::Output {
+        match self {
+            FillMode::Color(color) => FillMode::Color(color + rhs),
+            FillMode::Texture(img, texr) => FillMode::ColoredTexture(ColorOp::add(rhs), img, texr),
+            FillMode::ColoredTexture(op, img, texr) => FillMode::ColoredTexture(op + rhs, img, texr),
+        }
     }
 }
 
