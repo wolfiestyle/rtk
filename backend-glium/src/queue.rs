@@ -1,16 +1,15 @@
+use crate::shared_res::SharedRes;
 use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
-use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, TextureCreationError};
+use glium::texture::SrgbTexture2d;
 use glium::GlObject;
 use glium::{uniform, Surface};
-use std::borrow::Cow;
-use std::collections::HashMap;
 use std::fmt;
 use std::ops::Range;
 use std::rc::Rc;
 use widgets::draw::{Color, DrawBackend, TextDrawMode};
 use widgets::geometry::{Rect, Size};
-use widgets::image::{Image, ImageData, ImageId, PixelFormat};
+use widgets::image::Image;
 
 /// Draw command detail.
 #[derive(Debug, Clone)]
@@ -45,28 +44,19 @@ pub struct DrawQueue {
     indices: Vec<u32>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    texture_map: HashMap<ImageId, Rc<SrgbTexture2d>>,
-    t_white: SrgbTexture2d,
-    program: glium::Program,
+    /// Shared OpenGL resources
+    shared_res: Rc<SharedRes>,
+    /// Glium context handle
     pub display: glium::Display,
 }
 
 impl DrawQueue {
-    pub fn new(display: glium::Display) -> Self {
-        let vert_src = include_str!("widgets.vert.glsl");
-        let frag_src = include_str!("widgets.frag.glsl");
-        let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
-
-        let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
-
+    pub fn new(display: glium::Display, shared_res: Rc<SharedRes>) -> Self {
         Self {
             vertices: Default::default(),
             indices: Default::default(),
             commands: Default::default(),
-            program,
-            texture_map: Default::default(),
-            t_white,
+            shared_res,
             display,
         }
     }
@@ -116,14 +106,6 @@ impl DrawQueue {
         }
     }
 
-    fn load_texture(&mut self, image: &Image) -> Rc<SrgbTexture2d> {
-        let display = &self.display;
-        self.texture_map
-            .entry(image.get_id())
-            .or_insert_with(|| to_glium_texture(image, display).unwrap().into())
-            .clone()
-    }
-
     /// Runs the stored draw commands.
     pub fn execute(&self, win_size: Size) {
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
@@ -149,7 +131,7 @@ impl DrawQueue {
                         // indices reference a single shared vertex buffer
                         let indices = index_buf.slice(cmd.idx_range.clone()).unwrap();
                         // get texture to use
-                        let texture = cmd.texture.as_deref().unwrap_or(&self.t_white);
+                        let texture = cmd.texture.as_deref().unwrap_or(&self.shared_res.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
@@ -160,7 +142,9 @@ impl DrawQueue {
                         };
                         draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
                         // perform the draw command
-                        target.draw(&vertex_buf, indices, &self.program, &uniforms, &draw_params).unwrap();
+                        target
+                            .draw(&vertex_buf, indices, &self.shared_res.program, &uniforms, &draw_params)
+                            .unwrap();
                     }
                 }
             }
@@ -184,7 +168,7 @@ impl DrawBackend for DrawQueue {
         V: IntoIterator<Item = Self::Vertex>,
         I: IntoIterator<Item = u32>,
     {
-        let texture = image.map(|img| self.load_texture(img));
+        let texture = image.map(|img| self.shared_res.load_texture(img));
         self.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
     }
 
@@ -201,9 +185,8 @@ impl fmt::Debug for DrawQueue {
             .field("vertices", &self.vertices)
             .field("indices", &self.indices)
             .field("commands", &self.commands)
-            .field("texture_map", &self.texture_map)
-            .field("t_white", &self.t_white)
-            .field("program", &self.program)
+            .field("shared_res", &self.shared_res)
+            .field("display", &format_args!("..."))
             .finish()
     }
 }
@@ -214,68 +197,5 @@ fn to_glium_rect(rect: widgets::geometry::Rect, win_height: u32) -> glium::Rect 
         bottom: win_height - rect.size.h - rect.pos.y as u32,
         width: rect.size.w,
         height: rect.size.h,
-    }
-}
-
-fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTexture2d, TextureCreationError> {
-    let (width, height) = image.get_size().into();
-    match image.get_data() {
-        None => SrgbTexture2d::empty(display, width, height),
-        Some(ImageData::U8(vec)) => {
-            let img = RawImage2d {
-                data: Cow::Borrowed(vec),
-                width,
-                height,
-                format: match image.get_format() {
-                    PixelFormat::Luma => ClientFormat::U8,
-                    PixelFormat::LumaA => ClientFormat::U8U8,
-                    PixelFormat::Rgb => ClientFormat::U8U8U8,
-                    PixelFormat::Rgba => ClientFormat::U8U8U8U8,
-                },
-            };
-            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
-        }
-        Some(ImageData::U16(vec)) => {
-            let img = RawImage2d {
-                data: Cow::Borrowed(vec),
-                width,
-                height,
-                format: match image.get_format() {
-                    PixelFormat::Luma => ClientFormat::U16,
-                    PixelFormat::LumaA => ClientFormat::U16U16,
-                    PixelFormat::Rgb => ClientFormat::U16U16U16,
-                    PixelFormat::Rgba => ClientFormat::U16U16U16U16,
-                },
-            };
-            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
-        }
-        Some(ImageData::U32(vec)) => {
-            let img = RawImage2d {
-                data: Cow::Borrowed(vec),
-                width,
-                height,
-                format: match image.get_format() {
-                    PixelFormat::Luma => ClientFormat::U32,
-                    PixelFormat::LumaA => ClientFormat::U32U32,
-                    PixelFormat::Rgb => ClientFormat::U32U32U32,
-                    PixelFormat::Rgba => ClientFormat::U32U32U32U32,
-                },
-            };
-            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
-        }
-        Some(ImageData::F32(vec)) => {
-            let img = RawImage2d {
-                data: Cow::Borrowed(vec),
-                width,
-                height,
-                format: match image.get_format() {
-                    PixelFormat::Luma => ClientFormat::F32,
-                    PixelFormat::LumaA => ClientFormat::F32F32,
-                    PixelFormat::Rgb => ClientFormat::F32F32F32,
-                    PixelFormat::Rgba => ClientFormat::F32F32F32F32,
-                },
-            };
-            SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
-        }
     }
 }

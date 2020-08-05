@@ -1,8 +1,10 @@
 use crate::queue::DrawQueue;
+use crate::shared_res::SharedRes;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
+use std::rc::Rc;
 use widgets::event::Event;
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
@@ -15,25 +17,28 @@ pub struct GliumWindow<T> {
 }
 
 impl<T: TopLevel> GliumWindow<T> {
-    pub fn new(window: T, event_loop: &EventLoop<()>) -> Self {
+    pub fn new(window: T, event_loop: &EventLoop<()>, shared_res: Rc<SharedRes>) -> Self {
         let win_attr = window.get_attr();
         let win_builder = make_win_builder(win_attr);
+        let shared_win = shared_res.display.gl_window();
 
         let mut ctx = ContextBuilder::new()
             .with_gl_profile(GlProfile::Core)
             .with_gl_robustness(Robustness::TryRobustNoResetNotification)
+            .with_shared_lists(shared_win.context())
             .with_double_buffer(Some(true));
         ctx.pf_reqs.hardware_accelerated = None;
         ctx.pf_reqs.depth_bits = None;
         ctx.pf_reqs.stencil_bits = None;
 
         let display = glium::Display::new(win_builder, ctx, event_loop).unwrap();
+        drop(shared_win);
 
         if let Some(pos) = win_attr.position {
             display.gl_window().window().set_outer_position(PhysicalPosition::new(pos.x, pos.y));
         }
 
-        let draw_queue = DrawQueue::new(display);
+        let draw_queue = DrawQueue::new(display, shared_res);
 
         Self {
             draw_queue,

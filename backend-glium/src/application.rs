@@ -1,21 +1,28 @@
+use crate::shared_res::SharedRes;
 use crate::window::GliumWindow;
+use std::rc::Rc;
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;
 
 #[derive(Debug)]
 pub struct GliumApplication<T> {
     main_loop: MainLoop<GliumWindow<T>>,
+    shared_res: Rc<SharedRes>,
 }
 
 impl<T: TopLevel + 'static> GliumApplication<T> {
     #[inline]
     pub fn new() -> Self {
-        Default::default()
+        let main_loop = MainLoop::new();
+        let shared_res = Rc::new(SharedRes::new(&main_loop.event_loop));
+
+        Self { main_loop, shared_res }
     }
 
     #[inline]
     pub fn add_window(&mut self, window: T) {
-        self.main_loop.add_window(GliumWindow::new(window, &self.main_loop.event_loop))
+        self.main_loop
+            .add_window(GliumWindow::new(window, &self.main_loop.event_loop, self.shared_res.clone()))
     }
 
     #[inline]
@@ -24,11 +31,9 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     }
 }
 
-impl<T> Default for GliumApplication<T> {
+impl<T: TopLevel + 'static> Default for GliumApplication<T> {
     #[inline]
     fn default() -> Self {
-        Self {
-            main_loop: Default::default(),
-        }
+        Self::new()
     }
 }
