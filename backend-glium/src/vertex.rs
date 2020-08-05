@@ -2,22 +2,29 @@ use widgets::draw::{ColorOp, TexCoord};
 use widgets::geometry::Point;
 
 #[derive(Debug, Clone, Copy)]
+#[repr(C)]
 pub struct Vertex {
     pos: [f32; 2],
-    color_mul: [f32; 4],
-    color_add: [f32; 4],
+    color_mul: [u16; 4],
+    color_add: [u16; 4],
     texc: [f32; 2],
 }
 
-glium::implement_vertex!(Vertex, pos, color_mul, color_add, texc);
+glium::implement_vertex! {
+    Vertex,
+    pos normalize(false),
+    color_mul normalize(true),
+    color_add normalize(true),
+    texc normalize(false)
+}
 
 impl Vertex {
     #[inline]
     pub fn new(pos: Point<f32>, color: ColorOp, texc: TexCoord) -> Self {
         Self {
             pos: pos.into(),
-            color_mul: color.mul.into(),
-            color_add: color.add.into(),
+            color_mul: color.mul.into_rgb16(),
+            color_add: color.add.into_rgb16(),
             texc: texc.into(),
         }
     }
