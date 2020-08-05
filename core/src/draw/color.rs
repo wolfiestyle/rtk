@@ -92,7 +92,7 @@ impl Color {
 
     /// Creates a new color from HSL components.
     ///
-    /// Argument `h` is in `[0, 360]` degrees, `s` and `l` in `[0, 1]` range.
+    /// Argument `h` is in `[0 .. 360]` degrees, `s` and `l` in `[0 .. 1]` range.
     #[inline]
     pub fn hsl(h: f32, s: f32, l: f32) -> Self {
         hsl_to_rgb(h, s, l).into()
@@ -100,7 +100,7 @@ impl Color {
 
     /// Converts this color into a 8-bit per component sRGBA array.
     ///
-    /// Components are returned as a `[r, g, b, a]` array.
+    /// Components are returned as `[r, g, b, a]`.
     #[inline]
     pub fn into_srgba8(self) -> [u8; 4] {
         [
@@ -108,6 +108,19 @@ impl Color {
             linear_to_u8(self.g),
             linear_to_u8(self.b),
             linear_to_u8(self.a),
+        ]
+    }
+
+    /// Converts this color into a 16-bit per component RGBA array.
+    ///
+    /// Components are returned as `[r, g, b, a]`.
+    #[inline]
+    pub fn into_rgb16(self) -> [u16; 4] {
+        [
+            float_to_u16(self.r),
+            float_to_u16(self.g),
+            float_to_u16(self.b),
+            float_to_u16(self.a),
         ]
     }
 
@@ -435,6 +448,7 @@ impl ops::Add<Color> for ColorOp {
     }
 }
 
+#[inline]
 fn srgb_to_linear(s: f32) -> f32 {
     if s <= 0.04045 {
         s / 12.92
@@ -443,6 +457,7 @@ fn srgb_to_linear(s: f32) -> f32 {
     }
 }
 
+#[inline]
 fn linear_to_srgb(l: f32) -> f32 {
     if l <= 0.0031308 {
         l * 12.92
@@ -451,14 +466,22 @@ fn linear_to_srgb(l: f32) -> f32 {
     }
 }
 
+#[inline]
 fn u8_to_linear(srgb: u8) -> f32 {
     srgb_to_linear(srgb as f32 / 255.0)
 }
 
+#[inline]
 fn linear_to_u8(linear: f32) -> u8 {
     (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
 }
 
+#[inline]
+fn float_to_u16(val: f32) -> u16 {
+    (val.max(0.0).min(1.0) * 65535.0).round() as u16
+}
+
+#[inline]
 fn hsl_to_rgb(h: f32, s: f32, l: f32) -> [f32; 3] {
     let a = s * l.min(1.0 - l);
     let f = move |n| {
