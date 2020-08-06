@@ -107,7 +107,7 @@ impl DrawQueue {
     }
 
     /// Runs the stored draw commands.
-    pub fn execute(&self, win_size: Size) {
+    pub fn execute(&self) {
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
         let index_buf = glium::index::IndexBuffer::new(&self.display, PrimitiveType::TrianglesList, &self.indices).unwrap();
         let mut draw_params = glium::DrawParameters {
@@ -115,6 +115,7 @@ impl DrawQueue {
             ..Default::default()
         };
 
+        let win_size: Size = self.display.get_framebuffer_dimensions().into();
         let mut target = self.display.draw();
 
         for drawcmd in &self.commands {
