@@ -58,7 +58,12 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
     }
 
     fn update(&mut self) {
-        self.window.update_layout()
+        if self.cur_attr.size.is_zero_area() {
+            let size: [u32; 2] = self.display().gl_window().window().inner_size().into();
+            self.cur_attr.set_size(size);
+        }
+
+        self.window.update_layout();
         //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
     }
 
