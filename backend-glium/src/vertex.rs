@@ -18,21 +18,14 @@ glium::implement_vertex! {
     texc normalize(false)
 }
 
-impl Vertex {
+impl From<(Point<f32>, ColorOp, TexCoord)> for Vertex {
     #[inline]
-    pub fn new(pos: Point<f32>, color: ColorOp, texc: TexCoord) -> Self {
+    fn from((pos, color, texc): (Point<f32>, ColorOp, TexCoord)) -> Self {
         Self {
             pos: pos.into(),
             color_mul: color.mul.into_rgb16(),
             color_add: color.add.into_rgb16(),
             texc: texc.into(),
         }
-    }
-}
-
-impl From<(Point<f32>, ColorOp, TexCoord)> for Vertex {
-    #[inline]
-    fn from((pos, color, texc): (Point<f32>, ColorOp, TexCoord)) -> Self {
-        Self::new(pos, color, texc)
     }
 }
