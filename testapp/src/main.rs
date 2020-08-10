@@ -47,7 +47,7 @@ impl Widget for TestWidget {
         dc.draw_rect((dc.origin(), self.bounds.size), &self.image * self.color + hover);
         dc.draw_triangle([10, 110], [100, 150], [50, 200], Color::BLUE.with_alpha(0.5));
         dc.draw_text(
-            TextSection::new()
+            TextSection::default()
                 .add_text(Text::new(&format!("{:?}", self.color)))
                 .with_bounds(self.bounds.size.as_point())
                 .with_screen_position((self.bounds.size / 2).as_point())
@@ -116,7 +116,7 @@ impl Widget for TestWidget2 {
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         //dc.clear(self.color);
         dc.draw_rect((dc.origin(), self.bounds.size), self.color);
-        dc.draw_text(TextSection::new().add_text(Text::new(&self.text)));
+        dc.draw_text(TextSection::default().add_text(Text::new(&self.text)));
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {

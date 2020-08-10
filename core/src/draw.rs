@@ -3,8 +3,8 @@ use crate::image::Image;
 use std::ops;
 
 pub use glyph_brush::Layout as TextLayout;
-pub use glyph_brush::Section as TextSection;
-pub use glyph_brush::Text;
+pub use glyph_brush::OwnedSection as TextSection;
+pub use glyph_brush::OwnedText as Text;
 
 mod color;
 pub use color::*;

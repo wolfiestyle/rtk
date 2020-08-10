@@ -1,5 +1,5 @@
 use crate::shared_res::SharedRes;
-use crate::vertex::{TextVertex, Vertex};
+use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
 use glium::texture::SrgbTexture2d;
 use glium::GlObject;
@@ -36,8 +36,7 @@ impl DrawCmdData {
 enum DrawCommand {
     Clear(Color, Rect),
     Triangles(DrawCmdData),
-    Text { verts: Vec<TextVertex>, viewport: Rect },
-    TextRedraw(Rect),
+    Text(TextSection, Rect),
 }
 
 /// Buffer with draw commands to be sent to the backend.
@@ -113,16 +112,7 @@ impl DrawQueue {
     /// Adds text to the draw queue.
     #[inline]
     fn push_text(&mut self, text: TextSection, viewport: Rect) {
-        let mut glyph_brush = self.shared_res.glyph_brush.borrow_mut();
-        glyph_brush.queue(text);
-        let action = glyph_brush.process_queued(|rect, data| self.shared_res.update_font_tex(rect, data), |gvert| gvert.into());
-        match action {
-            Ok(BrushAction::Draw(verts)) => self.commands.push(DrawCommand::Text { verts, viewport }),
-            Ok(BrushAction::ReDraw) => self.commands.push(DrawCommand::TextRedraw(viewport)),
-            Err(BrushError::TextureTooSmall { suggested }) => {
-                todo!("resize_tex: {:?}", suggested);
-            }
-        }
+        self.commands.push(DrawCommand::Text(text, viewport))
     }
 
     /// Runs the stored draw commands.
@@ -167,30 +157,39 @@ impl DrawQueue {
                             .unwrap();
                     }
                 }
-                DrawCommand::Text { verts, viewport } => {
+                DrawCommand::Text(section, viewport) => {
                     if let Some(scissor) = viewport.clip_inside(win_size.into()) {
-                        let vertex_buf = glium::VertexBuffer::new(&self.display, &verts).unwrap();
-                        let uniforms = uniform! {
-                            vp_size: <[f32; 2]>::from(win_size.as_point()),
-                            tex: self.shared_res.font_tex.sampled()
-                                .wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
-                                .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
-                                .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-                        };
-                        draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
-                        target
-                            .draw(
-                                (glium::vertex::EmptyVertexAttributes { len: 4 }, vertex_buf.per_instance().unwrap()),
-                                glium::index::NoIndices(PrimitiveType::TriangleStrip),
-                                &self.shared_res.text_prog,
-                                &uniforms,
-                                &draw_params,
-                            )
-                            .unwrap();
+                        let mut glyph_brush = self.shared_res.glyph_brush.borrow_mut();
+                        glyph_brush.queue(section);
+                        let action =
+                            glyph_brush.process_queued(|rect, data| self.shared_res.update_font_tex(rect, data), |gvert| gvert.into());
+                        match action {
+                            Ok(BrushAction::Draw(verts)) => {
+                                let vertex_buf = glium::VertexBuffer::new(&self.display, &verts).unwrap();
+                                let uniforms = uniform! {
+                                    vp_size: <[f32; 2]>::from(win_size.as_point()),
+                                    tex: self.shared_res.font_tex.sampled()
+                                        .wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
+                                        .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
+                                        .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+                                };
+                                draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
+                                target
+                                    .draw(
+                                        (glium::vertex::EmptyVertexAttributes { len: 4 }, vertex_buf.per_instance().unwrap()),
+                                        glium::index::NoIndices(PrimitiveType::TriangleStrip),
+                                        &self.shared_res.text_prog,
+                                        &uniforms,
+                                        &draw_params,
+                                    )
+                                    .unwrap();
+                            }
+                            Ok(BrushAction::ReDraw) => unimplemented!(),
+                            Err(BrushError::TextureTooSmall { suggested }) => {
+                                todo!("resize_tex: {:?}", suggested);
+                            }
+                        }
                     }
-                }
-                DrawCommand::TextRedraw(viewport) => {
-                    todo!("redraw_text: {:?}", viewport);
                 }
             }
         }
