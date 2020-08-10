@@ -473,12 +473,12 @@ fn u8_to_linear(srgb: u8) -> f32 {
 
 #[inline]
 fn linear_to_u8(linear: f32) -> u8 {
-    (linear_to_srgb(linear.max(0.0).min(1.0)) * 255.0).round() as u8
+    (linear_to_srgb(linear) * 255.0).round() as u8
 }
 
 #[inline]
 fn float_to_u16(val: f32) -> u16 {
-    (val.max(0.0).min(1.0) * 65535.0).round() as u16
+    (val * 65535.0) as u16
 }
 
 #[inline]
