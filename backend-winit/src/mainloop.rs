@@ -1,5 +1,6 @@
 use crate::event::translate_event;
 use std::collections::HashMap;
+use std::ops::Deref;
 use winit::event::WindowEvent;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowId;
@@ -14,7 +15,7 @@ pub trait BackendWindow {
 
 #[derive(Debug)]
 pub struct MainLoop<T> {
-    pub event_loop: EventLoop<()>,
+    event_loop: EventLoop<()>,
     window_map: HashMap<WindowId, T>,
 }
 
@@ -89,5 +90,14 @@ impl<T> Default for MainLoop<T> {
             event_loop: EventLoop::new(),
             window_map: Default::default(),
         }
+    }
+}
+
+impl<T> Deref for MainLoop<T> {
+    type Target = EventLoop<()>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.event_loop
     }
 }

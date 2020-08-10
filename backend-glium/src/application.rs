@@ -16,7 +16,7 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     #[inline]
     pub fn new() -> Self {
         let main_loop = MainLoop::new();
-        let shared_res = Rc::new(SharedRes::new(&main_loop.event_loop));
+        let shared_res = Rc::new(SharedRes::new(&main_loop));
 
         Self { main_loop, shared_res }
     }
@@ -24,7 +24,7 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
     #[inline]
     pub fn add_window(&mut self, window: T) {
         self.main_loop
-            .add_window(GliumWindow::new(window, &self.main_loop.event_loop, self.shared_res.clone()))
+            .add_window(GliumWindow::new(window, &self.main_loop, self.shared_res.clone()))
     }
 
     #[inline]
