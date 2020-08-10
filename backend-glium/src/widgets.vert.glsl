@@ -1,16 +1,14 @@
-#version 100
-precision highp float;
-
+#version 150
 uniform vec2 vp_size;
 
-attribute vec2 pos;
-attribute vec4 color_mul;
-attribute vec4 color_add;
-attribute vec2 texc;
+in vec2 pos;
+in vec4 color_mul;
+in vec4 color_add;
+in vec2 texc;
 
-varying vec4 v_color_mul;
-varying vec4 v_color_add;
-varying vec2 v_texc;
+out vec4 v_color_mul;
+out vec4 v_color_add;
+out vec2 v_texc;
 
 void main() {
     vec2 scaled = vec2(2.0, -2.0) * pos / vp_size + vec2(-1.0, 1.0);
