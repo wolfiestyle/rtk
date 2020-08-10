@@ -1,5 +1,8 @@
+pub use glyph_brush::HorizontalAlign as HAlign;
+pub use glyph_brush::VerticalAlign as VAlign;
+
 /// Defines an object's alignment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Alignment {
     pub horizontal: HAlign,
     pub vertical: VAlign,
@@ -10,7 +13,7 @@ impl From<HAlign> for Alignment {
     fn from(horizontal: HAlign) -> Self {
         Alignment {
             horizontal,
-            vertical: Default::default(),
+            vertical: VAlign::Top,
         }
     }
 }
@@ -19,14 +22,24 @@ impl From<VAlign> for Alignment {
     #[inline]
     fn from(vertical: VAlign) -> Self {
         Alignment {
-            horizontal: Default::default(),
+            horizontal: HAlign::Left,
             vertical,
+        }
+    }
+}
+
+impl Default for Alignment {
+    fn default() -> Self {
+        Alignment {
+            horizontal: HAlign::Left,
+            vertical: VAlign::Top,
         }
     }
 }
 
 impl_from_unit_default!(Alignment);
 
+/* TODO: pull request this stuff, or make a wrapper
 /// Horizontal alignment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HAlign {
@@ -96,3 +109,4 @@ impl Default for VAlign {
         VAlign::Top
     }
 }
+*/

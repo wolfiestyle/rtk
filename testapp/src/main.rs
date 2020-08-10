@@ -1,5 +1,6 @@
+use widgets::draw::{Text, TextLayout, TextSection};
 use widgets::event::*;
-use widgets::geometry::VAlign;
+use widgets::geometry::{HAlign, VAlign};
 use widgets::image::Image;
 use widgets::layout;
 use widgets::prelude::*;
@@ -45,6 +46,13 @@ impl Widget for TestWidget {
 
         dc.draw_rect((dc.origin(), self.bounds.size), &self.image * self.color + hover);
         dc.draw_triangle([10, 110], [100, 150], [50, 200], Color::BLUE.with_alpha(0.5));
+        dc.draw_text(
+            TextSection::new()
+                .add_text(Text::new(&format!("{:?}", self.color)))
+                .with_bounds(self.bounds.size.as_point())
+                .with_screen_position((self.bounds.size / 2).as_point())
+                .with_layout(TextLayout::default_wrap().h_align(HAlign::Center).v_align(VAlign::Center)),
+        );
 
         for child in &self.childs {
             dc.draw_child(child);
@@ -99,6 +107,7 @@ struct TestWidget2 {
     id: WidgetId,
     bounds: Rect,
     color: Color,
+    text: String,
 }
 
 impl Widget for TestWidget2 {
@@ -107,6 +116,7 @@ impl Widget for TestWidget2 {
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         //dc.clear(self.color);
         dc.draw_rect((dc.origin(), self.bounds.size), self.color);
+        dc.draw_text(TextSection::new().add_text(Text::new(&self.text)));
     }
 
     fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
@@ -142,6 +152,8 @@ impl From<Empty> for TestEnum {
 }
 */
 fn main() {
+    let mut app = GliumApplication::new();
+
     let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::WHITE,
@@ -159,6 +171,7 @@ fn main() {
             id: WidgetId::new(),
             bounds: Rect::new([0, 0], [30 + s, 30 + s * 2]),
             color: Color::hsl(v * 360.0, 1.0, 0.5),
+            text: i.to_string(),
         });
         //widget.childs.push(Empty::with_size([10, 10]).into());
     }
@@ -167,7 +180,6 @@ fn main() {
     window.set_title("awoo");
     window.set_background([0.1, 0.1, 0.1]);
 
-    let mut app = GliumApplication::new();
     app.add_window(window);
     app.run();
 }

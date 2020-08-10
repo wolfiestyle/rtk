@@ -1,9 +1,19 @@
-use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextDrawMode};
+use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection};
+use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
 
+/// Resources provided by the backend.
+pub trait BackendResources {
+    fn enumerate_fonts(&self) -> Vec<String>;
+
+    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource>;
+
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError>;
+}
+
 /// Drawing interface implemented by the backend.
-pub trait DrawBackend {
+pub trait DrawBackend: BackendResources {
     type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
 
     fn clear(&mut self, color: Color, viewport: Rect);
@@ -13,7 +23,7 @@ pub trait DrawBackend {
         V: IntoIterator<Item = Self::Vertex>,
         I: IntoIterator<Item = u32>;
 
-    fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect);
+    fn draw_text(&mut self, text: TextSection, viewport: Rect);
 
     #[inline]
     fn draw_rect(&mut self, rect: Rect, fill: FillMode, viewport: Rect) {

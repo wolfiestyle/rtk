@@ -125,7 +125,11 @@ where
     T: Bounds + 'a,
     I: IntoIterator<Item = &'a mut T>,
 {
-    let align_val = valign.value();
+    let align_val = match valign {
+        VAlign::Top => 0.0,
+        VAlign::Center => 0.5,
+        VAlign::Bottom => 1.0,
+    };
     let mut row_items = vec![];
     let mut iter = items.into_iter();
 

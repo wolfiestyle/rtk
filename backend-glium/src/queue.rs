@@ -1,13 +1,15 @@
 use crate::shared_res::SharedRes;
-use crate::vertex::Vertex;
+use crate::vertex::{TextVertex, Vertex};
 use glium::index::PrimitiveType;
 use glium::texture::SrgbTexture2d;
 use glium::GlObject;
 use glium::{uniform, Surface};
+use glyph_brush::{BrushAction, BrushError};
 use std::fmt;
 use std::ops::Range;
 use std::rc::Rc;
-use widgets::draw::{Color, DrawBackend, TextDrawMode};
+use widgets::draw::{BackendResources, Color, DrawBackend, TextSection};
+use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
 
@@ -34,6 +36,8 @@ impl DrawCmdData {
 enum DrawCommand {
     Clear(Color, Rect),
     Triangles(DrawCmdData),
+    Text { verts: Vec<TextVertex>, viewport: Rect },
+    TextRedraw(Rect),
 }
 
 /// Buffer with draw commands to be sent to the backend.
@@ -106,6 +110,21 @@ impl DrawQueue {
         }
     }
 
+    /// Adds text to the draw queue.
+    #[inline]
+    fn push_text(&mut self, text: TextSection, viewport: Rect) {
+        let mut glyph_brush = self.shared_res.glyph_brush.borrow_mut();
+        glyph_brush.queue(text);
+        let action = glyph_brush.process_queued(|rect, data| self.shared_res.update_font_tex(rect, data), |gvert| gvert.into());
+        match action {
+            Ok(BrushAction::Draw(verts)) => self.commands.push(DrawCommand::Text { verts, viewport }),
+            Ok(BrushAction::ReDraw) => self.commands.push(DrawCommand::TextRedraw(viewport)),
+            Err(BrushError::TextureTooSmall { suggested }) => {
+                todo!("resize_tex: {:?}", suggested);
+            }
+        }
+    }
+
     /// Runs the stored draw commands.
     pub fn execute(&self) {
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
@@ -148,10 +167,52 @@ impl DrawQueue {
                             .unwrap();
                     }
                 }
+                DrawCommand::Text { verts, viewport } => {
+                    if let Some(scissor) = viewport.clip_inside(win_size.into()) {
+                        let vertex_buf = glium::VertexBuffer::new(&self.display, &verts).unwrap();
+                        let uniforms = uniform! {
+                            vp_size: <[f32; 2]>::from(win_size.as_point()),
+                            tex: self.shared_res.font_tex.sampled()
+                                .wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
+                                .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
+                                .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+                        };
+                        draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
+                        target
+                            .draw(
+                                (glium::vertex::EmptyVertexAttributes { len: 4 }, vertex_buf.per_instance().unwrap()),
+                                glium::index::NoIndices(PrimitiveType::TriangleStrip),
+                                &self.shared_res.text_prog,
+                                &uniforms,
+                                &draw_params,
+                            )
+                            .unwrap();
+                    }
+                }
+                DrawCommand::TextRedraw(viewport) => {
+                    todo!("redraw_text: {:?}", viewport);
+                }
             }
         }
 
         target.finish().unwrap();
+    }
+}
+
+impl BackendResources for DrawQueue {
+    #[inline]
+    fn enumerate_fonts(&self) -> Vec<String> {
+        self.shared_res.enumerate_fonts()
+    }
+
+    #[inline]
+    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
+        self.shared_res.select_font(family_names, properties)
+    }
+
+    #[inline]
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        self.shared_res.load_font(font_src)
     }
 }
 
@@ -173,10 +234,9 @@ impl DrawBackend for DrawQueue {
         self.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
     }
 
-    #[allow(unused_variables)]
     #[inline]
-    fn draw_text(&mut self, text: &str, font_desc: &str, mode: TextDrawMode, color: Color, viewport: Rect) {
-        todo!() //TODO: implement text drawing
+    fn draw_text(&mut self, text: TextSection, viewport: Rect) {
+        self.push_text(text, viewport)
     }
 }
 

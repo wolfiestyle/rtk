@@ -4,6 +4,7 @@ mod macros;
 
 pub mod draw;
 pub mod event;
+pub mod font;
 pub mod geometry;
 pub mod image;
 pub mod layout;

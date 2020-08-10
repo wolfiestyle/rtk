@@ -1,7 +1,10 @@
 //! Types used to communicate with the drawing backend.
-use crate::geometry::{Alignment, HAlign, Position, Rect, VAlign};
 use crate::image::Image;
 use std::ops;
+
+pub use glyph_brush::Layout as TextLayout;
+pub use glyph_brush::Section as TextSection;
+pub use glyph_brush::Text;
 
 mod color;
 pub use color::*;
@@ -91,65 +94,5 @@ impl<'a> ops::Add<Color> for FillMode<'a> {
             FillMode::Texture(img, texr) => FillMode::ColoredTexture(ColorOp::add(rhs), img, texr),
             FillMode::ColoredTexture(op, img, texr) => FillMode::ColoredTexture(op + rhs, img, texr),
         }
-    }
-}
-
-/// Defines how text should be drawn.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum TextDrawMode {
-    /// Draw from the baseline at the specified position.
-    Baseline(Position),
-    /// Draw inside the specified rectangle.
-    Bounded(Rect, Alignment),
-}
-
-impl TextDrawMode {
-    pub fn offset(self, offset: Position) -> Self {
-        match self {
-            TextDrawMode::Baseline(pos) => TextDrawMode::Baseline(pos + offset),
-            TextDrawMode::Bounded(rect, align) => TextDrawMode::Bounded(rect.offset(offset), align),
-        }
-    }
-}
-
-impl From<Position> for TextDrawMode {
-    #[inline]
-    fn from(pos: Position) -> Self {
-        TextDrawMode::Baseline(pos)
-    }
-}
-
-impl From<[i32; 2]> for TextDrawMode {
-    #[inline]
-    fn from([x, y]: [i32; 2]) -> Self {
-        TextDrawMode::Baseline(Position { x, y })
-    }
-}
-
-impl From<Rect> for TextDrawMode {
-    #[inline]
-    fn from(bounds: Rect) -> Self {
-        TextDrawMode::Bounded(bounds, Default::default())
-    }
-}
-
-impl From<(Rect, Alignment)> for TextDrawMode {
-    #[inline]
-    fn from((bounds, align): (Rect, Alignment)) -> Self {
-        TextDrawMode::Bounded(bounds, align)
-    }
-}
-
-impl From<(Rect, HAlign)> for TextDrawMode {
-    #[inline]
-    fn from((bounds, halign): (Rect, HAlign)) -> Self {
-        TextDrawMode::Bounded(bounds, halign.into())
-    }
-}
-
-impl From<(Rect, VAlign)> for TextDrawMode {
-    #[inline]
-    fn from((bounds, valign): (Rect, VAlign)) -> Self {
-        TextDrawMode::Bounded(bounds, valign.into())
     }
 }

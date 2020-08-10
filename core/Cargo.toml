@@ -9,4 +9,6 @@ default = ["image"]
 
 [dependencies]
 num-traits = "0.2.11"
+font-kit = "0.10.0"
+glyph_brush = "0.7.0"
 image = { version = "0.23.5", optional = true }

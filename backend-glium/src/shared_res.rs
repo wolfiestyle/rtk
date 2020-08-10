@@ -1,20 +1,32 @@
+use crate::vertex::TextVertex;
+use font_kit::family_name::FamilyName;
+use font_kit::properties::Properties;
+use font_kit::source::SystemSource;
 use glium::glutin::dpi::PhysicalSize;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowBuilder;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
-use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, TextureCreationError};
+use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Texture2d, TextureCreationError};
+use glyph_brush::ab_glyph::FontVec;
+use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
+use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, ImageId, PixelFormat};
 
 pub struct SharedRes {
     pub display: glium::Display,
     pub t_white: SrgbTexture2d,
-    texture_map: RefCell<HashMap<ImageId, Rc<SrgbTexture2d>>>,
     pub program: glium::Program,
+    pub font_src: SystemSource,
+    texture_map: RefCell<HashMap<ImageId, Rc<SrgbTexture2d>>>,
+    loaded_fonts: RefCell<HashMap<FontSource, FontId>>,
+    pub glyph_brush: RefCell<GlyphBrush<TextVertex, Extra, FontVec>>,
+    pub font_tex: Texture2d,
+    pub text_prog: glium::Program,
 }
 
 impl SharedRes {
@@ -38,12 +50,31 @@ impl SharedRes {
         let frag_src = include_str!("widgets.frag.glsl");
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
-        Self {
+        let vert_src = include_str!("text.vert.glsl");
+        let frag_src = include_str!("text.frag.glsl");
+        let text_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
+
+        let glyph_brush = GlyphBrushBuilder::using_fonts(vec![]).cache_redraws(false).build();
+        let (w, h) = glyph_brush.texture_dimensions();
+        let font_tex =
+            Texture2d::empty_with_format(&display, glium::texture::UncompressedFloatFormat::U8, MipmapsOption::NoMipmap, w, h).unwrap();
+
+        let this = Self {
             display,
             t_white,
-            texture_map: Default::default(),
             program,
-        }
+            font_src: SystemSource::new(),
+            texture_map: Default::default(),
+            loaded_fonts: Default::default(),
+            glyph_brush: glyph_brush.into(),
+            font_tex,
+            text_prog,
+        };
+
+        let default_font = this.select_font(&[FamilyName::SansSerif], &Default::default()).unwrap();
+        this.load_font(&default_font).unwrap();
+
+        this
     }
 
     pub fn load_texture(&self, image: &Image) -> Rc<SrgbTexture2d> {
@@ -54,15 +85,62 @@ impl SharedRes {
             .or_insert_with(|| to_glium_texture(image, display).unwrap().into())
             .clone()
     }
+
+    pub fn enumerate_fonts(&self) -> Vec<String> {
+        self.font_src.all_families().unwrap()
+    }
+
+    pub fn select_font(&self, family_names: &[FamilyName], properties: &Properties) -> Option<FontSource> {
+        self.font_src
+            .select_best_match(family_names, properties)
+            .ok()
+            .map(from_fontkit_handle)
+    }
+
+    pub fn load_font(&self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        let mut loaded_fonts = self.loaded_fonts.borrow_mut();
+        if let Some(font_id) = loaded_fonts.get(font_src) {
+            Ok(*font_id)
+        } else {
+            let data = std::fs::read(&font_src.path)?;
+            let font = FontVec::try_from_vec_and_index(data, font_src.font_index).map_err(|_| FontLoadError::InvalidData)?;
+            let id = self.glyph_brush.borrow_mut().add_font(font);
+            loaded_fonts.insert(font_src.clone(), id);
+            Ok(id)
+        }
+    }
+
+    #[inline]
+    pub fn update_font_tex(&self, rect: glyph_brush::Rectangle<u32>, data: &[u8]) {
+        let rect = glium::Rect {
+            left: rect.min[0],
+            bottom: rect.min[1], // bottom is the new top
+            width: rect.width(),
+            height: rect.height(),
+        };
+        let img = RawImage2d {
+            data: Cow::Borrowed(data),
+            width: rect.width,
+            height: rect.height,
+            format: ClientFormat::U8,
+        };
+        self.font_tex.write(rect, img);
+    }
 }
 
+// pls implement Debug on your types..
 impl fmt::Debug for SharedRes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("SharedRes")
             .field("display", &format_args!("..."))
             .field("t_white", &self.t_white)
-            .field("texture_map", &self.texture_map)
             .field("program", &self.program)
+            .field("font_src", &format_args!("..."))
+            .field("texture_map", &self.texture_map)
+            .field("loaded_fonts", &self.loaded_fonts)
+            .field("glyph_brush", &self.glyph_brush)
+            .field("font_tex", &self.font_tex)
+            .field("text_prog", &self.text_prog)
             .finish()
     }
 }
@@ -127,5 +205,12 @@ fn to_glium_texture(image: &Image, display: &glium::Display) -> Result<SrgbTextu
             };
             SrgbTexture2d::with_mipmaps(display, img, MipmapsOption::NoMipmap)
         }
+    }
+}
+
+fn from_fontkit_handle(handle: font_kit::handle::Handle) -> FontSource {
+    match handle {
+        font_kit::handle::Handle::Path { path, font_index } => FontSource { path, font_index },
+        _ => unimplemented!(), // font selection only returns paths AFAIK
     }
 }

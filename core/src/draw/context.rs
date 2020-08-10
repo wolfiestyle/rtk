@@ -1,7 +1,8 @@
-use crate::draw::{Color, ColorOp, DrawBackend, FillMode, TexCoord, TextDrawMode};
+use crate::draw::{Color, ColorOp, DrawBackend, FillMode, TexCoord, TextSection};
 use crate::geometry::{Point, Position, Rect};
 use crate::image::Image;
 use crate::widget::Widget;
+use std::ops;
 
 /// Draw context attached to a widget.
 #[derive(Debug)]
@@ -111,8 +112,25 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
 
     /// Draws text.
     #[inline]
-    pub fn draw_text(&mut self, text: &str, font_desc: &str, mode: impl Into<TextDrawMode>, color: impl Into<Color>) {
+    pub fn draw_text(&mut self, mut text: TextSection) {
+        let pos: Point<f32> = text.screen_position.into();
+        text.screen_position = (pos + self.offset.cast()).into();
+        self.backend.draw_text(text, self.viewport)
+    }
+}
+
+impl<'b, B: DrawBackend> ops::Deref for DrawContext<'b, B> {
+    type Target = B;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
         self.backend
-            .draw_text(text, font_desc, mode.into().offset(self.offset), color.into(), self.viewport)
+    }
+}
+
+impl<'b, B: DrawBackend> ops::DerefMut for DrawContext<'b, B> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.backend
     }
 }

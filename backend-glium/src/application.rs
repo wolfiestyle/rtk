@@ -1,6 +1,8 @@
 use crate::shared_res::SharedRes;
 use crate::window::GliumWindow;
 use std::rc::Rc;
+use widgets::draw::BackendResources;
+use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;
 
@@ -35,5 +37,22 @@ impl<T: TopLevel + 'static> Default for GliumApplication<T> {
     #[inline]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<T> BackendResources for GliumApplication<T> {
+    #[inline]
+    fn enumerate_fonts(&self) -> Vec<String> {
+        self.shared_res.enumerate_fonts()
+    }
+
+    #[inline]
+    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
+        self.shared_res.select_font(family_names, properties)
+    }
+
+    #[inline]
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        self.shared_res.load_font(font_src)
     }
 }
