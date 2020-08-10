@@ -46,8 +46,8 @@ impl SharedRes {
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
         let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
 
-        let vert_src = include_str!("widgets.vert.glsl");
-        let frag_src = include_str!("widgets.frag.glsl");
+        let vert_src = include_str!("standard.vert.glsl");
+        let frag_src = include_str!("standard.frag.glsl");
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
         let vert_src = include_str!("text.vert.glsl");
