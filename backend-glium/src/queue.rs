@@ -110,8 +110,8 @@ impl DrawQueue {
                         // get texture to use
                         let texture = cmd
                             .texture
-                            .and_then(|id| shared_res.texture_map.get(&id).cloned())
-                            .unwrap_or(shared_res.t_white.clone());
+                            .and_then(|id| shared_res.texture_map.get(&id))
+                            .unwrap_or(&shared_res.t_white);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),

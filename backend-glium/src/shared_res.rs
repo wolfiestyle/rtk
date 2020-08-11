@@ -13,7 +13,6 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops::Deref;
-use std::rc::Rc;
 use widgets::backend::BackendResources;
 use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
@@ -21,10 +20,10 @@ use widgets::image::{Image, ImageData, PixelFormat};
 
 pub struct SharedResources {
     pub display: glium::Display,
-    pub t_white: Rc<SrgbTexture2d>,
+    pub t_white: SrgbTexture2d,
     pub program: glium::Program,
     pub font_src: SystemSource,
-    pub texture_map: HashMap<TextureId, Rc<SrgbTexture2d>>,
+    pub texture_map: HashMap<TextureId, SrgbTexture2d>,
     loaded_fonts: HashMap<FontSource, FontId>,
     pub glyph_brush: GlyphBrush<TextVertex, Extra, FontVec>,
     pub font_tex: FontTex,
@@ -84,7 +83,7 @@ impl SharedResources {
 impl BackendResources for SharedResources {
     fn load_texture(&mut self, id: TextureId, image: &Image) {
         let texture = to_glium_texture(image, &self.display).unwrap();
-        self.texture_map.insert(id, texture.into());
+        self.texture_map.insert(id, texture);
     }
 
     fn enumerate_fonts(&self) -> Vec<String> {
