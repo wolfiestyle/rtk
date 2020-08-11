@@ -1,7 +1,7 @@
 use crate::shared_res::SharedRes;
 use crate::window::GliumWindow;
 use std::rc::Rc;
-use widgets::draw::BackendResources;
+use widgets::backend::BackendResources;
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;

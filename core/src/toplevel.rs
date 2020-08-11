@@ -1,5 +1,5 @@
 //! TopLevel type that interfaces with the backend.
-use crate::draw::DrawBackend;
+use crate::backend::DrawBackend;
 use crate::event::Event;
 
 mod window;

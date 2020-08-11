@@ -27,7 +27,7 @@ pub fn widget_impl(mut input: DeriveInput) -> TokenStream {
                     }
 
                     #[inline]
-                    fn draw<B: #crate_::draw::DrawBackend>(&self, dc: #crate_::draw::DrawContext<B>) {
+                    fn draw<B: #crate_::backend::DrawBackend>(&self, dc: #crate_::draw::DrawContext<B>) {
                         match self {
                             #(#patterns => #path::Widget::draw(a, dc),)*
                         }

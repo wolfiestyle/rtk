@@ -1,4 +1,5 @@
-use crate::draw::{Color, DrawBackend, DrawContext};
+use crate::backend::DrawBackend;
+use crate::draw::{Color, DrawContext};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Position, Size};
 use crate::toplevel::TopLevel;

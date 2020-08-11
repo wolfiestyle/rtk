@@ -1,4 +1,5 @@
-use crate::draw::{Color, ColorOp, DrawBackend, FillMode, TexCoord, TextSection};
+use crate::backend::DrawBackend;
+use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection};
 use crate::geometry::{Point, Position, Rect};
 use crate::image::Image;
 use crate::widget::Widget;

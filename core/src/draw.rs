@@ -12,8 +12,6 @@ mod texcoord;
 pub use texcoord::*;
 mod context;
 pub use context::DrawContext;
-mod backend;
-pub use backend::*;
 
 /// Drawing fill mode.
 #[derive(Debug, Clone, Copy, PartialEq)]

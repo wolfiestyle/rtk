@@ -2,6 +2,7 @@
 #[macro_use]
 mod macros;
 
+pub mod backend;
 pub mod draw;
 pub mod event;
 pub mod font;
