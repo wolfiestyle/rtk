@@ -19,19 +19,19 @@ use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
 
 pub struct SharedResources {
-    pub display: glium::Display,
-    pub t_white: SrgbTexture2d,
-    pub program: glium::Program,
-    pub font_src: SystemSource,
-    pub texture_map: HashMap<TextureId, SrgbTexture2d>,
+    pub(crate) display: glium::Display,
+    pub(crate) t_white: SrgbTexture2d,
+    pub(crate) program: glium::Program,
+    pub(crate) font_src: SystemSource,
+    pub(crate) texture_map: HashMap<TextureId, SrgbTexture2d>,
     loaded_fonts: HashMap<FontSource, FontId>,
-    pub glyph_brush: GlyphBrush<TextVertex, Extra, FontVec>,
-    pub font_tex: FontTex,
-    pub text_prog: glium::Program,
+    pub(crate) glyph_brush: GlyphBrush<TextVertex, Extra, FontVec>,
+    pub(crate) font_tex: FontTex,
+    pub(crate) text_prog: glium::Program,
 }
 
 impl SharedResources {
-    pub fn new(event_loop: &EventLoop<()>) -> Self {
+    pub(crate) fn new(event_loop: &EventLoop<()>) -> Self {
         // glium doesn't properly support headless yet, so we use a hidden window
         let win_builder = WindowBuilder::new().with_inner_size(PhysicalSize::new(1, 1)).with_visible(false);
 
@@ -128,7 +128,7 @@ impl fmt::Debug for SharedResources {
 }
 
 #[derive(Debug)]
-pub struct FontTex(pub Texture2d);
+pub(crate) struct FontTex(pub Texture2d);
 
 impl FontTex {
     fn new(display: &glium::Display, (w, h): (u32, u32)) -> Result<Self, TextureCreationError> {
