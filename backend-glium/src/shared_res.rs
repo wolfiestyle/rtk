@@ -18,7 +18,7 @@ use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
 
-pub struct SharedRes {
+pub struct SharedResources {
     pub display: glium::Display,
     pub t_white: Rc<SrgbTexture2d>,
     pub program: glium::Program,
@@ -30,7 +30,7 @@ pub struct SharedRes {
     pub text_prog: glium::Program,
 }
 
-impl SharedRes {
+impl SharedResources {
     pub fn new(event_loop: &EventLoop<()>) -> Self {
         // glium doesn't properly support headless yet, so we use a hidden window
         let win_builder = WindowBuilder::new().with_inner_size(PhysicalSize::new(1, 1)).with_visible(false);
@@ -128,9 +128,9 @@ impl SharedRes {
 }
 
 // pls implement Debug on your types..
-impl fmt::Debug for SharedRes {
+impl fmt::Debug for SharedResources {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("SharedRes")
+        f.debug_struct("SharedResources")
             .field("display", &format_args!("..."))
             .field("t_white", &self.t_white)
             .field("program", &self.program)

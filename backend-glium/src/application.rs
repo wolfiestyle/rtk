@@ -1,4 +1,4 @@
-use crate::shared_res::SharedRes;
+use crate::shared_res::SharedResources;
 use crate::window::GliumWindow;
 use std::rc::Rc;
 use widgets::backend::BackendResources;
@@ -11,14 +11,14 @@ use widgets_winit::MainLoop;
 #[derive(Debug)]
 pub struct GliumApplication<T> {
     main_loop: MainLoop<GliumWindow<T>>,
-    shared_res: Rc<SharedRes>,
+    shared_res: Rc<SharedResources>,
 }
 
 impl<T: TopLevel + 'static> GliumApplication<T> {
     #[inline]
     pub fn new() -> Self {
         let main_loop = MainLoop::new();
-        let shared_res = Rc::new(SharedRes::new(&main_loop));
+        let shared_res = Rc::new(SharedResources::new(&main_loop));
 
         Self { main_loop, shared_res }
     }

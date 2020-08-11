@@ -1,4 +1,4 @@
-use crate::shared_res::SharedRes;
+use crate::shared_res::SharedResources;
 use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
@@ -47,13 +47,13 @@ pub struct DrawQueue {
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
     /// Shared OpenGL resources
-    shared_res: Rc<SharedRes>,
+    shared_res: Rc<SharedResources>,
     /// Glium context handle
     pub display: glium::Display,
 }
 
 impl DrawQueue {
-    pub fn new(display: glium::Display, shared_res: Rc<SharedRes>) -> Self {
+    pub fn new(display: glium::Display, shared_res: Rc<SharedResources>) -> Self {
         Self {
             vertices: Default::default(),
             indices: Default::default(),

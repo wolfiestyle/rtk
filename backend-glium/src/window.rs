@@ -1,5 +1,5 @@
 use crate::queue::DrawQueue;
-use crate::shared_res::SharedRes;
+use crate::shared_res::SharedResources;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
@@ -17,7 +17,7 @@ pub struct GliumWindow<T> {
 }
 
 impl<T: TopLevel> GliumWindow<T> {
-    pub fn new(window: T, event_loop: &EventLoop<()>, shared_res: Rc<SharedRes>) -> Self {
+    pub fn new(window: T, event_loop: &EventLoop<()>, shared_res: Rc<SharedResources>) -> Self {
         let win_attr = window.get_attr();
         let win_builder = make_win_builder(win_attr);
         let shared_win = shared_res.display.gl_window();
