@@ -2,7 +2,9 @@ use crate::shared_res::SharedRes;
 use crate::window::GliumWindow;
 use std::rc::Rc;
 use widgets::backend::BackendResources;
+use widgets::draw::TextureId;
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
+use widgets::image::Image;
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;
 
@@ -41,6 +43,11 @@ impl<T: TopLevel + 'static> Default for GliumApplication<T> {
 }
 
 impl<T> BackendResources for GliumApplication<T> {
+    #[inline]
+    fn load_texture(&self, id: TextureId, image: &Image) {
+        self.shared_res.load_texture(id, image)
+    }
+
     #[inline]
     fn enumerate_fonts(&self) -> Vec<String> {
         self.shared_res.enumerate_fonts()

@@ -1,7 +1,6 @@
 use crate::backend::DrawBackend;
-use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection};
+use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection, TextureId};
 use crate::geometry::{Point, Position, Rect};
-use crate::image::Image;
 use crate::widget::Widget;
 use std::ops;
 
@@ -86,7 +85,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
 
     /// Draws textured triangles from vertices and indices.
     #[inline]
-    pub fn draw_triangles_uv<V, I>(&mut self, vertices: V, indices: I, color: impl Into<ColorOp>, image: &Image)
+    pub fn draw_triangles_uv<V, I>(&mut self, vertices: V, indices: I, color: impl Into<ColorOp>, texture: TextureId)
     where
         V: IntoIterator<Item = (Point<f32>, TexCoord)>,
         I: IntoIterator<Item = u32>,
@@ -94,22 +93,24 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         let offset = self.offset.cast();
         let color = color.into();
         let verts = vertices.into_iter().map(|(pos, texc)| (pos + offset, color, texc).into());
-        self.backend.draw_triangles(verts, indices, Some(image), self.viewport)
+        self.backend.draw_triangles(verts, indices, Some(texture), self.viewport)
     }
 
     /// Draws a rectangle.
     #[inline]
-    pub fn draw_rect<'a>(&mut self, rect: impl Into<Rect>, fill: impl Into<FillMode<'a>>) {
+    pub fn draw_rect(&mut self, rect: impl Into<Rect>, fill: impl Into<FillMode>) {
         let rect = rect.into().offset(self.offset);
         self.backend.draw_rect(rect, fill.into(), self.viewport)
     }
 
+    /* FIXME: can we convert this?
     /// Draws an image.
     #[inline]
     pub fn draw_image(&mut self, pos: impl Into<Position>, image: &Image) {
         let rect = Rect::new(pos.into() + self.offset, image.get_size());
         self.backend.draw_rect(rect, image.into(), self.viewport)
     }
+    */
 
     /// Draws text.
     #[inline]

@@ -1,15 +1,24 @@
-use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection};
+use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection, TextureId};
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
 
 /// Resources provided by the backend.
 pub trait BackendResources {
+    fn load_texture(&self, id: TextureId, image: &Image);
+
     fn enumerate_fonts(&self) -> Vec<String>;
 
     fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource>;
 
     fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError>;
+
+    #[inline]
+    fn create_texture(&self, image: &Image) -> TextureId {
+        let id = TextureId::new();
+        self.load_texture(id, image);
+        id
+    }
 }
 
 /// Drawing interface implemented by the backend.
@@ -18,7 +27,7 @@ pub trait DrawBackend: BackendResources {
 
     fn clear(&mut self, color: Color, viewport: Rect);
 
-    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, image: Option<&Image>, viewport: Rect)
+    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: IntoIterator<Item = Self::Vertex>,
         I: IntoIterator<Item = u32>;

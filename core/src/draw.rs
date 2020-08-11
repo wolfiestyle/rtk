@@ -1,6 +1,6 @@
 //! Types used to communicate with the drawing backend.
-use crate::image::Image;
 use std::ops;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub use glyph_brush::Layout as TextLayout;
 pub use glyph_brush::OwnedSection as TextSection;
@@ -15,13 +15,13 @@ pub use context::DrawContext;
 
 /// Drawing fill mode.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum FillMode<'a> {
+pub enum FillMode {
     Color(Color),
-    Texture(&'a Image, TexRect),
-    ColoredTexture(ColorOp, &'a Image, TexRect),
+    Texture(TextureId, TexRect),
+    ColoredTexture(ColorOp, TextureId, TexRect),
 }
 
-impl FillMode<'_> {
+impl FillMode {
     #[inline]
     pub fn color(&self) -> ColorOp {
         match self {
@@ -32,9 +32,9 @@ impl FillMode<'_> {
     }
 
     #[inline]
-    pub fn texture(&self) -> Option<&Image> {
+    pub fn texture(&self) -> Option<TextureId> {
         match self {
-            FillMode::Texture(img, _) | FillMode::ColoredTexture(_, img, _) => Some(img),
+            FillMode::Texture(tex, _) | FillMode::ColoredTexture(_, tex, _) => Some(*tex),
             _ => None,
         }
     }
@@ -48,28 +48,28 @@ impl FillMode<'_> {
     }
 }
 
-impl From<Color> for FillMode<'_> {
+impl From<Color> for FillMode {
     #[inline]
     fn from(color: Color) -> Self {
         FillMode::Color(color)
     }
 }
 
-impl<'a> From<&'a Image> for FillMode<'a> {
+impl From<TextureId> for FillMode {
     #[inline]
-    fn from(img: &'a Image) -> Self {
-        FillMode::Texture(img, Default::default())
+    fn from(tex: TextureId) -> Self {
+        FillMode::Texture(tex, Default::default())
     }
 }
 
-impl<'a> From<(&'a Image, TexRect)> for FillMode<'a> {
+impl From<(TextureId, TexRect)> for FillMode {
     #[inline]
-    fn from((img, texr): (&'a Image, TexRect)) -> Self {
-        FillMode::Texture(img, texr)
+    fn from((tex, texr): (TextureId, TexRect)) -> Self {
+        FillMode::Texture(tex, texr)
     }
 }
 
-impl<'a> ops::Mul<Color> for FillMode<'a> {
+impl ops::Mul<Color> for FillMode {
     type Output = Self;
 
     #[inline]
@@ -82,7 +82,7 @@ impl<'a> ops::Mul<Color> for FillMode<'a> {
     }
 }
 
-impl<'a> ops::Add<Color> for FillMode<'a> {
+impl ops::Add<Color> for FillMode {
     type Output = Self;
 
     #[inline]
@@ -92,5 +92,36 @@ impl<'a> ops::Add<Color> for FillMode<'a> {
             FillMode::Texture(img, texr) => FillMode::ColoredTexture(ColorOp::add(rhs), img, texr),
             FillMode::ColoredTexture(op, img, texr) => FillMode::ColoredTexture(op + rhs, img, texr),
         }
+    }
+}
+
+/// Unique texture id.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TextureId(usize);
+
+static TEXTURE_ID: AtomicUsize = AtomicUsize::new(1);
+
+impl TextureId {
+    pub fn new() -> Self {
+        let id = TEXTURE_ID.fetch_add(1, Ordering::Relaxed);
+        Self(id)
+    }
+}
+
+impl ops::Mul<Color> for TextureId {
+    type Output = FillMode;
+
+    #[inline]
+    fn mul(self, rhs: Color) -> Self::Output {
+        FillMode::ColoredTexture(ColorOp::mul(rhs), self, Default::default())
+    }
+}
+
+impl ops::Add<Color> for TextureId {
+    type Output = FillMode;
+
+    #[inline]
+    fn add(self, rhs: Color) -> Self::Output {
+        FillMode::ColoredTexture(ColorOp::add(rhs), self, Default::default())
     }
 }

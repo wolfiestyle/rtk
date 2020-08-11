@@ -1,22 +1,16 @@
 //! Image type.
-use crate::draw::{Color, ColorOp, FillMode};
 use crate::geometry::Size;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::ops;
-use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
-
 #[cfg(feature = "image")]
 use image::{DynamicImage, ImageBuffer, ImageResult, Luma, LumaA, Primitive, Rgb, Rgba};
+use std::fmt;
+use std::path::Path;
 
 /// An image to be used for drawing operations.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Image {
     data: Option<ImageData>,
     size: Size,
     format: PixelFormat,
-    id: ImageId,
 }
 
 impl Image {
@@ -35,7 +29,6 @@ impl Image {
             data: Some(data),
             size,
             format,
-            id: ImageId::new(),
         }
     }
 
@@ -45,7 +38,6 @@ impl Image {
             data: None,
             size: size.into(),
             format,
-            id: ImageId::new(),
         }
     }
 
@@ -76,11 +68,6 @@ impl Image {
     #[inline]
     pub fn get_format(&self) -> PixelFormat {
         self.format
-    }
-
-    #[inline]
-    pub fn get_id(&self) -> ImageId {
-        self.id
     }
 }
 
@@ -131,40 +118,6 @@ impl<T: PixelComponent + Primitive + 'static> From<ImageBuffer<Rgba<T>, Vec<T>>>
     fn from(buf: ImageBuffer<Rgba<T>, Vec<T>>) -> Self {
         let size = buf.dimensions();
         Self::new(buf.into_raw(), size, PixelFormat::Rgba)
-    }
-}
-
-impl PartialEq for Image {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl Eq for Image {}
-
-impl Hash for Image {
-    #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
-
-impl<'a> ops::Mul<Color> for &'a Image {
-    type Output = FillMode<'a>;
-
-    #[inline]
-    fn mul(self, rhs: Color) -> Self::Output {
-        FillMode::ColoredTexture(ColorOp::mul(rhs), self, Default::default())
-    }
-}
-
-impl<'a> ops::Add<Color> for &'a Image {
-    type Output = FillMode<'a>;
-
-    #[inline]
-    fn add(self, rhs: Color) -> Self::Output {
-        FillMode::ColoredTexture(ColorOp::add(rhs), self, Default::default())
     }
 }
 
@@ -279,18 +232,5 @@ impl PixelComponent for f32 {
     #[inline]
     fn image_data_from(data: Vec<Self>) -> ImageData {
         ImageData::F32(data)
-    }
-}
-
-/// Unique image id (used for hashing).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ImageId(usize);
-
-static IMAGE_ID: AtomicUsize = AtomicUsize::new(1);
-
-impl ImageId {
-    fn new() -> Self {
-        let id = IMAGE_ID.fetch_add(1, Ordering::Relaxed);
-        ImageId(id)
     }
 }

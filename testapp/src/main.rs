@@ -1,4 +1,4 @@
-use widgets::draw::{Text, TextLayout, TextSection};
+use widgets::draw::{Text, TextLayout, TextSection, TextureId};
 use widgets::event::*;
 use widgets::geometry::{HAlign, VAlign};
 use widgets::image::Image;
@@ -16,7 +16,7 @@ struct TestWidget {
     id: WidgetId,
     hover: bool,
     vp_orig: Position,
-    image: Image,
+    texture: TextureId,
     #[visit_iter]
     childs: Vec<TestWidget2>,
 }
@@ -44,7 +44,7 @@ impl Widget for TestWidget {
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         let hover = if self.hover { Color::gray(0.05) } else { Default::default() };
 
-        dc.draw_rect((dc.origin(), self.bounds.size), &self.image * self.color + hover);
+        dc.draw_rect((dc.origin(), self.bounds.size), self.texture * self.color + hover);
         dc.draw_triangle([10, 110], [100, 150], [50, 200], Color::BLUE.with_alpha(0.5));
         dc.draw_text(
             TextSection::default()
@@ -154,13 +154,16 @@ impl From<Empty> for TestEnum {
 fn main() {
     let mut app = GliumApplication::new();
 
+    let image = Image::from_file("image.jpg").unwrap();
+    let texture = app.create_texture(&image);
+
     let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
         color: Color::WHITE,
         hover: false,
         vp_orig: Default::default(),
         id: WidgetId::new(),
-        image: Image::from_file("image.jpg").unwrap(),
+        texture,
         childs: Vec::new(),
     };
 

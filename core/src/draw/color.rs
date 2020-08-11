@@ -1,5 +1,4 @@
-use crate::draw::FillMode;
-use crate::image::Image;
+use crate::draw::{FillMode, TextureId};
 use std::ops;
 
 /// A RGB color stored in linear space.
@@ -285,38 +284,38 @@ impl ops::Add<ColorOp> for Color {
     }
 }
 
-impl<'a> ops::Mul<&'a Image> for Color {
-    type Output = FillMode<'a>;
+impl<'a> ops::Mul<TextureId> for Color {
+    type Output = FillMode;
 
     #[inline]
-    fn mul(self, rhs: &'a Image) -> Self::Output {
+    fn mul(self, rhs: TextureId) -> Self::Output {
         rhs * self
     }
 }
 
-impl<'a> ops::Add<&'a Image> for Color {
-    type Output = FillMode<'a>;
+impl<'a> ops::Add<TextureId> for Color {
+    type Output = FillMode;
 
     #[inline]
-    fn add(self, rhs: &'a Image) -> Self::Output {
+    fn add(self, rhs: TextureId) -> Self::Output {
         rhs + self
     }
 }
 
-impl<'a> ops::Mul<FillMode<'a>> for Color {
-    type Output = FillMode<'a>;
+impl<'a> ops::Mul<FillMode> for Color {
+    type Output = FillMode;
 
     #[inline]
-    fn mul(self, rhs: FillMode<'a>) -> Self::Output {
+    fn mul(self, rhs: FillMode) -> Self::Output {
         rhs * self
     }
 }
 
-impl<'a> ops::Add<FillMode<'a>> for Color {
-    type Output = FillMode<'a>;
+impl<'a> ops::Add<FillMode> for Color {
+    type Output = FillMode;
 
     #[inline]
-    fn add(self, rhs: FillMode<'a>) -> Self::Output {
+    fn add(self, rhs: FillMode) -> Self::Output {
         rhs + self
     }
 }

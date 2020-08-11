@@ -14,15 +14,16 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::rc::Rc;
+use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
-use widgets::image::{Image, ImageData, ImageId, PixelFormat};
+use widgets::image::{Image, ImageData, PixelFormat};
 
 pub struct SharedRes {
     pub display: glium::Display,
-    pub t_white: SrgbTexture2d,
+    pub t_white: Rc<SrgbTexture2d>,
     pub program: glium::Program,
     pub font_src: SystemSource,
-    texture_map: RefCell<HashMap<ImageId, Rc<SrgbTexture2d>>>,
+    pub texture_map: RefCell<HashMap<TextureId, Rc<SrgbTexture2d>>>,
     loaded_fonts: RefCell<HashMap<FontSource, FontId>>,
     pub glyph_brush: RefCell<GlyphBrush<TextVertex, Extra, FontVec>>,
     pub font_tex: Texture2d,
@@ -44,7 +45,9 @@ impl SharedRes {
         let display = glium::Display::new(win_builder, ctx_builder, event_loop).unwrap();
 
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
+        let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap)
+            .unwrap()
+            .into();
 
         let vert_src = include_str!("standard.vert.glsl");
         let frag_src = include_str!("standard.frag.glsl");
@@ -77,13 +80,9 @@ impl SharedRes {
         this
     }
 
-    pub fn load_texture(&self, image: &Image) -> Rc<SrgbTexture2d> {
-        let display = &self.display;
-        self.texture_map
-            .borrow_mut()
-            .entry(image.get_id())
-            .or_insert_with(|| to_glium_texture(image, display).unwrap().into())
-            .clone()
+    pub fn load_texture(&self, id: TextureId, image: &Image) {
+        let texture = to_glium_texture(image, &self.display).unwrap();
+        self.texture_map.borrow_mut().insert(id, texture.into());
     }
 
     pub fn enumerate_fonts(&self) -> Vec<String> {

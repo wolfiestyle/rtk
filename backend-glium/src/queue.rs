@@ -1,15 +1,13 @@
 use crate::shared_res::SharedRes;
 use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
-use glium::texture::SrgbTexture2d;
-use glium::GlObject;
 use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::fmt;
 use std::ops::Range;
 use std::rc::Rc;
 use widgets::backend::{BackendResources, DrawBackend};
-use widgets::draw::{Color, TextSection};
+use widgets::draw::{Color, TextSection, TextureId};
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
@@ -20,15 +18,15 @@ struct DrawCmdData {
     /// Range inside the shared vertex buffer.
     idx_range: Range<usize>,
     /// Image to use for this draw command.
-    texture: Option<Rc<SrgbTexture2d>>,
+    texture: Option<TextureId>,
     /// Clipping viewport.
     viewport: Rect,
 }
 
 impl DrawCmdData {
     #[inline]
-    fn compatible_with(&self, viewport: Rect, texture: &Option<Rc<SrgbTexture2d>>) -> bool {
-        self.viewport == viewport && self.texture.as_ref().map(|t| t.get_id()) == texture.as_ref().map(|t| t.get_id())
+    fn compatible_with(&self, viewport: Rect, texture: Option<TextureId>) -> bool {
+        self.viewport == viewport && self.texture == texture
     }
 }
 
@@ -81,7 +79,7 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     #[inline]
-    fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<Rc<SrgbTexture2d>>, viewport: Rect)
+    fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: Iterator<Item = Vertex>,
         I: Iterator<Item = u32>,
@@ -95,7 +93,7 @@ impl DrawQueue {
 
         // check if the last draw command has the same state of the incoming one
         match self.commands.last_mut() {
-            Some(DrawCommand::Triangles(cmd)) if cmd.compatible_with(viewport, &texture) => {
+            Some(DrawCommand::Triangles(cmd)) if cmd.compatible_with(viewport, texture) => {
                 // ..then we only need to add more indices
                 cmd.idx_range.end = self.indices.len();
             }
@@ -142,7 +140,10 @@ impl DrawQueue {
                         // indices reference a single shared vertex buffer
                         let indices = index_buf.slice(cmd.idx_range.clone()).unwrap();
                         // get texture to use
-                        let texture = cmd.texture.as_deref().unwrap_or(&self.shared_res.t_white);
+                        let texture = cmd
+                            .texture
+                            .and_then(|id| self.shared_res.texture_map.borrow().get(&id).cloned())
+                            .unwrap_or(self.shared_res.t_white.clone());
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
@@ -201,6 +202,11 @@ impl DrawQueue {
 
 impl BackendResources for DrawQueue {
     #[inline]
+    fn load_texture(&self, id: TextureId, image: &Image) {
+        self.shared_res.load_texture(id, image)
+    }
+
+    #[inline]
     fn enumerate_fonts(&self) -> Vec<String> {
         self.shared_res.enumerate_fonts()
     }
@@ -225,12 +231,11 @@ impl DrawBackend for DrawQueue {
     }
 
     #[inline]
-    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, image: Option<&Image>, viewport: Rect)
+    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: IntoIterator<Item = Self::Vertex>,
         I: IntoIterator<Item = u32>,
     {
-        let texture = image.map(|img| self.shared_res.load_texture(img));
         self.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
     }
 
