@@ -12,32 +12,6 @@ use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSourc
 use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
 
-/// Draw command detail.
-#[derive(Debug, Clone)]
-struct DrawCmdData {
-    /// Range inside the shared vertex buffer.
-    idx_range: Range<usize>,
-    /// Image to use for this draw command.
-    texture: Option<TextureId>,
-    /// Clipping viewport.
-    viewport: Rect,
-}
-
-impl DrawCmdData {
-    #[inline]
-    fn compatible_with(&self, viewport: Rect, texture: Option<TextureId>) -> bool {
-        self.viewport == viewport && self.texture == texture
-    }
-}
-
-/// A single draw command.
-#[derive(Debug, Clone)]
-enum DrawCommand {
-    Clear(Color, Rect),
-    Triangles(DrawCmdData),
-    Text(TextSection, Rect),
-}
-
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
     /// Shared vertex buffer.
@@ -254,6 +228,32 @@ impl fmt::Debug for DrawQueue {
             .field("shared_res", &self.shared_res)
             .field("display", &format_args!("..."))
             .finish()
+    }
+}
+
+/// A single draw command.
+#[derive(Debug, Clone)]
+enum DrawCommand {
+    Clear(Color, Rect),
+    Triangles(DrawCmdData),
+    Text(TextSection, Rect),
+}
+
+/// Draw command detail.
+#[derive(Debug, Clone)]
+struct DrawCmdData {
+    /// Range inside the shared vertex buffer.
+    idx_range: Range<usize>,
+    /// Image to use for this draw command.
+    texture: Option<TextureId>,
+    /// Clipping viewport.
+    viewport: Rect,
+}
+
+impl DrawCmdData {
+    #[inline]
+    fn compatible_with(&self, viewport: Rect, texture: Option<TextureId>) -> bool {
+        self.viewport == viewport && self.texture == texture
     }
 }
 
