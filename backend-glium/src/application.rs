@@ -1,32 +1,26 @@
 use crate::shared_res::SharedResources;
 use crate::window::GliumWindow;
-use std::rc::Rc;
-use widgets::backend::BackendResources;
-use widgets::draw::TextureId;
-use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
-use widgets::image::Image;
+use std::ops;
 use widgets::toplevel::TopLevel;
 use widgets_winit::MainLoop;
 
 #[derive(Debug)]
 pub struct GliumApplication<T> {
-    main_loop: MainLoop<GliumWindow<T>>,
-    shared_res: Rc<SharedResources>,
+    main_loop: MainLoop<GliumWindow<T>, SharedResources>,
 }
 
 impl<T: TopLevel + 'static> GliumApplication<T> {
     #[inline]
     pub fn new() -> Self {
-        let main_loop = MainLoop::new();
-        let shared_res = Rc::new(SharedResources::new(&main_loop));
-
-        Self { main_loop, shared_res }
+        Self {
+            main_loop: MainLoop::new(SharedResources::new),
+        }
     }
 
     #[inline]
     pub fn add_window(&mut self, window: T) {
         self.main_loop
-            .add_window(GliumWindow::new(window, &self.main_loop, self.shared_res.clone()))
+            .add_window(GliumWindow::new(window, &self.main_loop, &self.main_loop.resources))
     }
 
     #[inline]
@@ -42,24 +36,18 @@ impl<T: TopLevel + 'static> Default for GliumApplication<T> {
     }
 }
 
-impl<T> BackendResources for GliumApplication<T> {
-    #[inline]
-    fn load_texture(&self, id: TextureId, image: &Image) {
-        self.shared_res.load_texture(id, image)
-    }
+impl<T> ops::Deref for GliumApplication<T> {
+    type Target = SharedResources;
 
     #[inline]
-    fn enumerate_fonts(&self) -> Vec<String> {
-        self.shared_res.enumerate_fonts()
+    fn deref(&self) -> &Self::Target {
+        &self.main_loop.resources
     }
+}
 
+impl<T> ops::DerefMut for GliumApplication<T> {
     #[inline]
-    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
-        self.shared_res.select_font(family_names, properties)
-    }
-
-    #[inline]
-    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
-        self.shared_res.load_font(font_src)
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.main_loop.resources
     }
 }

@@ -5,12 +5,9 @@ use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::fmt;
 use std::ops::Range;
-use std::rc::Rc;
-use widgets::backend::{BackendResources, DrawBackend};
+use widgets::backend::DrawBackend;
 use widgets::draw::{Color, TextSection, TextureId};
-use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
-use widgets::image::Image;
 
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
@@ -20,19 +17,16 @@ pub struct DrawQueue {
     indices: Vec<u32>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    /// Shared OpenGL resources
-    shared_res: Rc<SharedResources>,
     /// Glium context handle
     pub display: glium::Display,
 }
 
 impl DrawQueue {
-    pub fn new(display: glium::Display, shared_res: Rc<SharedResources>) -> Self {
+    pub fn new(display: glium::Display) -> Self {
         Self {
             vertices: Default::default(),
             indices: Default::default(),
             commands: Default::default(),
-            shared_res,
             display,
         }
     }
@@ -89,7 +83,7 @@ impl DrawQueue {
     }
 
     /// Runs the stored draw commands.
-    pub fn execute(&self) {
+    pub fn execute(&self, shared_res: &mut SharedResources) {
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
         let index_buf = glium::index::IndexBuffer::new(&self.display, PrimitiveType::TrianglesList, &self.indices).unwrap();
         let mut draw_params = glium::DrawParameters {
@@ -116,8 +110,8 @@ impl DrawQueue {
                         // get texture to use
                         let texture = cmd
                             .texture
-                            .and_then(|id| self.shared_res.texture_map.borrow().get(&id).cloned())
-                            .unwrap_or(self.shared_res.t_white.clone());
+                            .and_then(|id| shared_res.texture_map.get(&id).cloned())
+                            .unwrap_or(shared_res.t_white.clone());
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
@@ -129,22 +123,23 @@ impl DrawQueue {
                         draw_params.scissor = Some(to_glium_rect(scissor, win_size.h));
                         // perform the draw command
                         target
-                            .draw(&vertex_buf, indices, &self.shared_res.program, &uniforms, &draw_params)
+                            .draw(&vertex_buf, indices, &shared_res.program, &uniforms, &draw_params)
                             .unwrap();
                     }
                 }
                 DrawCommand::Text(section, viewport) => {
                     if let Some(scissor) = viewport.clip_inside(win_size.into()) {
-                        let mut glyph_brush = self.shared_res.glyph_brush.borrow_mut();
-                        glyph_brush.queue(section);
-                        let action =
-                            glyph_brush.process_queued(|rect, data| self.shared_res.update_font_tex(rect, data), |gvert| gvert.into());
+                        shared_res.glyph_brush.queue(section);
+                        let font_tex = &shared_res.font_tex;
+                        let action = shared_res
+                            .glyph_brush
+                            .process_queued(|rect, data| font_tex.update(rect, data), |gvert| gvert.into());
                         match action {
                             Ok(BrushAction::Draw(verts)) => {
                                 let vertex_buf = glium::VertexBuffer::new(&self.display, &verts).unwrap();
                                 let uniforms = uniform! {
                                     vp_size: <[f32; 2]>::from(win_size.as_point()),
-                                    tex: self.shared_res.font_tex.sampled()
+                                    tex: shared_res.font_tex.sampled()
                                         .wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
                                         .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
                                         .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
@@ -154,7 +149,7 @@ impl DrawQueue {
                                     .draw(
                                         (glium::vertex::EmptyVertexAttributes { len: 4 }, vertex_buf.per_instance().unwrap()),
                                         glium::index::NoIndices(PrimitiveType::TriangleStrip),
-                                        &self.shared_res.text_prog,
+                                        &shared_res.text_prog,
                                         &uniforms,
                                         &draw_params,
                                     )
@@ -171,28 +166,6 @@ impl DrawQueue {
         }
 
         target.finish().unwrap();
-    }
-}
-
-impl BackendResources for DrawQueue {
-    #[inline]
-    fn load_texture(&self, id: TextureId, image: &Image) {
-        self.shared_res.load_texture(id, image)
-    }
-
-    #[inline]
-    fn enumerate_fonts(&self) -> Vec<String> {
-        self.shared_res.enumerate_fonts()
-    }
-
-    #[inline]
-    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
-        self.shared_res.select_font(family_names, properties)
-    }
-
-    #[inline]
-    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
-        self.shared_res.load_font(font_src)
     }
 }
 
@@ -225,7 +198,6 @@ impl fmt::Debug for DrawQueue {
             .field("vertices", &self.vertices)
             .field("indices", &self.indices)
             .field("commands", &self.commands)
-            .field("shared_res", &self.shared_res)
             .field("display", &format_args!("..."))
             .finish()
     }

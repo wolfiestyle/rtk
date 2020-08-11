@@ -5,7 +5,7 @@ use crate::image::Image;
 
 /// Resources provided by the backend.
 pub trait BackendResources {
-    fn load_texture(&self, id: TextureId, image: &Image);
+    fn load_texture(&mut self, id: TextureId, image: &Image);
 
     fn enumerate_fonts(&self) -> Vec<String>;
 
@@ -14,7 +14,7 @@ pub trait BackendResources {
     fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError>;
 
     #[inline]
-    fn create_texture(&self, image: &Image) -> TextureId {
+    fn create_texture(&mut self, image: &Image) -> TextureId {
         let id = TextureId::new();
         self.load_texture(id, image);
         id
@@ -22,7 +22,7 @@ pub trait BackendResources {
 }
 
 /// Drawing interface implemented by the backend.
-pub trait DrawBackend: BackendResources {
+pub trait DrawBackend {
     type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
 
     fn clear(&mut self, color: Color, viewport: Rect);

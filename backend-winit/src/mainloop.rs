@@ -5,24 +5,34 @@ use winit::event::WindowEvent;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowId;
 
-pub trait BackendWindow {
+pub trait BackendWindow<R> {
     fn get_id(&self) -> WindowId;
     fn update(&mut self);
-    fn draw(&mut self);
+    fn draw(&mut self, resources: &mut R);
     fn request_redraw(&self);
     fn push_event(&mut self, event: widgets::event::Event) -> bool;
 }
 
 #[derive(Debug)]
-pub struct MainLoop<T> {
+pub struct MainLoop<T, R> {
     event_loop: EventLoop<()>,
     window_map: HashMap<WindowId, T>,
+    pub resources: R,
 }
 
-impl<T: BackendWindow + 'static> MainLoop<T> {
+impl<T: BackendWindow<R> + 'static, R: 'static> MainLoop<T, R> {
     #[inline]
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new<F>(resource_f: F) -> Self
+    where
+        F: FnOnce(&EventLoop<()>) -> R,
+    {
+        let event_loop = EventLoop::new();
+        let resources = resource_f(&event_loop);
+        Self {
+            event_loop,
+            window_map: Default::default(),
+            resources,
+        }
     }
 
     #[inline]
@@ -38,6 +48,7 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
         use winit::event::Event;
 
         let mut window_map = self.window_map;
+        let mut resources = self.resources;
 
         self.event_loop.run(move |event, _, cf| {
             *cf = ControlFlow::Wait;
@@ -74,7 +85,7 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
                 }
                 Event::RedrawRequested(window_id) => {
                     if let Some(window) = window_map.get_mut(&window_id) {
-                        window.draw();
+                        window.draw(&mut resources);
                     }
                 }
                 _ => (),
@@ -83,17 +94,7 @@ impl<T: BackendWindow + 'static> MainLoop<T> {
     }
 }
 
-impl<T> Default for MainLoop<T> {
-    #[inline]
-    fn default() -> Self {
-        Self {
-            event_loop: EventLoop::new(),
-            window_map: Default::default(),
-        }
-    }
-}
-
-impl<T> Deref for MainLoop<T> {
+impl<T, R> Deref for MainLoop<T, R> {
     type Target = EventLoop<()>;
 
     #[inline]

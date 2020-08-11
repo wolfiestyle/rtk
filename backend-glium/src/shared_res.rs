@@ -10,10 +10,11 @@ use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Tex
 use glyph_brush::ab_glyph::FontVec;
 use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
+use std::ops::Deref;
 use std::rc::Rc;
+use widgets::backend::BackendResources;
 use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
@@ -23,10 +24,10 @@ pub struct SharedResources {
     pub t_white: Rc<SrgbTexture2d>,
     pub program: glium::Program,
     pub font_src: SystemSource,
-    pub texture_map: RefCell<HashMap<TextureId, Rc<SrgbTexture2d>>>,
-    loaded_fonts: RefCell<HashMap<FontSource, FontId>>,
-    pub glyph_brush: RefCell<GlyphBrush<TextVertex, Extra, FontVec>>,
-    pub font_tex: Texture2d,
+    pub texture_map: HashMap<TextureId, Rc<SrgbTexture2d>>,
+    loaded_fonts: HashMap<FontSource, FontId>,
+    pub glyph_brush: GlyphBrush<TextVertex, Extra, FontVec>,
+    pub font_tex: FontTex,
     pub text_prog: glium::Program,
 }
 
@@ -58,11 +59,10 @@ impl SharedResources {
         let text_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
         let glyph_brush = GlyphBrushBuilder::using_fonts(vec![]).cache_redraws(false).build();
-        let (w, h) = glyph_brush.texture_dimensions();
-        let font_tex =
-            Texture2d::empty_with_format(&display, glium::texture::UncompressedFloatFormat::U8, MipmapsOption::NoMipmap, w, h).unwrap();
 
-        let this = Self {
+        let font_tex = FontTex::new(&display, glyph_brush.texture_dimensions()).unwrap();
+
+        let mut this = Self {
             display,
             t_white,
             program,
@@ -79,51 +79,35 @@ impl SharedResources {
 
         this
     }
+}
 
-    pub fn load_texture(&self, id: TextureId, image: &Image) {
+impl BackendResources for SharedResources {
+    fn load_texture(&mut self, id: TextureId, image: &Image) {
         let texture = to_glium_texture(image, &self.display).unwrap();
-        self.texture_map.borrow_mut().insert(id, texture.into());
+        self.texture_map.insert(id, texture.into());
     }
 
-    pub fn enumerate_fonts(&self) -> Vec<String> {
+    fn enumerate_fonts(&self) -> Vec<String> {
         self.font_src.all_families().unwrap()
     }
 
-    pub fn select_font(&self, family_names: &[FamilyName], properties: &Properties) -> Option<FontSource> {
+    fn select_font(&self, family_names: &[FamilyName], properties: &Properties) -> Option<FontSource> {
         self.font_src
             .select_best_match(family_names, properties)
             .ok()
             .map(from_fontkit_handle)
     }
 
-    pub fn load_font(&self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
-        let mut loaded_fonts = self.loaded_fonts.borrow_mut();
-        if let Some(font_id) = loaded_fonts.get(font_src) {
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        if let Some(font_id) = self.loaded_fonts.get(font_src) {
             Ok(*font_id)
         } else {
             let data = std::fs::read(&font_src.path)?;
             let font = FontVec::try_from_vec_and_index(data, font_src.font_index).map_err(|_| FontLoadError::InvalidData)?;
-            let id = self.glyph_brush.borrow_mut().add_font(font);
-            loaded_fonts.insert(font_src.clone(), id);
+            let id = self.glyph_brush.add_font(font);
+            self.loaded_fonts.insert(font_src.clone(), id);
             Ok(id)
         }
-    }
-
-    #[inline]
-    pub fn update_font_tex(&self, rect: glyph_brush::Rectangle<u32>, data: &[u8]) {
-        let rect = glium::Rect {
-            left: rect.min[0],
-            bottom: rect.min[1], // bottom is the new top
-            width: rect.width(),
-            height: rect.height(),
-        };
-        let img = RawImage2d {
-            data: Cow::Borrowed(data),
-            width: rect.width,
-            height: rect.height,
-            format: ClientFormat::U8,
-        };
-        self.font_tex.write(rect, img);
     }
 }
 
@@ -141,6 +125,41 @@ impl fmt::Debug for SharedResources {
             .field("font_tex", &self.font_tex)
             .field("text_prog", &self.text_prog)
             .finish()
+    }
+}
+
+#[derive(Debug)]
+pub struct FontTex(pub Texture2d);
+
+impl FontTex {
+    fn new(display: &glium::Display, (w, h): (u32, u32)) -> Result<Self, TextureCreationError> {
+        Texture2d::empty_with_format(display, glium::texture::UncompressedFloatFormat::U8, MipmapsOption::NoMipmap, w, h).map(FontTex)
+    }
+
+    #[inline]
+    pub fn update(&self, rect: glyph_brush::Rectangle<u32>, data: &[u8]) {
+        let rect = glium::Rect {
+            left: rect.min[0],
+            bottom: rect.min[1], // bottom is the new top
+            width: rect.width(),
+            height: rect.height(),
+        };
+        let img = RawImage2d {
+            data: Cow::Borrowed(data),
+            width: rect.width,
+            height: rect.height,
+            format: ClientFormat::U8,
+        };
+        self.0.write(rect, img);
+    }
+}
+
+impl Deref for FontTex {
+    type Target = Texture2d;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

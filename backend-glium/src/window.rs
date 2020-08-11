@@ -4,7 +4,6 @@ use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
-use std::rc::Rc;
 use widgets::event::Event;
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
@@ -17,7 +16,7 @@ pub struct GliumWindow<T> {
 }
 
 impl<T: TopLevel> GliumWindow<T> {
-    pub fn new(window: T, event_loop: &EventLoop<()>, shared_res: Rc<SharedResources>) -> Self {
+    pub fn new(window: T, event_loop: &EventLoop<()>, shared_res: &SharedResources) -> Self {
         let win_attr = window.get_attr();
         let win_builder = make_win_builder(win_attr);
         let shared_win = shared_res.display.gl_window();
@@ -38,7 +37,7 @@ impl<T: TopLevel> GliumWindow<T> {
             display.gl_window().window().set_outer_position(PhysicalPosition::new(pos.x, pos.y));
         }
 
-        let draw_queue = DrawQueue::new(display, shared_res);
+        let draw_queue = DrawQueue::new(display);
 
         Self {
             draw_queue,
@@ -52,7 +51,7 @@ impl<T: TopLevel> GliumWindow<T> {
     }
 }
 
-impl<T: TopLevel> BackendWindow for GliumWindow<T> {
+impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
     fn get_id(&self) -> WindowId {
         self.display().gl_window().window().id()
     }
@@ -67,10 +66,10 @@ impl<T: TopLevel> BackendWindow for GliumWindow<T> {
         //TODO: compare `self.cur_attr` with `self.window.get_window_attributes()` to make changes to real window
     }
 
-    fn draw(&mut self) {
+    fn draw(&mut self, resources: &mut SharedResources) {
         self.draw_queue.clear();
         self.window.draw(&mut self.draw_queue);
-        self.draw_queue.execute();
+        self.draw_queue.execute(resources);
     }
 
     fn request_redraw(&self) {
