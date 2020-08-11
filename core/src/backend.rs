@@ -2,10 +2,15 @@ use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection, TextureId};
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
+use std::fmt;
 
 /// Resources provided by the backend.
 pub trait BackendResources {
-    fn load_texture(&mut self, id: TextureId, image: &Image);
+    fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
+
+    fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
+
+    fn delete_texture(&mut self, id: TextureId);
 
     fn enumerate_fonts(&self) -> Vec<String>;
 
@@ -14,10 +19,10 @@ pub trait BackendResources {
     fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError>;
 
     #[inline]
-    fn create_texture(&mut self, image: &Image) -> TextureId {
+    fn create_texture(&mut self, image: &Image) -> Result<TextureId, TextureError> {
         let id = TextureId::new();
-        self.load_texture(id, image);
-        id
+        self.load_texture(id, image)?;
+        Ok(id)
     }
 }
 
@@ -53,5 +58,24 @@ pub trait DrawBackend {
         ];
         let indices = [0, 1, 2, 2, 3, 0];
         self.draw_triangles(verts.iter().copied(), indices.iter().copied(), fill.texture(), viewport)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum TextureError {
+    FormatNotSupported,
+    DimensionsNotSupported,
+    TypeNotSupported,
+}
+
+impl fmt::Display for TextureError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        use self::TextureError::*;
+        let desc = match *self {
+            FormatNotSupported => "The requested format is not supported by the backend",
+            DimensionsNotSupported => "The requested texture dimensions are not supported",
+            TypeNotSupported => "The texture format is not supported by the backend",
+        };
+        fmt.write_str(desc)
     }
 }

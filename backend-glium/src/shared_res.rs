@@ -10,10 +10,10 @@ use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Tex
 use glyph_brush::ab_glyph::FontVec;
 use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{hash_map, HashMap};
 use std::fmt;
 use std::ops::Deref;
-use widgets::backend::BackendResources;
+use widgets::backend::{BackendResources, TextureError};
 use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
@@ -81,9 +81,22 @@ impl SharedResources {
 }
 
 impl BackendResources for SharedResources {
-    fn load_texture(&mut self, id: TextureId, image: &Image) {
-        let texture = to_glium_texture(image, &self.display).unwrap();
+    fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        let texture = to_glium_texture(image, &self.display).map_err(to_texture_error)?;
         self.texture_map.insert(id, texture);
+        Ok(())
+    }
+
+    fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        if let hash_map::Entry::Vacant(entry) = self.texture_map.entry(id) {
+            let texture = to_glium_texture(image, &self.display).map_err(to_texture_error)?;
+            entry.insert(texture);
+        }
+        Ok(())
+    }
+
+    fn delete_texture(&mut self, id: TextureId) {
+        self.texture_map.remove(&id);
     }
 
     fn enumerate_fonts(&self) -> Vec<String> {
@@ -229,5 +242,13 @@ fn from_fontkit_handle(handle: font_kit::handle::Handle) -> FontSource {
     match handle {
         font_kit::handle::Handle::Path { path, font_index } => FontSource { path, font_index },
         _ => unimplemented!(), // font selection only returns paths AFAIK
+    }
+}
+
+fn to_texture_error(error: TextureCreationError) -> TextureError {
+    match error {
+        TextureCreationError::FormatNotSupported => TextureError::FormatNotSupported,
+        TextureCreationError::DimensionsNotSupported => TextureError::DimensionsNotSupported,
+        TextureCreationError::TypeNotSupported => TextureError::TypeNotSupported,
     }
 }

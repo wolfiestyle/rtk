@@ -155,7 +155,7 @@ fn main() {
     let mut app = GliumApplication::new();
 
     let image = Image::from_file("image.jpg").unwrap();
-    let texture = app.create_texture(&image);
+    let texture = app.create_texture(&image).unwrap();
 
     let mut widget = TestWidget {
         bounds: Rect::new([20, 10], [320, 240]),
