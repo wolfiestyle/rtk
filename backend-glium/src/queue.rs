@@ -1,4 +1,4 @@
-use crate::shared_res::SharedResources;
+use crate::shared_res::{FontTex, SharedResources};
 use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
@@ -156,8 +156,9 @@ impl DrawQueue {
                                     .unwrap();
                             }
                             Ok(BrushAction::ReDraw) => unimplemented!(),
-                            Err(BrushError::TextureTooSmall { suggested }) => {
-                                todo!("resize_tex: {:?}", suggested);
+                            Err(BrushError::TextureTooSmall { suggested: (w, h) }) => {
+                                shared_res.font_tex = FontTex::new(&shared_res.display, (w, h)).unwrap();
+                                shared_res.glyph_brush.resize_texture(w, h);
                             }
                         }
                     }

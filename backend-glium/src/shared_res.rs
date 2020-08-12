@@ -144,7 +144,8 @@ impl fmt::Debug for SharedResources {
 pub(crate) struct FontTex(pub Texture2d);
 
 impl FontTex {
-    fn new(display: &glium::Display, (w, h): (u32, u32)) -> Result<Self, TextureCreationError> {
+    #[inline]
+    pub fn new(display: &glium::Display, (w, h): (u32, u32)) -> Result<Self, TextureCreationError> {
         Texture2d::empty_with_format(display, glium::texture::UncompressedFloatFormat::U8, MipmapsOption::NoMipmap, w, h).map(FontTex)
     }
 
