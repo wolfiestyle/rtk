@@ -22,9 +22,9 @@ struct TestWidget {
 }
 
 impl Widget for TestWidget {
-    fn update_layout(&mut self, parent_rect: Rect) {
+    fn update_layout<R: BackendResources>(&mut self, parent_rect: Rect, resources: &mut R) {
         for child in &mut self.childs {
-            child.update_layout(self.bounds);
+            child.update_layout(self.bounds, resources);
         }
 
         self.bounds.size = parent_rect.size - self.bounds.pos.as_size();
@@ -111,7 +111,7 @@ struct TestWidget2 {
 }
 
 impl Widget for TestWidget2 {
-    fn update_layout(&mut self, _parent_rect: Rect) {}
+    fn update_layout<R: BackendResources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
 
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
         //dc.clear(self.color);

@@ -20,9 +20,9 @@ pub fn widget_impl(mut input: DeriveInput) -> TokenStream {
             quote! {
                 impl #impl_generics #path::Widget for #name #ty_generics #where_clause {
                     #[inline]
-                    fn update_layout(&mut self, parent_rect: #crate_::geometry::Rect) {
+                    fn update_layout<R: #crate_::backend::BackendResources>(&mut self, parent_rect: #crate_::geometry::Rect, resources: &mut R) {
                         match self {
-                            #(#patterns => #path::Widget::update_layout(a, parent_rect),)*
+                            #(#patterns => #path::Widget::update_layout(a, parent_rect, resources),)*
                         }
                     }
 

@@ -2,7 +2,7 @@ use crate::shared_res::SharedResources;
 use crate::window::GliumWindow;
 use std::ops;
 use widgets::toplevel::TopLevel;
-use widgets_winit::MainLoop;
+use widgets_winit::{BackendWindow, MainLoop};
 
 #[derive(Debug)]
 pub struct GliumApplication<T> {
@@ -19,8 +19,12 @@ impl<T: TopLevel + 'static> GliumApplication<T> {
 
     #[inline]
     pub fn add_window(&mut self, window: T) {
-        self.main_loop
-            .add_window(GliumWindow::new(window, &self.main_loop, &self.main_loop.resources))
+        let mut window = GliumWindow::new(window, &self.main_loop, self);
+        window.update(self);
+        if window.push_event(widgets::event::Event::Created) {
+            window.update(self);
+        }
+        self.main_loop.add_window(window)
     }
 
     #[inline]

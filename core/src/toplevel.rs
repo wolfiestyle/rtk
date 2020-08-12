@@ -1,5 +1,5 @@
 //! TopLevel type that interfaces with the backend.
-use crate::backend::DrawBackend;
+use crate::backend::{BackendResources, DrawBackend};
 use crate::event::Event;
 
 mod window;
@@ -7,7 +7,7 @@ pub use window::*;
 
 /// Defines an object that can be a top level window.
 pub trait TopLevel {
-    fn update_layout(&mut self);
+    fn update_layout<R: BackendResources>(&mut self, resources: &mut R);
 
     fn draw<B: DrawBackend>(&self, backend: &mut B);
 
@@ -20,8 +20,8 @@ pub trait TopLevel {
 
 impl<T: TopLevel> TopLevel for Box<T> {
     #[inline]
-    fn update_layout(&mut self) {
-        (**self).update_layout()
+    fn update_layout<R: BackendResources>(&mut self, resources: &mut R) {
+        (**self).update_layout(resources)
     }
 
     #[inline]

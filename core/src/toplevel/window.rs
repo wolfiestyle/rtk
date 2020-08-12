@@ -1,4 +1,4 @@
-use crate::backend::DrawBackend;
+use crate::backend::{BackendResources, DrawBackend};
 use crate::draw::{Color, DrawContext};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Position, Size};
@@ -40,7 +40,7 @@ impl<T> Window<T> {
 }
 
 impl<T: Widget> TopLevel for Window<T> {
-    fn update_layout(&mut self) {
+    fn update_layout<R: BackendResources>(&mut self, resources: &mut R) {
         if self.size.is_zero_area() {
             // our size is unset, first try to get the default content size
             let initial = self
@@ -50,14 +50,14 @@ impl<T: Widget> TopLevel for Window<T> {
                 .map_size(|s| s.nonzero_or(DEFAULT_WINDOW_SIZE)); // if we failed to get a size then use a default
 
             // update the child's size using this size as our viewport
-            self.child.update_layout(initial);
+            self.child.update_layout(initial, resources);
 
             // set our size to the calculated content size
             let updated = self.child.get_bounds().expand_to_origin().size.nonzero_or(DEFAULT_WINDOW_SIZE);
             self.set_size(updated);
         } else {
             // we alread have a size, only update child
-            self.child.update_layout(self.size.into());
+            self.child.update_layout(self.size.into(), resources);
         }
     }
 

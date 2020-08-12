@@ -1,3 +1,4 @@
+use widgets::backend::NullResources;
 use widgets::prelude::*;
 use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
@@ -16,7 +17,7 @@ struct TestWidget {
 }
 
 impl Widget for TestWidget {
-    fn update_layout(&mut self, parent_rect: Rect) {
+    fn update_layout<R: BackendResources>(&mut self, parent_rect: Rect, _resources: &mut R) {
         self.bounds = parent_rect;
     }
     fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}
@@ -35,8 +36,8 @@ fn widget() {
         id: WidgetId::new(),
         bounds: rect1,
     });
-    e1.update_layout(rect2);
-    e2.update_layout(rect2);
+    e1.update_layout(rect2, &mut NullResources);
+    e2.update_layout(rect2, &mut NullResources);
     assert_eq!(e1.get_bounds(), rect1);
     assert_eq!(e2.get_bounds(), rect2);
 }

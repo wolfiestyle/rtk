@@ -7,7 +7,7 @@ use winit::window::WindowId;
 
 pub trait BackendWindow<R> {
     fn get_id(&self) -> WindowId;
-    fn update(&mut self);
+    fn update(&mut self, resources: &mut R);
     fn draw(&mut self, resources: &mut R);
     fn request_redraw(&self);
     fn push_event(&mut self, event: widgets::event::Event) -> bool;
@@ -36,11 +36,7 @@ impl<T: BackendWindow<R> + 'static, R: 'static> MainLoop<T, R> {
     }
 
     #[inline]
-    pub fn add_window(&mut self, mut window: T) {
-        window.update();
-        if window.push_event(widgets::event::Event::Created) {
-            window.update();
-        }
+    pub fn add_window(&mut self, window: T) {
         self.window_map.insert(window.get_id(), window);
     }
 
@@ -68,7 +64,7 @@ impl<T: BackendWindow<R> + 'static, R: 'static> MainLoop<T, R> {
                         let ev_consumed = translate_event(event).map_or(false, |ev| window.push_event(ev));
                         if window_changed || ev_consumed {
                             // event was consumed, update and trigger a redraw
-                            window.update();
+                            window.update(&mut resources);
                             window.request_redraw();
                         } else if is_close_req {
                             // CloseRequest wasn't consumed, destroy window

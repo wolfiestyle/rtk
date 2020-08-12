@@ -13,7 +13,7 @@ struct TestWidget1<T> {
 }
 
 impl<T: Widget> Widget for TestWidget1<T> {
-    fn update_layout(&mut self, _parent_rect: Rect) {}
+    fn update_layout<R: BackendResources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
     fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
@@ -31,7 +31,7 @@ struct TestWidget2<T> {
 }
 
 impl<T: Widget> Widget for TestWidget2<T> {
-    fn update_layout(&mut self, _parent_rect: Rect) {}
+    fn update_layout<R: BackendResources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
     fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}
     fn handle_event(&mut self, _event: &Event, _ctx: EventContext) -> EventResult {
         EventResult::Pass
