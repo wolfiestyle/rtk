@@ -1,5 +1,5 @@
-use widgets::backend::NullResources;
 use widgets::prelude::*;
+use widgets::testing::NullResources;
 use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 
