@@ -1,4 +1,4 @@
-use crate::backend::{BackendResources, DrawBackend};
+use crate::backend::{DrawBackend, Resources};
 use crate::draw::{Color, DrawContext};
 use crate::event::{Event, EventDispatcher};
 use crate::geometry::{Position, Size};
@@ -40,7 +40,7 @@ impl<T> Window<T> {
 }
 
 impl<T: Widget> TopLevel for Window<T> {
-    fn update_layout<R: BackendResources>(&mut self, resources: &mut R) {
+    fn update_layout<R: Resources>(&mut self, resources: &mut R) {
         if self.size.is_zero_area() {
             // our size is unset, first try to get the default content size
             let initial = self

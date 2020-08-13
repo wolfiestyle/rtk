@@ -5,7 +5,7 @@ use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::fmt;
 use std::ops::Range;
-use widgets::backend::{BackendResources, DrawBackend, TextureError};
+use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{Color, TextSection, TextureId};
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
@@ -211,7 +211,7 @@ impl DrawBackend for BackendWrapper<'_> {
     }
 }
 
-impl BackendResources for BackendWrapper<'_> {
+impl Resources for BackendWrapper<'_> {
     #[inline]
     fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
         self.resources.load_texture(id, image)

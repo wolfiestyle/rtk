@@ -1,5 +1,5 @@
 //! Widget type and definitions.
-use crate::backend::{BackendResources, DrawBackend};
+use crate::backend::{DrawBackend, Resources};
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Position, Rect};
@@ -13,7 +13,7 @@ pub use empty::*;
 /// Defines an object that can be drawn and viewed inside a window.
 pub trait Widget: ObjectId + Bounds + Visitable {
     /// Update the object's layout.
-    fn update_layout<R: BackendResources>(&mut self, parent_rect: Rect, resources: &mut R);
+    fn update_layout<R: Resources>(&mut self, parent_rect: Rect, resources: &mut R);
 
     /// Draws the contents of this object.
     //TODO: invalidate mechanics to avoid overdraw
@@ -35,7 +35,7 @@ pub trait Widget: ObjectId + Bounds + Visitable {
 
 impl<T: Widget> Widget for Box<T> {
     #[inline]
-    fn update_layout<R: BackendResources>(&mut self, parent_rect: Rect, resources: &mut R) {
+    fn update_layout<R: Resources>(&mut self, parent_rect: Rect, resources: &mut R) {
         (**self).update_layout(parent_rect, resources)
     }
 

@@ -17,7 +17,7 @@ struct TestWidget {
 }
 
 impl Widget for TestWidget {
-    fn update_layout<R: BackendResources>(&mut self, parent_rect: Rect, _resources: &mut R) {
+    fn update_layout<R: Resources>(&mut self, parent_rect: Rect, _resources: &mut R) {
         self.bounds = parent_rect;
     }
     fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}

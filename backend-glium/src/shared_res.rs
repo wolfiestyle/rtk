@@ -13,7 +13,7 @@ use std::borrow::Cow;
 use std::collections::{hash_map, HashMap};
 use std::fmt;
 use std::ops::Deref;
-use widgets::backend::{BackendResources, TextureError};
+use widgets::backend::{Resources, TextureError};
 use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
@@ -80,7 +80,7 @@ impl SharedResources {
     }
 }
 
-impl BackendResources for SharedResources {
+impl Resources for SharedResources {
     fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
         let texture = to_glium_texture(image, &self.display).map_err(to_texture_error)?;
         self.texture_map.insert(id, texture);

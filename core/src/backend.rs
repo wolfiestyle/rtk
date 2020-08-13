@@ -5,7 +5,7 @@ use crate::image::Image;
 use std::fmt;
 
 /// Resources provided by the backend.
-pub trait BackendResources {
+pub trait Resources {
     fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
 
     fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
@@ -27,7 +27,7 @@ pub trait BackendResources {
 }
 
 /// Drawing interface implemented by the backend.
-pub trait DrawBackend: BackendResources {
+pub trait DrawBackend: Resources {
     type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
 
     fn clear(&mut self, color: Color, viewport: Rect);

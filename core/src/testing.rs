@@ -1,4 +1,4 @@
-use crate::backend::{BackendResources, TextureError};
+use crate::backend::{Resources, TextureError};
 use crate::draw::TextureId;
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::image::Image;
@@ -7,7 +7,7 @@ use crate::image::Image;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct NullResources;
 
-impl BackendResources for NullResources {
+impl Resources for NullResources {
     #[inline]
     fn load_texture(&mut self, _id: TextureId, _image: &Image) -> Result<(), TextureError> {
         Err(TextureError::FormatNotSupported)

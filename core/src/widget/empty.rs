@@ -1,4 +1,4 @@
-use crate::backend::{BackendResources, DrawBackend};
+use crate::backend::{DrawBackend, Resources};
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Position, Rect, Size};
@@ -81,7 +81,7 @@ impl Visitable for Empty {
 
 impl Widget for Empty {
     #[inline]
-    fn update_layout<R: BackendResources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
+    fn update_layout<R: Resources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
 
     #[inline]
     fn draw<B: DrawBackend>(&self, _dc: DrawContext<B>) {}
