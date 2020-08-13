@@ -27,7 +27,7 @@ pub trait BackendResources {
 }
 
 /// Drawing interface implemented by the backend.
-pub trait DrawBackend {
+pub trait DrawBackend: BackendResources {
     type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
 
     fn clear(&mut self, color: Color, viewport: Rect);

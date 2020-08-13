@@ -1,4 +1,4 @@
-use crate::queue::DrawQueue;
+use crate::queue::{BackendWrapper, DrawQueue};
 use crate::shared_res::SharedResources;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
@@ -68,7 +68,10 @@ impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
 
     fn draw(&mut self, resources: &mut SharedResources) {
         self.draw_queue.clear();
-        self.window.draw(&mut self.draw_queue);
+        self.window.draw(&mut BackendWrapper {
+            queue: &mut self.draw_queue,
+            resources,
+        });
         self.draw_queue.execute(resources);
     }
 

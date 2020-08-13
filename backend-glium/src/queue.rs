@@ -5,9 +5,11 @@ use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::fmt;
 use std::ops::Range;
-use widgets::backend::DrawBackend;
+use widgets::backend::{BackendResources, DrawBackend, TextureError};
 use widgets::draw::{Color, TextSection, TextureId};
+use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
+use widgets::image::Image;
 
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
@@ -170,29 +172,6 @@ impl DrawQueue {
     }
 }
 
-impl DrawBackend for DrawQueue {
-    type Vertex = Vertex;
-
-    #[inline]
-    fn clear(&mut self, color: Color, viewport: Rect) {
-        self.push_clear(color, viewport)
-    }
-
-    #[inline]
-    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
-    where
-        V: IntoIterator<Item = Self::Vertex>,
-        I: IntoIterator<Item = u32>,
-    {
-        self.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
-    }
-
-    #[inline]
-    fn draw_text(&mut self, text: TextSection, viewport: Rect) {
-        self.push_text(text, viewport)
-    }
-}
-
 impl fmt::Debug for DrawQueue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("GliumWindow")
@@ -201,6 +180,66 @@ impl fmt::Debug for DrawQueue {
             .field("commands", &self.commands)
             .field("display", &format_args!("..."))
             .finish()
+    }
+}
+
+pub struct BackendWrapper<'a> {
+    pub queue: &'a mut DrawQueue,
+    pub resources: &'a mut SharedResources,
+}
+
+impl DrawBackend for BackendWrapper<'_> {
+    type Vertex = Vertex;
+
+    #[inline]
+    fn clear(&mut self, color: Color, viewport: Rect) {
+        self.queue.push_clear(color, viewport)
+    }
+
+    #[inline]
+    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
+    where
+        V: IntoIterator<Item = Self::Vertex>,
+        I: IntoIterator<Item = u32>,
+    {
+        self.queue.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
+    }
+
+    #[inline]
+    fn draw_text(&mut self, text: TextSection, viewport: Rect) {
+        self.queue.push_text(text, viewport)
+    }
+}
+
+impl BackendResources for BackendWrapper<'_> {
+    #[inline]
+    fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        self.resources.load_texture(id, image)
+    }
+
+    #[inline]
+    fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        self.resources.load_texture_once(id, image)
+    }
+
+    #[inline]
+    fn delete_texture(&mut self, id: TextureId) {
+        self.resources.delete_texture(id)
+    }
+
+    #[inline]
+    fn enumerate_fonts(&self) -> Vec<String> {
+        self.resources.enumerate_fonts()
+    }
+
+    #[inline]
+    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
+        self.resources.select_font(family_names, properties)
+    }
+
+    #[inline]
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        self.resources.load_font(font_src)
     }
 }
 
