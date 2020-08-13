@@ -21,8 +21,7 @@ pub trait Resources {
     #[inline]
     fn create_texture(&mut self, image: &Image) -> Result<TextureId, TextureError> {
         let id = TextureId::new();
-        self.load_texture(id, image)?;
-        Ok(id)
+        self.load_texture(id, image).map(|_| id)
     }
 }
 
