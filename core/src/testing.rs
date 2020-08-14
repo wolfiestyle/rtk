@@ -1,5 +1,5 @@
 use crate::backend::{DrawBackend, Resources, TextureError};
-use crate::draw::{Color, ColorOp, TexCoord, TextSection, TextureId};
+use crate::draw::{ColorOp, TexCoord, TextSection, TextureId};
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
@@ -48,10 +48,6 @@ impl Resources for TestBackend {
 impl DrawBackend for TestBackend {
     type Vertex = TestVertex;
 
-    fn clear(&mut self, color: Color, viewport: Rect) {
-        self.draw_cmd.push(TestDrawCmd::Clear { color, viewport });
-    }
-
     fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: IntoIterator<Item = Self::Vertex>,
@@ -85,10 +81,6 @@ impl From<(Point<f32>, ColorOp, TexCoord)> for TestVertex {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TestDrawCmd {
-    Clear {
-        color: Color,
-        viewport: Rect,
-    },
     Triangles {
         vertices: Vec<TestVertex>,
         indices: Vec<u32>,

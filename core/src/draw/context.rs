@@ -47,10 +47,10 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         }
     }
 
-    /// Clears the drawing area.
+    /// Fills the entire drawing area with a single color.
     #[inline]
-    pub fn clear(&mut self, color: impl Into<Color>) {
-        self.backend.clear(color.into(), self.viewport)
+    pub fn fill(&mut self, color: impl Into<Color>) {
+        self.backend.draw_rect(self.viewport, color.into().into(), self.viewport)
     }
 
     /// Draws a single triangle.

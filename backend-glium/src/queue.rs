@@ -41,12 +41,6 @@ impl DrawQueue {
         //self.texture_map.remove_expired();  //TODO: GC old textures
     }
 
-    /// Adds a clear command to the draw queue.
-    #[inline]
-    fn push_clear(&mut self, color: Color, viewport: Rect) {
-        self.commands.push(DrawCommand::Clear(color, viewport))
-    }
-
     /// Adds raw elements to the draw queue.
     #[inline]
     fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
@@ -84,8 +78,8 @@ impl DrawQueue {
         self.commands.push(DrawCommand::Text(text, viewport))
     }
 
-    /// Runs the stored draw commands.
-    pub fn execute(&self, shared_res: &mut SharedResources) {
+    /// Runs the stored draw commands by drawing them into the framebuffer.
+    pub fn render(&self, clear_color: Option<Color>, shared_res: &mut SharedResources) {
         let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
         let index_buf = glium::index::IndexBuffer::new(&self.display, PrimitiveType::TrianglesList, &self.indices).unwrap();
         let mut draw_params = glium::DrawParameters {
@@ -96,14 +90,12 @@ impl DrawQueue {
         let win_size: Size = self.display.get_framebuffer_dimensions().into();
         let mut target = self.display.draw();
 
+        if let Some(Color { r, g, b, a }) = clear_color {
+            target.clear_color(r, g, b, a);
+        }
+
         for drawcmd in &self.commands {
             match drawcmd {
-                DrawCommand::Clear(color, viewport) => {
-                    if let Some(vp) = viewport.clip_inside(win_size.into()) {
-                        let rect = to_glium_rect(vp, win_size.h);
-                        target.clear(Some(&rect), Some((color.r, color.g, color.b, color.a)), false, None, None);
-                    }
-                }
                 DrawCommand::Triangles(cmd) => {
                     // clip the viewport against the visible window area
                     if let Some(scissor) = cmd.viewport.clip_inside(win_size.into()) {
@@ -192,11 +184,6 @@ impl DrawBackend for BackendWrapper<'_> {
     type Vertex = Vertex;
 
     #[inline]
-    fn clear(&mut self, color: Color, viewport: Rect) {
-        self.queue.push_clear(color, viewport)
-    }
-
-    #[inline]
     fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: IntoIterator<Item = Self::Vertex>,
@@ -246,7 +233,6 @@ impl Resources for BackendWrapper<'_> {
 /// A single draw command.
 #[derive(Debug, Clone)]
 enum DrawCommand {
-    Clear(Color, Rect),
     Triangles(DrawCmdData),
     Text(TextSection, Rect),
 }

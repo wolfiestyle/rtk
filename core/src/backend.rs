@@ -1,4 +1,4 @@
-use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection, TextureId};
+use crate::draw::{ColorOp, FillMode, TexCoord, TextSection, TextureId};
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
@@ -28,8 +28,6 @@ pub trait Resources {
 /// Drawing interface implemented by the backend.
 pub trait DrawBackend: Resources {
     type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
-
-    fn clear(&mut self, color: Color, viewport: Rect);
 
     fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where

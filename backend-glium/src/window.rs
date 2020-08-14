@@ -72,7 +72,7 @@ impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
             queue: &mut self.draw_queue,
             resources,
         });
-        self.draw_queue.execute(resources);
+        self.draw_queue.render(self.window.get_attr().background, resources);
     }
 
     fn request_redraw(&self) {

@@ -114,8 +114,7 @@ impl Widget for TestWidget2 {
     fn update_layout<R: Resources>(&mut self, _parent_rect: Rect, _resources: &mut R) {}
 
     fn draw<B: DrawBackend>(&self, mut dc: DrawContext<B>) {
-        //dc.clear(self.color);
-        dc.draw_rect((dc.origin(), self.bounds.size), self.color);
+        dc.fill(self.color);
         dc.draw_text(TextSection::default().add_text(Text::new(&self.text)));
     }
 

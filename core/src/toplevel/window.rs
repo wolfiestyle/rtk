@@ -63,9 +63,6 @@ impl<T: Widget> TopLevel for Window<T> {
 
     fn draw<B: DrawBackend>(&self, backend: &mut B) {
         let mut dc = DrawContext::new(backend, self.size.into());
-        if let Some(bg) = self.attr.background {
-            dc.clear(bg);
-        }
         dc.draw_child(&self.child);
     }
 
