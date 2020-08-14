@@ -40,7 +40,7 @@ pub trait DrawBackend: Resources {
 
     #[inline]
     fn draw_rect(&mut self, rect: Rect, fill: FillMode, viewport: Rect) {
-        if rect.size.is_zero_area() {
+        if rect.size.is_zero_area() || !rect.intersects(viewport) {
             return;
         }
         let top_left = rect.pos.cast();
