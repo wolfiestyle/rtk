@@ -1,5 +1,5 @@
 use crate::backend::DrawBackend;
-use crate::draw::{Color, ColorOp, FillMode, TexCoord, TextSection, TextureId};
+use crate::draw::{Color, FillMode, TextSection, TextureId};
 use crate::geometry::{Point, Position, Rect};
 use crate::widget::Widget;
 use std::ops;
@@ -72,28 +72,14 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
 
     /// Draws triangles from vertices and indices.
     #[inline]
-    pub fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, color: impl Into<Color>)
+    pub fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>)
     where
-        V: IntoIterator<Item = Point<f32>>,
+        V: IntoIterator<Item = B::Vertex>,
         I: IntoIterator<Item = u32>,
     {
         let offset = self.offset.cast();
-        let color = color.into().into();
-        let verts = vertices.into_iter().map(|p| (p + offset, color, Default::default()).into());
-        self.backend.draw_triangles(verts, indices, None, self.viewport)
-    }
-
-    /// Draws textured triangles from vertices and indices.
-    #[inline]
-    pub fn draw_triangles_uv<V, I>(&mut self, vertices: V, indices: I, color: impl Into<ColorOp>, texture: TextureId)
-    where
-        V: IntoIterator<Item = (Point<f32>, TexCoord)>,
-        I: IntoIterator<Item = u32>,
-    {
-        let offset = self.offset.cast();
-        let color = color.into();
-        let verts = vertices.into_iter().map(|(pos, texc)| (pos + offset, color, texc).into());
-        self.backend.draw_triangles(verts, indices, Some(texture), self.viewport)
+        let verts = vertices.into_iter().map(|v| v + offset);
+        self.backend.draw_triangles(verts, indices, texture, self.viewport)
     }
 
     /// Draws a rectangle.

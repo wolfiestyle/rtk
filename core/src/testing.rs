@@ -4,6 +4,7 @@ use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource}
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
 use std::collections::HashMap;
+use std::ops::Add;
 
 /// Test backend implementation.
 ///
@@ -76,6 +77,17 @@ pub struct TestVertex {
 impl From<(Point<f32>, ColorOp, TexCoord)> for TestVertex {
     fn from((pos, color, texc): (Point<f32>, ColorOp, TexCoord)) -> Self {
         TestVertex { pos, color, texc }
+    }
+}
+
+impl Add<Point<f32>> for TestVertex {
+    type Output = Self;
+
+    fn add(self, rhs: Point<f32>) -> Self::Output {
+        Self {
+            pos: self.pos + rhs,
+            ..self
+        }
     }
 }
 

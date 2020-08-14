@@ -1,4 +1,5 @@
 use glyph_brush::GlyphVertex;
+use std::ops::Add;
 use widgets::draw::{Color, ColorOp, TexCoord};
 use widgets::geometry::Point;
 
@@ -27,6 +28,18 @@ impl From<(Point<f32>, ColorOp, TexCoord)> for Vertex {
             color_mul: color.mul.into_rgb16(),
             color_add: color.add.into_rgb16(),
             texc: texc.into(),
+        }
+    }
+}
+
+impl Add<Point<f32>> for Vertex {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Point<f32>) -> Self::Output {
+        Self {
+            pos: [self.pos[0] + rhs.x, self.pos[1] + rhs.y],
+            ..self
         }
     }
 }

@@ -3,6 +3,7 @@ use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource}
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
 use std::fmt;
+use std::ops::Add;
 
 /// Resources provided by the backend.
 pub trait Resources {
@@ -27,7 +28,7 @@ pub trait Resources {
 
 /// Drawing interface implemented by the backend.
 pub trait DrawBackend: Resources {
-    type Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)>;
+    type Vertex: Vertex;
 
     fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
@@ -76,3 +77,8 @@ impl fmt::Display for TextureError {
         fmt.write_str(desc)
     }
 }
+
+/// Required trait bounds for `DrawBackend::Vertex`.
+pub trait Vertex: Copy + From<(Point<f32>, ColorOp, TexCoord)> + Add<Point<f32>, Output = Self> {}
+
+impl<T> Vertex for T where T: Copy + From<(Point<f32>, ColorOp, TexCoord)> + Add<Point<f32>, Output = T> {}
