@@ -32,30 +32,3 @@ pub trait Widget: ObjectId + Bounds + Visitable {
         Default::default()
     }
 }
-
-impl<T: Widget> Widget for Box<T> {
-    #[inline]
-    fn update_layout<R: Resources>(&mut self, parent_rect: Rect, resources: &mut R) {
-        (**self).update_layout(parent_rect, resources)
-    }
-
-    #[inline]
-    fn draw<B: DrawBackend>(&self, dc: DrawContext<B>) {
-        (**self).draw(dc)
-    }
-
-    #[inline]
-    fn handle_event(&mut self, event: &Event, ctx: EventContext) -> EventResult {
-        (**self).handle_event(event, ctx)
-    }
-
-    #[inline]
-    fn event_consumed(&mut self, event: &Event, ctx: &EventContext) {
-        (**self).event_consumed(event, ctx)
-    }
-
-    #[inline]
-    fn viewport_origin(&self) -> Position {
-        (**self).viewport_origin()
-    }
-}

@@ -51,10 +51,3 @@ impl<T: ObjectId, E> ObjectId for Result<T, E> {
         self.as_ref().map_or(WidgetId::EMPTY, ObjectId::get_id)
     }
 }
-
-impl<T: ObjectId> ObjectId for Box<T> {
-    #[inline]
-    fn get_id(&self) -> WidgetId {
-        (**self).get_id()
-    }
-}

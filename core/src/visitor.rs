@@ -78,18 +78,6 @@ impl<T: Visitable, E> Visitable for Result<T, E> {
     }
 }
 
-impl<T: Visitable> Visitable for Box<T> {
-    #[inline]
-    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-        (**self).accept(visitor, ctx)
-    }
-
-    #[inline]
-    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-        (**self).accept_rev(visitor, ctx)
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct ParentData {
     pub id: WidgetId,

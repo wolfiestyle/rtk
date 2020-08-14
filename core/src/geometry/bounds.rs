@@ -49,30 +49,3 @@ impl Bounds for Rect {
         *self
     }
 }
-
-impl<T: Bounds> Bounds for Box<T> {
-    #[inline]
-    fn get_position(&self) -> Position {
-        (**self).get_position()
-    }
-
-    #[inline]
-    fn get_size(&self) -> Size {
-        (**self).get_size()
-    }
-
-    #[inline]
-    fn set_position(&mut self, position: Position) {
-        (**self).set_position(position)
-    }
-
-    #[inline]
-    fn set_size(&mut self, size: Size) {
-        (**self).set_size(size)
-    }
-
-    #[inline]
-    fn get_bounds(&self) -> Rect {
-        (**self).get_bounds()
-    }
-}
