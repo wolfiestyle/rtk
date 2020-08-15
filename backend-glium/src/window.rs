@@ -1,11 +1,17 @@
-use crate::queue::{BackendWrapper, DrawQueue};
+use crate::queue::DrawQueue;
 use crate::shared_res::SharedResources;
+use crate::vertex::Vertex;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use std::fmt;
+use widgets::backend::{DrawBackend, Resources, TextureError};
+use widgets::draw::{TextSection, TextureId};
 use widgets::event::Event;
+use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
+use widgets::geometry::Rect;
+use widgets::image::Image;
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
 
@@ -101,5 +107,60 @@ impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
             _ => (),
         }
         self.window.push_event(event)
+    }
+}
+
+struct BackendWrapper<'a> {
+    pub queue: &'a mut DrawQueue,
+    pub resources: &'a mut SharedResources,
+}
+
+impl DrawBackend for BackendWrapper<'_> {
+    type Vertex = Vertex;
+
+    #[inline]
+    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
+    where
+        V: IntoIterator<Item = Self::Vertex>,
+        I: IntoIterator<Item = u32>,
+    {
+        self.queue.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
+    }
+
+    #[inline]
+    fn draw_text(&mut self, text: TextSection, viewport: Rect) {
+        self.queue.push_text(text, viewport)
+    }
+}
+
+impl Resources for BackendWrapper<'_> {
+    #[inline]
+    fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        self.resources.load_texture(id, image)
+    }
+
+    #[inline]
+    fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
+        self.resources.load_texture_once(id, image)
+    }
+
+    #[inline]
+    fn delete_texture(&mut self, id: TextureId) {
+        self.resources.delete_texture(id)
+    }
+
+    #[inline]
+    fn enumerate_fonts(&self) -> Vec<String> {
+        self.resources.enumerate_fonts()
+    }
+
+    #[inline]
+    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
+        self.resources.select_font(family_names, properties)
+    }
+
+    #[inline]
+    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
+        self.resources.load_font(font_src)
     }
 }

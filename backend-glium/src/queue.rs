@@ -4,11 +4,8 @@ use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::ops::Range;
-use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{Color, TextSection, TextureId};
-use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
-use widgets::image::Image;
 
 #[derive(Debug)]
 /// Buffer with draw commands to be sent to the backend.
@@ -40,7 +37,7 @@ impl DrawQueue {
 
     /// Adds raw elements to the draw queue.
     #[inline]
-    fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
+    pub fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: Iterator<Item = Vertex>,
         I: Iterator<Item = u32>,
@@ -71,7 +68,7 @@ impl DrawQueue {
 
     /// Adds text to the draw queue.
     #[inline]
-    fn push_text(&mut self, text: TextSection, viewport: Rect) {
+    pub fn push_text(&mut self, text: TextSection, viewport: Rect) {
         self.commands.push(DrawCommand::Text(text, viewport))
     }
 
@@ -158,61 +155,6 @@ impl DrawQueue {
         }
 
         target.finish().unwrap();
-    }
-}
-
-pub struct BackendWrapper<'a> {
-    pub queue: &'a mut DrawQueue,
-    pub resources: &'a mut SharedResources,
-}
-
-impl DrawBackend for BackendWrapper<'_> {
-    type Vertex = Vertex;
-
-    #[inline]
-    fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
-    where
-        V: IntoIterator<Item = Self::Vertex>,
-        I: IntoIterator<Item = u32>,
-    {
-        self.queue.push_tris(vertices.into_iter(), indices.into_iter(), texture, viewport)
-    }
-
-    #[inline]
-    fn draw_text(&mut self, text: TextSection, viewport: Rect) {
-        self.queue.push_text(text, viewport)
-    }
-}
-
-impl Resources for BackendWrapper<'_> {
-    #[inline]
-    fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
-        self.resources.load_texture(id, image)
-    }
-
-    #[inline]
-    fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError> {
-        self.resources.load_texture_once(id, image)
-    }
-
-    #[inline]
-    fn delete_texture(&mut self, id: TextureId) {
-        self.resources.delete_texture(id)
-    }
-
-    #[inline]
-    fn enumerate_fonts(&self) -> Vec<String> {
-        self.resources.enumerate_fonts()
-    }
-
-    #[inline]
-    fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource> {
-        self.resources.select_font(family_names, properties)
-    }
-
-    #[inline]
-    fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError> {
-        self.resources.load_font(font_src)
     }
 }
 
