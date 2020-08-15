@@ -5,7 +5,7 @@ use font_kit::source::SystemSource;
 use glium::glutin::dpi::PhysicalSize;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowBuilder;
-use glium::glutin::{ContextBuilder, GlProfile, Robustness};
+use glium::glutin::{Api, ContextBuilder, GlProfile, GlRequest, NotCurrent, Robustness};
 use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Texture2d, TextureCreationError};
 use glyph_brush::ab_glyph::FontVec;
 use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
@@ -35,14 +35,7 @@ impl SharedResources {
         // glium doesn't properly support headless yet, so we use a hidden window
         let win_builder = WindowBuilder::new().with_inner_size(PhysicalSize::new(1, 1)).with_visible(false);
 
-        let mut ctx_builder = ContextBuilder::new()
-            .with_gl_profile(GlProfile::Core)
-            .with_gl_robustness(Robustness::TryRobustNoResetNotification);
-        ctx_builder.pf_reqs.hardware_accelerated = None;
-        ctx_builder.pf_reqs.depth_bits = None;
-        ctx_builder.pf_reqs.stencil_bits = None;
-
-        let display = glium::Display::new(win_builder, ctx_builder, event_loop).unwrap();
+        let display = glium::Display::new(win_builder, Self::ctx_params(), event_loop).unwrap();
 
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
         let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap)
@@ -77,6 +70,17 @@ impl SharedResources {
         this.load_font(&default_font).unwrap();
 
         this
+    }
+
+    pub(crate) fn ctx_params() -> ContextBuilder<'static, NotCurrent> {
+        let mut builder = ContextBuilder::new()
+            .with_gl(GlRequest::Specific(Api::OpenGl, (3, 3)))
+            .with_gl_profile(GlProfile::Core)
+            .with_gl_robustness(Robustness::TryRobustNoResetNotification);
+        builder.pf_reqs.hardware_accelerated = None;
+        builder.pf_reqs.depth_bits = None;
+        builder.pf_reqs.stencil_bits = None;
+        builder
     }
 }
 

@@ -4,7 +4,6 @@ use crate::vertex::Vertex;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
-use glium::glutin::{ContextBuilder, GlProfile, Robustness};
 use std::fmt;
 use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{TextSection, TextureId};
@@ -39,16 +38,11 @@ impl<T: TopLevel> GliumWindow<T> {
         let win_builder = make_win_builder(win_attr);
         let shared_win = shared_res.display.gl_window();
 
-        let mut ctx = ContextBuilder::new()
-            .with_gl_profile(GlProfile::Core)
-            .with_gl_robustness(Robustness::TryRobustNoResetNotification)
+        let ctx_builder = SharedResources::ctx_params()
             .with_shared_lists(shared_win.context())
             .with_double_buffer(Some(true));
-        ctx.pf_reqs.hardware_accelerated = None;
-        ctx.pf_reqs.depth_bits = None;
-        ctx.pf_reqs.stencil_bits = None;
 
-        let display = glium::Display::new(win_builder, ctx, event_loop).unwrap();
+        let display = glium::Display::new(win_builder, ctx_builder, event_loop).unwrap();
         drop(shared_win);
 
         if let Some(pos) = win_attr.position {
