@@ -55,10 +55,8 @@ impl<T: TopLevel> GliumWindow<T> {
             display.gl_window().window().set_outer_position(PhysicalPosition::new(pos.x, pos.y));
         }
 
-        let draw_queue = DrawQueue::new();
-
         Self {
-            draw_queue,
+            draw_queue: Default::default(),
             cur_attr: win_attr.clone(),
             window,
             display,

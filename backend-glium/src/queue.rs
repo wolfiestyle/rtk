@@ -7,7 +7,7 @@ use std::ops::Range;
 use widgets::draw::{Color, TextSection, TextureId};
 use widgets::geometry::{Rect, Size};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
     /// Shared vertex buffer.
@@ -19,14 +19,6 @@ pub struct DrawQueue {
 }
 
 impl DrawQueue {
-    pub fn new() -> Self {
-        Self {
-            vertices: Default::default(),
-            indices: Default::default(),
-            commands: Default::default(),
-        }
-    }
-
     /// Clears all data from the draw queue.
     #[inline]
     pub fn clear(&mut self) {
