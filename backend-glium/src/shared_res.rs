@@ -1,4 +1,4 @@
-use crate::vertex::TextVertex;
+use crate::vertex::RectVertex;
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
@@ -25,7 +25,7 @@ pub struct SharedResources {
     pub(crate) font_src: SystemSource,
     pub(crate) texture_map: HashMap<TextureId, SrgbTexture2d>,
     loaded_fonts: HashMap<FontSource, FontId>,
-    pub(crate) glyph_brush: GlyphBrush<TextVertex, Extra, FontVec>,
+    pub(crate) glyph_brush: GlyphBrush<RectVertex, Extra, FontVec>,
     pub(crate) font_tex: FontTex,
     pub(crate) text_prog: glium::Program,
 }

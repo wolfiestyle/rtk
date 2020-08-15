@@ -3,10 +3,14 @@ uniform vec2 vp_size;
 
 in vec4 rect;
 in vec4 texr;
-in vec4 color;
+in vec4 color_mul;
+in vec4 color_add;
+in vec4 font_col;
 
 out vec2 v_texc;
-out vec4 v_color;
+out vec4 v_color_mul;
+out vec4 v_color_add;
+out vec4 v_font_col;
 
 void main() {
     vec2 pos = vec2(0.0);
@@ -31,5 +35,8 @@ void main() {
 
     vec2 scaled = vec2(2.0, -2.0) * pos / vp_size + vec2(-1.0, 1.0);
     gl_Position = vec4(scaled, 0.0, 1.0);
-    v_color = color;
+
+    v_color_mul = color_mul;
+    v_color_add = color_add;
+    v_font_col = font_col;
 }

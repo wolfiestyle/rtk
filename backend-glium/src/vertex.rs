@@ -46,20 +46,24 @@ impl Add<Point<f32>> for Vertex {
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
-pub struct TextVertex {
+pub struct RectVertex {
     rect: [f32; 4],
     texr: [f32; 4],
-    color: [u16; 4],
+    color_mul: [u16; 4],
+    color_add: [u16; 4],
+    font_col: [u16; 4],
 }
 
 glium::implement_vertex! {
-    TextVertex,
+    RectVertex,
     rect normalize(false),
     texr normalize(false),
-    color normalize(true)
+    color_mul normalize(true),
+    color_add normalize(true),
+    font_col normalize(true)
 }
 
-impl From<GlyphVertex<'_>> for TextVertex {
+impl From<GlyphVertex<'_>> for RectVertex {
     #[inline]
     fn from(vert: GlyphVertex) -> Self {
         use glyph_brush::ab_glyph::Point;
@@ -72,7 +76,9 @@ impl From<GlyphVertex<'_>> for TextVertex {
         Self {
             rect: [x0, y0, x1, y1],
             texr: [u0, v0, u1, v1],
-            color: Color::from(vert.extra.color).into_rgb16(),
+            color_mul: Default::default(),
+            color_add: Default::default(),
+            font_col: Color::from(vert.extra.color).into_rgb16(),
         }
     }
 }

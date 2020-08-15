@@ -119,7 +119,8 @@ impl DrawQueue {
                                 let vertex_buf = glium::VertexBuffer::new(display, &verts).unwrap();
                                 let uniforms = uniform! {
                                     vp_size: <[f32; 2]>::from(win_size.as_point()),
-                                    tex: shared_res.font_tex.sampled()
+                                    tex: &shared_res.t_white,
+                                    font_tex: shared_res.font_tex.sampled()
                                         .wrap_function(glium::uniforms::SamplerWrapFunction::Clamp)
                                         .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
                                         .magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
