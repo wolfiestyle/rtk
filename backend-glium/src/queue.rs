@@ -3,7 +3,6 @@ use crate::vertex::Vertex;
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
-use std::fmt;
 use std::ops::Range;
 use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{Color, TextSection, TextureId};
@@ -11,6 +10,7 @@ use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSourc
 use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
 
+#[derive(Debug)]
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
     /// Shared vertex buffer.
@@ -19,17 +19,14 @@ pub struct DrawQueue {
     indices: Vec<u32>,
     /// List of draw commands to be executed.
     commands: Vec<DrawCommand>,
-    /// Glium context handle
-    pub display: glium::Display,
 }
 
 impl DrawQueue {
-    pub fn new(display: glium::Display) -> Self {
+    pub fn new() -> Self {
         Self {
             vertices: Default::default(),
             indices: Default::default(),
             commands: Default::default(),
-            display,
         }
     }
 
@@ -79,16 +76,16 @@ impl DrawQueue {
     }
 
     /// Runs the stored draw commands by drawing them into the framebuffer.
-    pub fn render(&self, clear_color: Option<Color>, shared_res: &mut SharedResources) {
-        let vertex_buf = glium::VertexBuffer::new(&self.display, &self.vertices).unwrap();
-        let index_buf = glium::index::IndexBuffer::new(&self.display, PrimitiveType::TrianglesList, &self.indices).unwrap();
+    pub fn render(&self, display: &glium::Display, clear_color: Option<Color>, shared_res: &mut SharedResources) {
+        let vertex_buf = glium::VertexBuffer::new(display, &self.vertices).unwrap();
+        let index_buf = glium::index::IndexBuffer::new(display, PrimitiveType::TrianglesList, &self.indices).unwrap();
         let mut draw_params = glium::DrawParameters {
             blend: glium::Blend::alpha_blending(),
             ..Default::default()
         };
 
-        let win_size: Size = self.display.get_framebuffer_dimensions().into();
-        let mut target = self.display.draw();
+        let win_size: Size = display.get_framebuffer_dimensions().into();
+        let mut target = display.draw();
 
         if let Some(Color { r, g, b, a }) = clear_color {
             target.clear_color(r, g, b, a);
@@ -130,7 +127,7 @@ impl DrawQueue {
                             .process_queued(|rect, data| font_tex.update(rect, data), |gvert| gvert.into());
                         match action {
                             Ok(BrushAction::Draw(verts)) => {
-                                let vertex_buf = glium::VertexBuffer::new(&self.display, &verts).unwrap();
+                                let vertex_buf = glium::VertexBuffer::new(display, &verts).unwrap();
                                 let uniforms = uniform! {
                                     vp_size: <[f32; 2]>::from(win_size.as_point()),
                                     tex: shared_res.font_tex.sampled()
@@ -161,17 +158,6 @@ impl DrawQueue {
         }
 
         target.finish().unwrap();
-    }
-}
-
-impl fmt::Debug for DrawQueue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("GliumWindow")
-            .field("vertices", &self.vertices)
-            .field("indices", &self.indices)
-            .field("commands", &self.commands)
-            .field("display", &format_args!("..."))
-            .finish()
     }
 }
 

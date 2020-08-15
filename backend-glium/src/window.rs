@@ -4,15 +4,27 @@ use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
 use glium::glutin::{ContextBuilder, GlProfile, Robustness};
+use std::fmt;
 use widgets::event::Event;
 use widgets::toplevel::{TopLevel, WindowAttributes};
 use widgets_winit::{make_win_builder, BackendWindow};
 
-#[derive(Debug)]
 pub struct GliumWindow<T> {
+    display: glium::Display,
     draw_queue: DrawQueue,
     cur_attr: WindowAttributes,
     window: T,
+}
+
+impl<T: fmt::Debug> fmt::Debug for GliumWindow<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("GliumWindow")
+            .field("display", &format_args!("..."))
+            .field("draw_queue", &self.draw_queue)
+            .field("cur_attr", &self.cur_attr)
+            .field("window", &self.window)
+            .finish()
+    }
 }
 
 impl<T: TopLevel> GliumWindow<T> {
@@ -37,28 +49,25 @@ impl<T: TopLevel> GliumWindow<T> {
             display.gl_window().window().set_outer_position(PhysicalPosition::new(pos.x, pos.y));
         }
 
-        let draw_queue = DrawQueue::new(display);
+        let draw_queue = DrawQueue::new();
 
         Self {
             draw_queue,
             cur_attr: win_attr.clone(),
             window,
+            display,
         }
-    }
-
-    fn display(&self) -> &glium::Display {
-        &self.draw_queue.display
     }
 }
 
 impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
     fn get_id(&self) -> WindowId {
-        self.display().gl_window().window().id()
+        self.display.gl_window().window().id()
     }
 
     fn update(&mut self, resources: &mut SharedResources) {
         if self.cur_attr.size.is_zero_area() {
-            let size: [u32; 2] = self.display().gl_window().window().inner_size().into();
+            let size: [u32; 2] = self.display.gl_window().window().inner_size().into();
             self.cur_attr.set_size(size);
         }
 
@@ -72,11 +81,11 @@ impl<T: TopLevel> BackendWindow<SharedResources> for GliumWindow<T> {
             queue: &mut self.draw_queue,
             resources,
         });
-        self.draw_queue.render(self.window.get_attr().background, resources);
+        self.draw_queue.render(&self.display, self.window.get_attr().background, resources);
     }
 
     fn request_redraw(&self) {
-        self.display().gl_window().window().request_redraw();
+        self.display.gl_window().window().request_redraw();
     }
 
     fn push_event(&mut self, event: Event) -> bool {
