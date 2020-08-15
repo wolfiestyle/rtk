@@ -7,7 +7,7 @@ use std::ops::Range;
 use widgets::draw::{Color, TextSection, TextureId};
 use widgets::geometry::{Rect, Size};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue {
     /// Shared vertex buffer.
