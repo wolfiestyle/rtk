@@ -7,18 +7,36 @@ use std::ops::Add;
 
 /// Resources provided by the backend.
 pub trait Resources {
+    /// Creates a texture with a specific id.
+    ///
+    /// If a texture already exists on that id, it will be replaced.
     fn load_texture(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
 
+    /// Creates a texture with a specific id, only if it isn't used.
+    ///
+    /// If a texture already exists on that id, it won't be replaced.
     fn load_texture_once(&mut self, id: TextureId, image: &Image) -> Result<(), TextureError>;
 
+    /// Deletes the texture on the specified id.
     fn delete_texture(&mut self, id: TextureId);
 
+    /// Lists all the fonts installed on the system.
+    ///
+    /// The string returned is the family name of each font.
     fn enumerate_fonts(&self) -> Vec<String>;
 
+    /// Selects a system font based on family names and properties.
+    ///
+    /// Family names are checked in order (to specify alternatives).
+    /// Returns `None` if there is no font that matches any of the family names or properties.
     fn select_font(&self, family_names: &[FontFamily], properties: &FontProperties) -> Option<FontSource>;
 
+    /// Loads the specified font.
+    ///
+    /// The result of this method is cached, so a single font is loaded only once.
     fn load_font(&mut self, font_src: &FontSource) -> Result<FontId, FontLoadError>;
 
+    /// Creates a texture from an image.
     #[inline]
     fn create_texture(&mut self, image: &Image) -> Result<TextureId, TextureError> {
         let id = TextureId::new();
@@ -30,13 +48,20 @@ pub trait Resources {
 pub trait DrawBackend: Resources {
     type Vertex: Vertex;
 
+    /// Draws triangles from vertices and indices.
     fn draw_triangles<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: IntoIterator<Item = Self::Vertex>,
         I: IntoIterator<Item = u32>;
 
+    /// Draws text.
     fn draw_text(&mut self, text: TextSection, viewport: Rect);
 
+    /// Draws a rectangle.
+    ///
+    /// The default implementation splits the rect into two triangles, and
+    /// assumes OpenGL-style fill rules (must cover the center of the pixel to
+    /// generate a fragment).
     #[inline]
     fn draw_rect(&mut self, rect: Rect, fill: FillMode, viewport: Rect) {
         if rect.size.is_zero_area() || !rect.intersects(viewport) {
@@ -59,6 +84,7 @@ pub trait DrawBackend: Resources {
     }
 }
 
+/// Error produced by texture operations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TextureError {
     FormatNotSupported,
