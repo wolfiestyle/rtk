@@ -18,16 +18,43 @@ use widgets::draw::TextureId;
 use widgets::font::{FontLoadError, FontSource};
 use widgets::image::{Image, ImageData, PixelFormat};
 
+/// Shared OpenGL context and resources used for drawing.
 pub struct SharedResources {
+    /// Shared OpenGL context used for storage.
     pub(crate) display: glium::Display,
-    pub(crate) t_white: SrgbTexture2d,
+    /// Program used to draw triangles.
     pub(crate) program: glium::Program,
-    pub(crate) font_src: SystemSource,
-    pub(crate) texture_map: HashMap<TextureId, SrgbTexture2d>,
-    loaded_fonts: HashMap<FontSource, FontId>,
-    pub(crate) glyph_brush: GlyphBrush<RectVertex, Extra, FontVec>,
-    pub(crate) font_tex: FontTex,
+    /// Program used to draw text.
     pub(crate) text_prog: glium::Program,
+    /// Default texture (1x1 white pixel).
+    pub(crate) default_tex: SrgbTexture2d,
+    /// Used to find system fonts.
+    font_src: SystemSource,
+    /// Maps user texture id's into OpenGL textures.
+    pub(crate) texture_map: HashMap<TextureId, SrgbTexture2d>,
+    /// Currently loaded fonts.
+    loaded_fonts: HashMap<FontSource, FontId>,
+    /// Text rendering engine.
+    pub(crate) glyph_brush: GlyphBrush<RectVertex, Extra, FontVec>,
+    /// Font texture cache.
+    pub(crate) font_tex: FontTex,
+}
+
+// pls implement Debug on your types..
+impl fmt::Debug for SharedResources {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("SharedResources")
+            .field("display", &format_args!("..."))
+            .field("program", &self.program)
+            .field("text_prog", &self.text_prog)
+            .field("default_tex", &self.default_tex)
+            .field("font_src", &format_args!("..."))
+            .field("texture_map", &self.texture_map)
+            .field("loaded_fonts", &self.loaded_fonts)
+            .field("glyph_brush", &self.glyph_brush)
+            .field("font_tex", &self.font_tex)
+            .finish()
+    }
 }
 
 impl SharedResources {
@@ -37,11 +64,6 @@ impl SharedResources {
 
         let display = glium::Display::new(win_builder, Self::ctx_params(), event_loop).unwrap();
 
-        let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let t_white = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap)
-            .unwrap()
-            .into();
-
         let vert_src = include_str!("standard.vert.glsl");
         let frag_src = include_str!("standard.frag.glsl");
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
@@ -50,20 +72,25 @@ impl SharedResources {
         let frag_src = include_str!("text.frag.glsl");
         let text_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
+        let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
+        let default_tex = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap)
+            .unwrap()
+            .into();
+
         let glyph_brush = GlyphBrushBuilder::using_fonts(vec![]).cache_redraws(false).build();
 
         let font_tex = FontTex::new(&display, glyph_brush.texture_dimensions()).unwrap();
 
         let mut this = Self {
             display,
-            t_white,
+            default_tex,
+            font_tex,
             program,
+            text_prog,
             font_src: SystemSource::new(),
             texture_map: Default::default(),
             loaded_fonts: Default::default(),
             glyph_brush: glyph_brush.into(),
-            font_tex,
-            text_prog,
         };
 
         let default_font = this.select_font(&[FamilyName::SansSerif], &Default::default()).unwrap();
@@ -124,23 +151,6 @@ impl Resources for SharedResources {
             self.loaded_fonts.insert(font_src.clone(), id);
             Ok(id)
         }
-    }
-}
-
-// pls implement Debug on your types..
-impl fmt::Debug for SharedResources {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("SharedResources")
-            .field("display", &format_args!("..."))
-            .field("t_white", &self.t_white)
-            .field("program", &self.program)
-            .field("font_src", &format_args!("..."))
-            .field("texture_map", &self.texture_map)
-            .field("loaded_fonts", &self.loaded_fonts)
-            .field("glyph_brush", &self.glyph_brush)
-            .field("font_tex", &self.font_tex)
-            .field("text_prog", &self.text_prog)
-            .finish()
     }
 }
 
