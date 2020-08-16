@@ -3,8 +3,8 @@ use std::ops;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub use glyph_brush::Layout as TextLayout;
-pub use glyph_brush::OwnedSection as TextSection;
-pub use glyph_brush::OwnedText as Text;
+pub use glyph_brush::Section as TextSection;
+pub use glyph_brush::Text;
 
 mod color;
 pub use color::*;

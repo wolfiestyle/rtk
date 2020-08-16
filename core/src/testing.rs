@@ -3,6 +3,7 @@ use crate::draw::{ColorOp, TexCoord, TextSection, TextureId};
 use crate::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use crate::geometry::{Point, Rect};
 use crate::image::Image;
+pub use glyph_brush::OwnedSection;
 use std::collections::HashMap;
 use std::ops::Add;
 
@@ -63,7 +64,10 @@ impl DrawBackend for TestBackend {
     }
 
     fn draw_text(&mut self, text: TextSection, viewport: Rect) {
-        self.draw_cmd.push(TestDrawCmd::Text { text, viewport })
+        self.draw_cmd.push(TestDrawCmd::Text {
+            text: text.to_owned(),
+            viewport,
+        })
     }
 }
 
@@ -100,7 +104,7 @@ pub enum TestDrawCmd {
         viewport: Rect,
     },
     Text {
-        text: TextSection,
+        text: OwnedSection,
         viewport: Rect,
     },
 }

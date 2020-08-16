@@ -1,7 +1,7 @@
 use std::sync::mpsc::{channel, Sender};
 use widgets::draw::{DrawContext, Text, TextSection};
 use widgets::prelude::*;
-use widgets::testing::{TestBackend, TestDrawCmd};
+use widgets::testing::{OwnedSection, TestBackend, TestDrawCmd};
 use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable, Widget};
 
@@ -63,7 +63,7 @@ fn widget() {
 
     e2.draw(DrawContext::new(&mut backend, Rect::new_at_origin([800, 600])));
     if let Some(TestDrawCmd::Text {
-        text: TextSection { text, .. },
+        text: OwnedSection { text, .. },
         ..
     }) = &backend.draw_cmd.get(0)
     {

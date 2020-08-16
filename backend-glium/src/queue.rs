@@ -69,7 +69,7 @@ impl<'a> DrawQueue<'a> {
     /// Adds text to the draw queue.
     #[inline]
     pub fn push_text(&mut self, text: TextSection, viewport: Rect) {
-        self.shared_res.glyph_brush.queue(&text);
+        self.shared_res.glyph_brush.queue(text);
         let font_tex = &self.shared_res.font_tex;
         let action = self
             .shared_res
