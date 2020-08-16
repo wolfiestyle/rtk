@@ -11,7 +11,6 @@ use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
 
 /// Buffer with draw commands to be sent to the backend.
-#[derive(Debug)]
 pub struct DrawQueue<'a> {
     /// Shared vertex buffer.
     vertices: Vec<Vertex>,
@@ -97,7 +96,7 @@ impl<'a> DrawQueue<'a> {
                         let texture = cmd
                             .texture
                             .and_then(|id| self.shared_res.texture_map.get(&id))
-                            .unwrap_or(&self.shared_res.t_white);
+                            .unwrap_or(&self.shared_res.default_tex);
                         // settings for the pipeline
                         let uniforms = uniform! {
                             vp_size: <[f32; 2]>::from(win_size.as_point()),
