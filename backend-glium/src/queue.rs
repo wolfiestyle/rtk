@@ -25,6 +25,8 @@ pub struct DrawQueue<'a> {
 }
 
 impl<'a> DrawQueue<'a> {
+    /// Creates a new draw queue using the specified resources.
+    #[inline]
     pub fn new(shared_res: &'a mut SharedResources) -> Self {
         Self {
             vertices: vec![],
@@ -35,9 +37,9 @@ impl<'a> DrawQueue<'a> {
         }
     }
 
-    /// Adds raw elements to the draw queue.
+    /// Adds triangles to the draw queue.
     #[inline]
-    pub fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
+    fn push_tris<V, I>(&mut self, vertices: V, indices: I, texture: Option<TextureId>, viewport: Rect)
     where
         V: Iterator<Item = Vertex>,
         I: Iterator<Item = u32>,
@@ -91,7 +93,7 @@ impl<'a> DrawQueue<'a> {
 
     /// Adds text to the draw queue.
     #[inline]
-    pub fn push_text(&mut self, text: TextSection, viewport: Rect) {
+    fn push_text(&mut self, text: TextSection, viewport: Rect) {
         self.shared_res.glyph_brush.queue(text);
         let font_tex = &self.shared_res.font_tex;
         let action = self
