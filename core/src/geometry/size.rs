@@ -116,6 +116,11 @@ impl Size {
         })
     }
 
+    #[inline]
+    pub fn saturating_sub(self, rhs: Size) -> Self {
+        self.map2(rhs, u32::saturating_sub)
+    }
+
     implement_map!(u32, w, h);
 }
 
