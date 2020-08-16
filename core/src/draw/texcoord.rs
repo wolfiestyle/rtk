@@ -147,6 +147,13 @@ impl From<TexRect> for (TexCoord, TexCoord) {
     }
 }
 
+impl From<TexRect> for [f32; 4] {
+    #[inline]
+    fn from(TexRect { top_left, bot_right }: TexRect) -> Self {
+        [top_left.u, top_left.v, bot_right.u, bot_right.v]
+    }
+}
+
 impl Default for TexRect {
     #[inline]
     fn default() -> Self {

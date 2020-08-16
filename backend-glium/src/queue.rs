@@ -5,7 +5,7 @@ use glium::{uniform, Surface};
 use glyph_brush::{BrushAction, BrushError};
 use std::ops::Range;
 use widgets::backend::{DrawBackend, Resources, TextureError};
-use widgets::draw::{Color, TextSection, TextureId};
+use widgets::draw::{Color, FillMode, TextSection, TextureId};
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
 use widgets::geometry::{Rect, Size};
 use widgets::image::Image;
@@ -66,6 +66,29 @@ impl<'a> DrawQueue<'a> {
         }
     }
 
+    /// Adds rectangles to the draw queue.
+    #[inline]
+    fn push_rects<V>(&mut self, vertices: V, texture: Option<TextureId>, viewport: Rect)
+    where
+        V: Iterator<Item = RectVertex>,
+    {
+        let base_vert = self.rects.len();
+        self.rects.extend(vertices);
+
+        match self.commands.last_mut() {
+            Some(DrawCommand::Rects(cmd)) if cmd.compatible_with(viewport, texture) => {
+                cmd.idx_range.end = self.rects.len();
+            }
+            _ => {
+                self.commands.push(DrawCommand::Rects(DrawCmdData {
+                    idx_range: base_vert..self.rects.len(),
+                    texture,
+                    viewport,
+                }));
+            }
+        }
+    }
+
     /// Adds text to the draw queue.
     #[inline]
     pub fn push_text(&mut self, text: TextSection, viewport: Rect) {
@@ -76,14 +99,9 @@ impl<'a> DrawQueue<'a> {
             .glyph_brush
             .process_queued(|rect, data| font_tex.update(rect, data), |gvert| gvert.into());
         match action {
-            Ok(BrushAction::Draw(mut verts)) => {
-                let base_vert = self.rects.len();
-                self.rects.append(&mut verts);
-                self.commands.push(DrawCommand::Rects(DrawCmdData {
-                    idx_range: base_vert..self.rects.len(),
-                    texture: None, // font_tex is always bound
-                    viewport,
-                }))
+            Ok(BrushAction::Draw(verts)) => {
+                // font_tex is always bound, it's selected with the font_col attribute
+                self.push_rects(verts.into_iter(), None, viewport)
             }
             Ok(BrushAction::ReDraw) => unimplemented!(),
             Err(BrushError::TextureTooSmall { suggested: (w, h) }) => {
@@ -193,6 +211,15 @@ impl DrawBackend for DrawQueue<'_> {
     #[inline]
     fn draw_text(&mut self, text: TextSection, viewport: Rect) {
         self.push_text(text, viewport)
+    }
+
+    #[inline]
+    fn draw_rect(&mut self, rect: Rect, fill: FillMode, viewport: Rect) {
+        if rect.size.is_zero_area() || !rect.intersects(viewport) {
+            return;
+        }
+        let vert = (rect, fill.texrect(), fill.color()).into();
+        self.push_rects(Some(vert).into_iter(), fill.texture(), viewport)
     }
 }
 

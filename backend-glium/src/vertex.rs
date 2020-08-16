@@ -1,7 +1,7 @@
 use glyph_brush::GlyphVertex;
 use std::ops::Add;
-use widgets::draw::{Color, ColorOp, TexCoord};
-use widgets::geometry::Point;
+use widgets::draw::{Color, ColorOp, TexCoord, TexRect};
+use widgets::geometry::{Point, Rect};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
@@ -79,6 +79,22 @@ impl From<GlyphVertex<'_>> for RectVertex {
             color_mul: Default::default(),
             color_add: Default::default(),
             font_col: Color::from(vert.extra.color).into_rgb16(),
+        }
+    }
+}
+
+impl From<(Rect, TexRect, ColorOp)> for RectVertex {
+    #[inline]
+    fn from((rect, texr, color): (Rect, TexRect, ColorOp)) -> Self {
+        let p0 = rect.pos.cast();
+        let p1 = p0 + rect.size.as_point();
+
+        Self {
+            rect: [p0.x, p0.y, p1.x, p1.y],
+            texr: texr.into(),
+            color_mul: color.mul.into_rgb16(),
+            color_add: color.add.into_rgb16(),
+            font_col: Default::default(),
         }
     }
 }
