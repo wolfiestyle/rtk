@@ -100,14 +100,14 @@ impl SharedResources {
     }
 
     pub(crate) fn ctx_params() -> ContextBuilder<'static, NotCurrent> {
-        let mut builder = ContextBuilder::new()
+        ContextBuilder::new()
             .with_gl(GlRequest::Specific(Api::OpenGl, (3, 3)))
             .with_gl_profile(GlProfile::Core)
-            .with_gl_robustness(Robustness::TryRobustNoResetNotification);
-        builder.pf_reqs.hardware_accelerated = None;
-        builder.pf_reqs.depth_bits = None;
-        builder.pf_reqs.stencil_bits = None;
-        builder
+            .with_gl_robustness(Robustness::TryRobustNoResetNotification)
+            .with_depth_buffer(0)
+            .with_stencil_buffer(0)
+            .with_double_buffer(Some(true))
+            .with_hardware_acceleration(None)
     }
 }
 
