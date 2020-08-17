@@ -106,7 +106,6 @@ impl SharedResources {
             .with_gl_robustness(Robustness::TryRobustNoResetNotification)
             .with_depth_buffer(0)
             .with_stencil_buffer(0)
-            .with_double_buffer(Some(true))
             .with_hardware_acceleration(None)
     }
 }
