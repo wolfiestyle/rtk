@@ -8,10 +8,15 @@ pub fn bounds_impl(mut input: DeriveInput) -> TokenStream {
     let name = input.ident;
     let path = quote!(widgets::geometry);
 
+    let mut generics_mut = input.generics.clone();
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Bounds)) {
         return err.to_compile_error().into();
     }
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut generics_mut, parse_quote!(#path::BoundsMut)) {
+        return err.to_compile_error().into();
+    }
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let (impl_generics_mut, ty_generics_mut, where_clause_mut) = generics_mut.split_for_impl();
 
     let expanded = match &input.data {
         Data::Struct(data) => match find_field_in_struct(data, &name, "Rect", "bounds") {
@@ -28,18 +33,25 @@ pub fn bounds_impl(mut input: DeriveInput) -> TokenStream {
                     }
 
                     #[inline]
+                    fn get_bounds(&self) -> #path::Rect {
+                        #path::Bounds::get_bounds(&self.#field)
+                    }
+                }
+
+                impl #impl_generics_mut #path::BoundsMut for #name #ty_generics_mut #where_clause_mut {
+                    #[inline]
                     fn set_position(&mut self, position: #path::Position) {
-                        #path::Bounds::set_position(&mut self.#field, position)
+                        #path::BoundsMut::set_position(&mut self.#field, position)
                     }
 
                     #[inline]
                     fn set_size(&mut self, size: #path::Size) {
-                        #path::Bounds::set_size(&mut self.#field, size)
+                        #path::BoundsMut::set_size(&mut self.#field, size)
                     }
 
                     #[inline]
-                    fn get_bounds(&self) -> #path::Rect {
-                        #path::Bounds::get_bounds(&self.#field)
+                    fn set_bounds(&mut self, bounds: #path::Rect) {
+                        #path::BoundsMut::set_bounds(&mut self.#field, bounds)
                     }
                 }
             }),
@@ -59,7 +71,9 @@ pub fn bounds_impl(mut input: DeriveInput) -> TokenStream {
                             fn get_size(&self) -> #path::Size {
                                 self.#size
                             }
+                        }
 
+                        impl #impl_generics_mut #path::BoundsMut for #name #ty_generics_mut #where_clause_mut {
                             #[inline]
                             fn set_position(&mut self, position: #path::Position) {
                                 self.#pos = position;
@@ -95,23 +109,32 @@ pub fn bounds_impl(mut input: DeriveInput) -> TokenStream {
                     }
 
                     #[inline]
+                    fn get_bounds(&self) -> #path::Rect {
+                        match self {
+                            #(#patterns => #path::Bounds::get_bounds(a),)*
+                        }
+                    }
+                }
+
+                impl #impl_generics_mut #path::BoundsMut for #name #ty_generics_mut #where_clause_mut {
+                    #[inline]
                     fn set_position(&mut self, position: #path::Position) {
                         match self {
-                            #(#patterns => #path::Bounds::set_position(a, position),)*
+                            #(#patterns => #path::BoundsMut::set_position(a, position),)*
                         }
                     }
 
                     #[inline]
                     fn set_size(&mut self, size: #path::Size) {
                         match self {
-                            #(#patterns => #path::Bounds::set_size(a, size),)*
+                            #(#patterns => #path::BoundsMut::set_size(a, size),)*
                         }
                     }
 
                     #[inline]
-                    fn get_bounds(&self) -> #path::Rect {
+                    fn set_bounds(&mut self, bounds: #path::Rect) {
                         match self {
-                            #(#patterns => #path::Bounds::get_bounds(a),)*
+                            #(#patterns => #path::BoundsMut::set_bounds(a, bounds),)*
                         }
                     }
                 }

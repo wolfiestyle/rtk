@@ -1,8 +1,8 @@
 //! Helper methods for composing widget layouts.
-use crate::geometry::{Bounds, VAlign};
+use crate::geometry::{Bounds, BoundsMut, VAlign};
 
 /// Bounds extension for placing widgets relative to others.
-pub trait Layout: Bounds {
+pub trait Layout: BoundsMut {
     fn left_of<B: Bounds>(&mut self, other: &B, spacing: u32) -> &mut Self {
         let pos = self
             .get_position()
@@ -105,7 +105,7 @@ pub trait Layout: Bounds {
     }
 }
 
-impl<T: Bounds> Layout for T {}
+impl<T: BoundsMut> Layout for T {}
 
 /// Runs a layout expression for a collection of widgets.
 pub fn foreach<'a, T: Bounds + 'a, F>(items: impl IntoIterator<Item = &'a mut T>, mut f: F)
@@ -122,7 +122,7 @@ where
 /// Places a collection of widgets horizontally in sequence, starting a new row if necessary.
 pub fn flow_horiz<'a, T, I>(items: I, valign: VAlign, max_width: u32, hspacing: u32, vspacing: u32)
 where
-    T: Bounds + 'a,
+    T: BoundsMut + 'a,
     I: IntoIterator<Item = &'a mut T>,
 {
     let align_val = match valign {

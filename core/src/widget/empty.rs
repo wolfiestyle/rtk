@@ -1,7 +1,7 @@
 use crate::backend::{DrawBackend, Resources};
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
-use crate::geometry::{Bounds, Position, Rect, Size};
+use crate::geometry::{Bounds, BoundsMut, Position, Rect, Size};
 use crate::visitor::{Visitable, Visitor};
 use crate::widget::{ObjectId, Widget, WidgetId};
 
@@ -52,6 +52,13 @@ impl Bounds for Empty {
     }
 
     #[inline]
+    fn get_bounds(&self) -> Rect {
+        self.bounds
+    }
+}
+
+impl BoundsMut for Empty {
+    #[inline]
     fn set_position(&mut self, position: Position) {
         self.bounds.pos = position;
     }
@@ -62,8 +69,8 @@ impl Bounds for Empty {
     }
 
     #[inline]
-    fn get_bounds(&self) -> Rect {
-        self.bounds
+    fn set_bounds(&mut self, bounds: Rect) {
+        self.bounds = bounds;
     }
 }
 
