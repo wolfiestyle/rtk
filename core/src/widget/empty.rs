@@ -8,7 +8,7 @@ use crate::widget::{ObjectId, Widget, WidgetId};
 /// The empty widget.
 ///
 /// It's a "null" widget that does nothing (it only occupies space).
-/// Can be used as a filler.
+/// Can be used as a filler in layout definitions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct Empty {
     bounds: Rect,
