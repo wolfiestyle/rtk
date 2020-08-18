@@ -210,14 +210,20 @@ pub fn parse_attribute_list(attrs: &[Attribute], tag: Str) -> syn::Result<Vec<Ne
     Ok(found_args)
 }
 
-pub fn add_trait_bounds(generics: &mut Generics, target: Ident, bound: &TypeParamBound) {
+pub fn add_trait_bounds(generics: &mut Generics, target: Ident, bound: &TypeParamBound) -> syn::Result<()> {
     for param in &mut generics.params {
         if let GenericParam::Type(ty_param) = param {
             if ty_param.ident == target {
                 ty_param.bounds.push(bound.clone());
+                return Ok(());
             }
         }
     }
+
+    Err(Error::new_spanned(
+        &generics.params,
+        format!("impl_generics: type parameter `{}` not found", target),
+    ))
 }
 
 pub fn parse_impl_generics(attrs: &[Attribute], generics: &mut Generics, bound: TypeParamBound) -> syn::Result<()> {
@@ -226,7 +232,7 @@ pub fn parse_impl_generics(attrs: &[Attribute], generics: &mut Generics, bound: 
     for arg in attr_args {
         if let NestedMeta::Meta(Meta::Path(path)) = arg {
             let arg_name = path.get_ident().unwrap().clone();
-            add_trait_bounds(generics, arg_name, &bound);
+            add_trait_bounds(generics, arg_name, &bound)?;
         } else {
             return Err(Error::new_spanned(arg, "invalid argument for `impl_generics` attribute"));
         }

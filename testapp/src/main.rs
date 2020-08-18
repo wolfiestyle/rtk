@@ -9,7 +9,6 @@ use widgets_derive::{Bounds, ObjectId, Visitable};
 use widgets_glium::GliumApplication;
 
 #[derive(Debug, ObjectId, Bounds, Visitable)]
-#[impl_generics(T)]
 struct TestWidget {
     bounds: Rect,
     color: Color,
