@@ -65,3 +65,15 @@ impl BoundsMut for Rect {
         *self = bounds;
     }
 }
+
+impl Bounds for Position {
+    #[inline]
+    fn get_position(&self) -> Position {
+        *self
+    }
+
+    #[inline]
+    fn get_size(&self) -> Size {
+        Default::default()
+    }
+}

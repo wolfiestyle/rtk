@@ -22,6 +22,8 @@ struct TestWidget {
 
 impl Widget for TestWidget {
     fn update_layout<R: Resources>(&mut self, parent_rect: Rect, resources: &mut R) {
+        use widgets::layout::Layout;
+
         for child in &mut self.childs {
             child.update_layout(self.bounds, resources);
         }
@@ -29,7 +31,9 @@ impl Widget for TestWidget {
         self.bounds.size = parent_rect.size.saturating_sub(self.bounds.pos.as_size());
 
         if let Some(first) = self.childs.first_mut() {
-            first.set_position([0, 0].into());
+            //first.set_position([0, 0].into());
+            let pos = Position::new(5, 5);
+            first.right_of(&pos, 0).below(&pos, 0);
         }
 
         /*
