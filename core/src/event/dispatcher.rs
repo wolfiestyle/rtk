@@ -116,18 +116,6 @@ struct TargetedDispatchVisitor {
     result: Option<EventContext>,
 }
 
-impl TargetedDispatchVisitor {
-    fn dispatch_to<W: Widget>(target: WidgetId, root: &mut W, event: Event, ctx: EventContext) -> Option<EventContext> {
-        let visitor = TargetedDispatchVisitor {
-            target,
-            event,
-            ctx,
-            result: None,
-        };
-        root.accept(visitor, &Default::default()).result
-    }
-}
-
 impl Visitor for TargetedDispatchVisitor {
     type Context = (Position, Position, WidgetId, WidgetId);
 
@@ -158,13 +146,6 @@ struct ConsumedNotifyVisitor {
     ctx: EventContext,
 }
 
-impl ConsumedNotifyVisitor {
-    fn notify_consumed<W: Widget>(root: &mut W, event: Event, ctx: EventContext) {
-        let visitor = ConsumedNotifyVisitor { event, ctx };
-        root.accept(visitor, &Default::default());
-    }
-}
-
 impl Visitor for ConsumedNotifyVisitor {
     type Context = ();
 
@@ -176,6 +157,11 @@ impl Visitor for ConsumedNotifyVisitor {
     fn new_context<W: Widget>(&self, _: &W, _: &Self::Context) -> Option<Self::Context> {
         Some(())
     }
+}
+
+fn notify_consumed<W: Widget>(root: &mut W, event: Event, ctx: EventContext) {
+    let visitor = ConsumedNotifyVisitor { event, ctx };
+    root.accept(visitor, &Default::default());
 }
 
 /// Helper to dispatch toplevel events into a widget tree.
@@ -215,8 +201,15 @@ impl EventDispatcher {
             _ => (),
         };
         // dispatch "outside changed" event
-        let out_res =
-            outside_target.and_then(|target| TargetedDispatchVisitor::dispatch_to(target, root, Event::PointerInside(false), ctx));
+        let out_res = outside_target.and_then(|target| {
+            let visitor = TargetedDispatchVisitor {
+                target,
+                event: Event::PointerInside(false),
+                ctx,
+                result: None,
+            };
+            root.accept(visitor, &Default::default()).result
+        });
 
         // dispatch other events
         // TODO: keyboard focus, mouse grab
@@ -254,13 +247,13 @@ impl EventDispatcher {
 
         // send the event consumed notification
         if let Some(ctx) = in_res {
-            ConsumedNotifyVisitor::notify_consumed(root, Event::PointerInside(true), ctx)
+            notify_consumed(root, Event::PointerInside(true), ctx)
         }
         if let Some(ctx) = out_res {
-            ConsumedNotifyVisitor::notify_consumed(root, Event::PointerInside(false), ctx)
+            notify_consumed(root, Event::PointerInside(false), ctx)
         }
         if let Some(ctx) = res {
-            ConsumedNotifyVisitor::notify_consumed(root, event, ctx)
+            notify_consumed(root, event, ctx)
         }
 
         res.or(in_res).or(out_res).is_some()
