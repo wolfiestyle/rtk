@@ -143,29 +143,25 @@ struct InsideCheckVisitor {
     ctx: EventContext,
     last_inside: WidgetId,
     inside: Option<WidgetId>,
-    in_res: Option<EventContext>,
+    consumed: bool,
 }
 
 impl Visitor for InsideCheckVisitor {
     type Context = BoundsContext;
 
-    fn visit_after<W: Widget>(self, widget: &mut W, this: &Self::Context) -> Self {
+    fn visit_after<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
         let inside = self.ctx.abs_pos.inside(this.abs_bounds);
         if inside {
-            let in_res = if self.last_inside != this.id {
+            if self.last_inside != this.id {
                 let ctx = self.ctx.update(this.abs_bounds.pos.cast(), this.id, this.parent_id);
-                widget.handle_event(&Event::PointerInside(true), ctx).then_some(ctx)
-            } else {
-                None
-            };
-            Self {
-                inside: Some(widget.get_id()),
-                in_res,
-                ..self
+                if widget.handle_event(&Event::PointerInside(true), ctx).consumed() {
+                    self.ctx = ctx;
+                    self.consumed = true;
+                }
             }
-        } else {
-            self
+            self.inside = Some(this.id);
         }
+        self
     }
 
     fn new_context<W: Widget>(&self, widget: &W, parent_ctx: &Self::Context) -> Option<Self::Context> {
@@ -175,6 +171,17 @@ impl Visitor for InsideCheckVisitor {
     #[inline]
     fn finished(&self) -> bool {
         self.inside.is_some()
+    }
+}
+
+impl InsideCheckVisitor {
+    #[inline]
+    fn result(self) -> Option<EventContext> {
+        if self.consumed {
+            Some(self.ctx)
+        } else {
+            None
+        }
     }
 }
 
@@ -268,12 +275,12 @@ impl EventDispatcher {
                     ctx,
                     last_inside: self.last_inside.unwrap_or_default(),
                     inside: None,
-                    in_res: None,
+                    consumed: false,
                 };
                 let result = root.accept(visitor, &parent_size.into());
                 if result.inside != self.last_inside {
                     outside_target = std::mem::replace(&mut self.last_inside, result.inside);
-                    in_res = result.in_res;
+                    in_res = result.result();
                 }
             }
             Event::PointerInside(false) => {
