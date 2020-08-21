@@ -7,16 +7,19 @@ use crate::widget::{Widget, WidgetId};
 struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
-    result: Option<EventContext>,
+    consumed: bool,
 }
 
 impl Visitor for EventDispatchVisitor {
     type Context = (Position, Position, WidgetId, WidgetId);
 
-    fn visit_after<W: Widget>(self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
+    fn visit_after<W: Widget>(mut self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
         let ctx = self.ctx.update(abs_pos.cast(), my_id, parent_id);
-        let result = widget.handle_event(&self.event, ctx).then_some(ctx);
-        Self { result, ..self }
+        if widget.handle_event(&self.event, ctx).consumed() {
+            self.ctx = ctx;
+            self.consumed = true;
+        }
+        self
     }
 
     fn new_context<W: Widget>(&self, widget: &W, &(parent_pos, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
@@ -26,7 +29,17 @@ impl Visitor for EventDispatchVisitor {
 
     #[inline]
     fn finished(&self) -> bool {
-        self.result.is_some()
+        self.consumed
+    }
+}
+
+impl EventDispatchVisitor {
+    fn result(self) -> Option<EventContext> {
+        if self.consumed {
+            Some(self.ctx)
+        } else {
+            None
+        }
     }
 }
 
@@ -34,20 +47,21 @@ impl Visitor for EventDispatchVisitor {
 struct PositionDispatchVisitor {
     event: Event,
     ctx: EventContext,
-    result: Option<EventContext>,
+    consumed: bool,
 }
 
 impl Visitor for PositionDispatchVisitor {
     type Context = (Rect, Position, WidgetId, WidgetId);
 
-    fn visit_after<W: Widget>(self, widget: &mut W, &(abs_bounds, _, my_id, parent_id): &Self::Context) -> Self {
+    fn visit_after<W: Widget>(mut self, widget: &mut W, &(abs_bounds, _, my_id, parent_id): &Self::Context) -> Self {
         if self.ctx.abs_pos.inside(abs_bounds) {
             let ctx = self.ctx.update(abs_bounds.pos.cast(), my_id, parent_id);
-            let result = widget.handle_event(&self.event, ctx).then_some(ctx);
-            Self { result, ..self }
-        } else {
-            self
+            if widget.handle_event(&self.event, ctx).consumed() {
+                self.ctx = ctx;
+                self.consumed = true;
+            }
         }
+        self
     }
 
     fn new_context<W: Widget>(&self, widget: &W, &(parent_vp, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
@@ -60,7 +74,17 @@ impl Visitor for PositionDispatchVisitor {
 
     #[inline]
     fn finished(&self) -> bool {
-        self.result.is_some()
+        self.consumed
+    }
+}
+
+impl PositionDispatchVisitor {
+    fn result(self) -> Option<EventContext> {
+        if self.consumed {
+            Some(self.ctx)
+        } else {
+            None
+        }
     }
 }
 
@@ -113,20 +137,21 @@ struct TargetedDispatchVisitor {
     target: WidgetId,
     event: Event,
     ctx: EventContext,
-    result: Option<EventContext>,
+    consumed: bool,
 }
 
 impl Visitor for TargetedDispatchVisitor {
     type Context = (Position, Position, WidgetId, WidgetId);
 
-    fn visit_before<W: Widget>(self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
+    fn visit_before<W: Widget>(mut self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
         if self.target == my_id {
             let ctx = self.ctx.update(abs_pos.cast(), my_id, parent_id);
-            let result = widget.handle_event(&self.event, ctx).then_some(ctx);
-            Self { result, ..self }
-        } else {
-            self
+            if widget.handle_event(&self.event, ctx).consumed() {
+                self.ctx = ctx;
+                self.consumed = true;
+            }
         }
+        self
     }
 
     fn new_context<W: Widget>(&self, widget: &W, &(parent_pos, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
@@ -136,7 +161,17 @@ impl Visitor for TargetedDispatchVisitor {
 
     #[inline]
     fn finished(&self) -> bool {
-        self.result.is_some()
+        self.consumed
+    }
+}
+
+impl TargetedDispatchVisitor {
+    fn result(self) -> Option<EventContext> {
+        if self.consumed {
+            Some(self.ctx)
+        } else {
+            None
+        }
     }
 }
 
@@ -206,9 +241,9 @@ impl EventDispatcher {
                 target,
                 event: Event::PointerInside(false),
                 ctx,
-                result: None,
+                consumed: false,
             };
-            root.accept(visitor, &Default::default()).result
+            root.accept(visitor, &Default::default()).result()
         });
 
         // dispatch other events
@@ -227,19 +262,19 @@ impl EventDispatcher {
                 let visitor = EventDispatchVisitor {
                     event: event.clone(),
                     ctx,
-                    result: None,
+                    consumed: false,
                 };
-                root.accept(visitor, &Default::default()).result
+                root.accept(visitor, &Default::default()).result()
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 let visitor = PositionDispatchVisitor {
                     event: event.clone(),
                     ctx,
-                    result: None,
+                    consumed: false,
                 };
                 root.accept(visitor, &(parent_size.into(), Default::default(), WidgetId::EMPTY, WidgetId::EMPTY))
-                    .result
+                    .result()
             }
             // already handled
             Event::PointerInside(_) => None,
