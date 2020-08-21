@@ -3,6 +3,59 @@ use crate::geometry::{Point, Position, Rect, Size};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
+#[derive(Default)]
+struct PosContext {
+    abs_pos: Position,
+    vp_orig: Position,
+    id: WidgetId,
+    parent_id: WidgetId,
+}
+
+impl PosContext {
+    fn from_parent<W: Widget>(parent: &PosContext, widget: &W) -> Option<Self> {
+        Some(Self {
+            abs_pos: parent.abs_pos - parent.vp_orig + widget.get_position(),
+            vp_orig: widget.viewport_origin(),
+            id: widget.get_id(),
+            parent_id: parent.id,
+        })
+    }
+}
+
+struct BoundsContext {
+    abs_bounds: Rect,
+    vp_orig: Position,
+    id: WidgetId,
+    parent_id: WidgetId,
+}
+
+impl BoundsContext {
+    fn from_parent<W: Widget>(parent: &BoundsContext, widget: &W) -> Option<Self> {
+        widget
+            .get_bounds()
+            .offset(parent.abs_bounds.pos - parent.vp_orig)
+            .clip_inside(parent.abs_bounds)
+            .map(|abs_bounds| Self {
+                abs_bounds,
+                vp_orig: widget.viewport_origin(),
+                id: widget.get_id(),
+                parent_id: parent.id,
+            })
+    }
+}
+
+impl From<Size> for BoundsContext {
+    #[inline]
+    fn from(size: Size) -> Self {
+        Self {
+            abs_bounds: size.into(),
+            vp_orig: Default::default(),
+            id: WidgetId::EMPTY,
+            parent_id: WidgetId::EMPTY,
+        }
+    }
+}
+
 /// Sends an event to all widgets (until consumed).
 struct EventDispatchVisitor {
     event: Event,
@@ -11,10 +64,10 @@ struct EventDispatchVisitor {
 }
 
 impl Visitor for EventDispatchVisitor {
-    type Context = (Position, Position, WidgetId, WidgetId);
+    type Context = PosContext;
 
-    fn visit_after<W: Widget>(mut self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
-        let ctx = self.ctx.update(abs_pos.cast(), my_id, parent_id);
+    fn visit_after<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
+        let ctx = self.ctx.update(this.abs_pos.cast(), this.id, this.parent_id);
         if widget.handle_event(&self.event, ctx).consumed() {
             self.ctx = ctx;
             self.consumed = true;
@@ -22,9 +75,8 @@ impl Visitor for EventDispatchVisitor {
         self
     }
 
-    fn new_context<W: Widget>(&self, widget: &W, &(parent_pos, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
-        let abs_pos = parent_pos - parent_orig + widget.get_position();
-        Some((abs_pos, widget.viewport_origin(), widget.get_id(), parent_id))
+    fn new_context<W: Widget>(&self, widget: &W, parent_ctx: &Self::Context) -> Option<Self::Context> {
+        PosContext::from_parent(parent_ctx, widget)
     }
 
     #[inline]
@@ -34,6 +86,7 @@ impl Visitor for EventDispatchVisitor {
 }
 
 impl EventDispatchVisitor {
+    #[inline]
     fn result(self) -> Option<EventContext> {
         if self.consumed {
             Some(self.ctx)
@@ -51,11 +104,11 @@ struct PositionDispatchVisitor {
 }
 
 impl Visitor for PositionDispatchVisitor {
-    type Context = (Rect, Position, WidgetId, WidgetId);
+    type Context = BoundsContext;
 
-    fn visit_after<W: Widget>(mut self, widget: &mut W, &(abs_bounds, _, my_id, parent_id): &Self::Context) -> Self {
-        if self.ctx.abs_pos.inside(abs_bounds) {
-            let ctx = self.ctx.update(abs_bounds.pos.cast(), my_id, parent_id);
+    fn visit_after<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
+        if self.ctx.abs_pos.inside(this.abs_bounds) {
+            let ctx = self.ctx.update(this.abs_bounds.pos.cast(), this.id, this.parent_id);
             if widget.handle_event(&self.event, ctx).consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
@@ -64,12 +117,8 @@ impl Visitor for PositionDispatchVisitor {
         self
     }
 
-    fn new_context<W: Widget>(&self, widget: &W, &(parent_vp, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
-        widget
-            .get_bounds()
-            .offset(parent_vp.pos - parent_orig)
-            .clip_inside(parent_vp)
-            .map(|abs_bounds| (abs_bounds, widget.viewport_origin(), widget.get_id(), parent_id))
+    fn new_context<W: Widget>(&self, widget: &W, parent_ctx: &Self::Context) -> Option<Self::Context> {
+        BoundsContext::from_parent(parent_ctx, widget)
     }
 
     #[inline]
@@ -79,6 +128,7 @@ impl Visitor for PositionDispatchVisitor {
 }
 
 impl PositionDispatchVisitor {
+    #[inline]
     fn result(self) -> Option<EventContext> {
         if self.consumed {
             Some(self.ctx)
@@ -97,13 +147,13 @@ struct InsideCheckVisitor {
 }
 
 impl Visitor for InsideCheckVisitor {
-    type Context = (Rect, Position, WidgetId, WidgetId);
+    type Context = BoundsContext;
 
-    fn visit_after<W: Widget>(self, widget: &mut W, &(abs_bounds, _, my_id, parent_id): &Self::Context) -> Self {
-        let inside = self.ctx.abs_pos.inside(abs_bounds);
+    fn visit_after<W: Widget>(self, widget: &mut W, this: &Self::Context) -> Self {
+        let inside = self.ctx.abs_pos.inside(this.abs_bounds);
         if inside {
-            let in_res = if self.last_inside != widget.get_id() {
-                let ctx = self.ctx.update(abs_bounds.pos.cast(), my_id, parent_id);
+            let in_res = if self.last_inside != this.id {
+                let ctx = self.ctx.update(this.abs_bounds.pos.cast(), this.id, this.parent_id);
                 widget.handle_event(&Event::PointerInside(true), ctx).then_some(ctx)
             } else {
                 None
@@ -118,12 +168,8 @@ impl Visitor for InsideCheckVisitor {
         }
     }
 
-    fn new_context<W: Widget>(&self, widget: &W, &(parent_vp, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
-        widget
-            .get_bounds()
-            .offset(parent_vp.pos - parent_orig)
-            .clip_inside(parent_vp)
-            .map(|abs_bounds| (abs_bounds, widget.viewport_origin(), widget.get_id(), parent_id))
+    fn new_context<W: Widget>(&self, widget: &W, parent_ctx: &Self::Context) -> Option<Self::Context> {
+        BoundsContext::from_parent(parent_ctx, widget)
     }
 
     #[inline]
@@ -141,11 +187,11 @@ struct TargetedDispatchVisitor {
 }
 
 impl Visitor for TargetedDispatchVisitor {
-    type Context = (Position, Position, WidgetId, WidgetId);
+    type Context = PosContext;
 
-    fn visit_before<W: Widget>(mut self, widget: &mut W, &(abs_pos, _, my_id, parent_id): &Self::Context) -> Self {
-        if self.target == my_id {
-            let ctx = self.ctx.update(abs_pos.cast(), my_id, parent_id);
+    fn visit_before<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
+        if self.target == this.id {
+            let ctx = self.ctx.update(this.abs_pos.cast(), this.id, this.parent_id);
             if widget.handle_event(&self.event, ctx).consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
@@ -154,9 +200,8 @@ impl Visitor for TargetedDispatchVisitor {
         self
     }
 
-    fn new_context<W: Widget>(&self, widget: &W, &(parent_pos, parent_orig, parent_id, _): &Self::Context) -> Option<Self::Context> {
-        let abs_pos = parent_pos - parent_orig + widget.get_position();
-        Some((abs_pos, widget.viewport_origin(), widget.get_id(), parent_id))
+    fn new_context<W: Widget>(&self, widget: &W, parent_ctx: &Self::Context) -> Option<Self::Context> {
+        PosContext::from_parent(parent_ctx, widget)
     }
 
     #[inline]
@@ -166,6 +211,7 @@ impl Visitor for TargetedDispatchVisitor {
 }
 
 impl TargetedDispatchVisitor {
+    #[inline]
     fn result(self) -> Option<EventContext> {
         if self.consumed {
             Some(self.ctx)
@@ -224,7 +270,7 @@ impl EventDispatcher {
                     inside: None,
                     in_res: None,
                 };
-                let result = root.accept(visitor, &(parent_size.into(), Default::default(), WidgetId::EMPTY, WidgetId::EMPTY));
+                let result = root.accept(visitor, &parent_size.into());
                 if result.inside != self.last_inside {
                     outside_target = std::mem::replace(&mut self.last_inside, result.inside);
                     in_res = result.in_res;
@@ -273,8 +319,7 @@ impl EventDispatcher {
                     ctx,
                     consumed: false,
                 };
-                root.accept(visitor, &(parent_size.into(), Default::default(), WidgetId::EMPTY, WidgetId::EMPTY))
-                    .result()
+                root.accept(visitor, &parent_size.into()).result()
             }
             // already handled
             Event::PointerInside(_) => None,
