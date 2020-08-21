@@ -33,8 +33,11 @@ pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
                     (
                         *i,
                         quote! {
-                            let visitor = self.#field.iter_mut().fold(visitor, |vis, obj| obj.accept(vis, &ctx));
-                            if visitor.finished() { return visitor }
+                            let mut visitor = visitor;
+                            for obj in &mut self.#field {
+                                visitor = obj.accept(visitor, &ctx);
+                                if visitor.finished() { return visitor }
+                            }
                         },
                     )
                 }))
@@ -48,9 +51,9 @@ pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     #[inline]
                     fn accept<V: #path::Visitor>(&mut self, visitor: V, prev_ctx: &V::Context) -> V {
+                        if visitor.finished() { return visitor }
                         if let Some(ctx) = visitor.new_context(self, prev_ctx) {
                             let visitor = visitor.visit_before(self, &ctx);
-                            if visitor.finished() { return visitor }
                             #(#stmts)*
                             visitor.visit_after(self, &ctx)
                         } else {
