@@ -73,9 +73,7 @@ impl SharedResources {
         let text_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
-        let default_tex = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap)
-            .unwrap()
-            .into();
+        let default_tex = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
 
         let glyph_brush = GlyphBrushBuilder::using_fonts(vec![]).cache_redraws(false).build();
 
@@ -90,7 +88,7 @@ impl SharedResources {
             font_src: SystemSource::new(),
             texture_map: Default::default(),
             loaded_fonts: Default::default(),
-            glyph_brush: glyph_brush.into(),
+            glyph_brush,
         };
 
         let default_font = this.select_font(&[FamilyName::SansSerif], &Default::default()).unwrap();
