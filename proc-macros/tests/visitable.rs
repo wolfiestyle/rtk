@@ -1,5 +1,5 @@
 use widgets::prelude::*;
-use widgets::visitor::{ParentData, Visitor};
+use widgets::visitor::{Visitable, Visitor};
 use widgets::widget::Empty;
 use widgets_derive::{Bounds, ObjectId, Visitable};
 
@@ -45,15 +45,14 @@ struct TestVisitor {
 }
 
 impl Visitor for TestVisitor {
-    type Return = ();
     type Context = ();
 
-    fn visit<W: Widget>(&mut self, widget: &mut W, _ctx: &Self::Context) -> Result<(), Self::Return> {
+    fn visit_before<W: Widget>(mut self, widget: &mut W, _: &Self::Context) -> Self {
         self.ids.push(widget.get_id());
-        Ok(())
+        self
     }
 
-    fn new_context<W: Widget>(&self, _child: &W, _parent_ctx: &Self::Context, _pdata: &ParentData) -> Option<Self::Context> {
+    fn new_context<W: Widget>(&self, _: &W, _: &Self::Context) -> Option<Self::Context> {
         Some(())
     }
 }
@@ -80,13 +79,7 @@ fn visitable() {
         ],
     };
 
-    let mut visitor = TestVisitor::default();
-    let mut expected = [ids[0], ids[1], WidgetId::EMPTY, ids[2], WidgetId::EMPTY];
-    visitor.visit_child(&mut widget, &(), &Default::default()).unwrap();
-    assert_eq!(visitor.ids, expected);
-
-    visitor.ids.clear();
-    expected.reverse();
-    visitor.visit_child_rev(&mut widget, &(), &Default::default()).unwrap();
+    let expected = [ids[0], ids[1], WidgetId::EMPTY, ids[2], WidgetId::EMPTY];
+    let visitor = widget.accept(TestVisitor::default(), &());
     assert_eq!(visitor.ids, expected);
 }

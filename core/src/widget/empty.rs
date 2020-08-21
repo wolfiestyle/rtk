@@ -76,13 +76,16 @@ impl BoundsMut for Empty {
 
 impl Visitable for Empty {
     #[inline]
-    fn accept<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-        visitor.visit(self, ctx)
-    }
-
-    #[inline]
-    fn accept_rev<V: Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-        visitor.visit(self, ctx)
+    fn accept<V: Visitor>(&mut self, visitor: V, prev_ctx: &V::Context) -> V {
+        if let Some(ctx) = visitor.new_context(self, prev_ctx) {
+            let visitor = visitor.visit_before(self, &ctx);
+            if visitor.finished() {
+                return visitor;
+            }
+            visitor.visit_after(self, &ctx)
+        } else {
+            visitor
+        }
     }
 }
 

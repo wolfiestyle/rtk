@@ -24,7 +24,8 @@ pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
                     (
                         *i,
                         quote! {
-                            visitor.visit_child(&mut self.#field, ctx, &pdata)?;
+                            let visitor = self.#field.accept(visitor, &ctx);
+                            if visitor.finished() { return visitor }
                         },
                     )
                 })
@@ -32,57 +33,29 @@ pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
                     (
                         *i,
                         quote! {
-                            for child in &mut self.#field {
-                                visitor.visit_child(child, ctx, &pdata)?;
-                            }
-                        },
-                    )
-                }))
-                .collect();
-
-            let mut expanded_rev: Vec<_> = child_fields
-                .iter()
-                .map(|(i, field)| {
-                    (
-                        *i,
-                        quote! {
-                            visitor.visit_child_rev(&mut self.#field, ctx, &pdata)?;
-                        },
-                    )
-                })
-                .chain(iter_fields.iter().map(|(i, field)| {
-                    (
-                        *i,
-                        quote! {
-                            for child in self.#field.iter_mut().rev() {
-                                visitor.visit_child_rev(child, ctx, &pdata)?;
-                            }
+                            let visitor = self.#field.iter_mut().fold(visitor, |vis, obj| obj.accept(vis, &ctx));
+                            if visitor.finished() { return visitor }
                         },
                     )
                 }))
                 .collect();
 
             expanded.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-            expanded_rev.sort_unstable_by(|(a, _), (b, _)| b.cmp(a));
 
             let stmts = expanded.into_iter().map(|(_, s)| s);
-            let stmts_rev = expanded_rev.into_iter().map(|(_, s)| s);
 
             Ok(quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     #[inline]
-                    fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-                        let pdata = #path::ParentData::new(self);
-                        visitor.visit(self, ctx)?;
-                        #(#stmts)*
-                        Ok(())
-                    }
-
-                    #[inline]
-                    fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-                        let pdata = #path::ParentData::new(self);
-                        #(#stmts_rev)*
-                        visitor.visit(self, ctx)
+                    fn accept<V: #path::Visitor>(&mut self, visitor: V, prev_ctx: &V::Context) -> V {
+                        if let Some(ctx) = visitor.new_context(self, prev_ctx) {
+                            let visitor = visitor.visit_before(self, &ctx);
+                            if visitor.finished() { return visitor }
+                            #(#stmts)*
+                            visitor.visit_after(self, &ctx)
+                        } else {
+                            visitor
+                        }
                     }
                 }
             })
@@ -91,16 +64,9 @@ pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
             quote! {
                 impl #impl_generics #path::Visitable for #name #ty_generics #where_clause {
                     #[inline]
-                    fn accept<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
+                    fn accept<V: #path::Visitor>(&mut self, visitor: V, ctx: &V::Context) -> V {
                         match self {
                             #(#patterns => #path::Visitable::accept(a, visitor, ctx),)*
-                        }
-                    }
-
-                    #[inline]
-                    fn accept_rev<V: #path::Visitor>(&mut self, visitor: &mut V, ctx: &V::Context) -> Result<(), V::Return> {
-                        match self {
-                            #(#patterns => #path::Visitable::accept_rev(a, visitor, ctx),)*
                         }
                     }
                 }
