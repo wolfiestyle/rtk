@@ -68,24 +68,8 @@ impl Visitor for PositionDispatchVisitor {
 struct InsideCheckVisitor {
     ctx: EventContext,
     last_inside: WidgetId,
-    result: Option<WidgetId>,
+    inside: Option<WidgetId>,
     in_res: Option<EventContext>,
-}
-
-impl InsideCheckVisitor {
-    fn check_inside<W: Widget>(
-        root: &mut W, last_inside: Option<WidgetId>, parent_size: Size, ctx: EventContext,
-    ) -> (Option<WidgetId>, Option<EventContext>) {
-        let visitor = InsideCheckVisitor {
-            ctx,
-            last_inside: last_inside.unwrap_or_default(),
-            result: None,
-            in_res: None,
-        };
-        let visitor = root.accept(visitor, &(parent_size.into(), Default::default(), WidgetId::EMPTY, WidgetId::EMPTY));
-
-        (visitor.result, visitor.in_res)
-    }
 }
 
 impl Visitor for InsideCheckVisitor {
@@ -101,7 +85,7 @@ impl Visitor for InsideCheckVisitor {
                 None
             };
             Self {
-                result: Some(widget.get_id()),
+                inside: Some(widget.get_id()),
                 in_res,
                 ..self
             }
@@ -120,7 +104,7 @@ impl Visitor for InsideCheckVisitor {
 
     #[inline]
     fn finished(&self) -> bool {
-        self.result.is_some()
+        self.inside.is_some()
     }
 }
 
@@ -213,10 +197,16 @@ impl EventDispatcher {
         let mut outside_target = None;
         match event {
             Event::MouseMoved(Axis::Position(_)) => {
-                let (inside, res) = InsideCheckVisitor::check_inside(root, self.last_inside, parent_size, ctx);
-                if inside != self.last_inside {
-                    outside_target = std::mem::replace(&mut self.last_inside, inside);
-                    in_res = res;
+                let visitor = InsideCheckVisitor {
+                    ctx,
+                    last_inside: self.last_inside.unwrap_or_default(),
+                    inside: None,
+                    in_res: None,
+                };
+                let result = root.accept(visitor, &(parent_size.into(), Default::default(), WidgetId::EMPTY, WidgetId::EMPTY));
+                if result.inside != self.last_inside {
+                    outside_target = std::mem::replace(&mut self.last_inside, result.inside);
+                    in_res = result.in_res;
                 }
             }
             Event::PointerInside(false) => {
