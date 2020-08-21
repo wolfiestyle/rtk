@@ -85,17 +85,6 @@ impl Visitor for EventDispatchVisitor {
     }
 }
 
-impl EventDispatchVisitor {
-    #[inline]
-    fn result(self) -> Option<EventContext> {
-        if self.consumed {
-            Some(self.ctx)
-        } else {
-            None
-        }
-    }
-}
-
 /// Sends an event to the widget under cursor.
 struct PositionDispatchVisitor {
     event: Event,
@@ -124,17 +113,6 @@ impl Visitor for PositionDispatchVisitor {
     #[inline]
     fn finished(&self) -> bool {
         self.consumed
-    }
-}
-
-impl PositionDispatchVisitor {
-    #[inline]
-    fn result(self) -> Option<EventContext> {
-        if self.consumed {
-            Some(self.ctx)
-        } else {
-            None
-        }
     }
 }
 
@@ -174,17 +152,6 @@ impl Visitor for InsideCheckVisitor {
     }
 }
 
-impl InsideCheckVisitor {
-    #[inline]
-    fn result(self) -> Option<EventContext> {
-        if self.consumed {
-            Some(self.ctx)
-        } else {
-            None
-        }
-    }
-}
-
 /// Sends an event to a single target.
 struct TargetedDispatchVisitor {
     target: WidgetId,
@@ -214,17 +181,6 @@ impl Visitor for TargetedDispatchVisitor {
     #[inline]
     fn finished(&self) -> bool {
         self.consumed
-    }
-}
-
-impl TargetedDispatchVisitor {
-    #[inline]
-    fn result(self) -> Option<EventContext> {
-        if self.consumed {
-            Some(self.ctx)
-        } else {
-            None
-        }
     }
 }
 
@@ -266,8 +222,8 @@ impl EventDispatcher {
         self.update_state(&event);
         let ctx = self.make_context();
 
-        // check if pointer inside/outside changed, also dispatch inside event
-        let mut in_res = None;
+        // check if pointer inside/outside changed
+        let mut in_res = false;
         let mut outside_target = None;
         match event {
             Event::MouseMoved(Axis::Position(_)) => {
@@ -277,10 +233,15 @@ impl EventDispatcher {
                     inside: None,
                     consumed: false,
                 };
+                // the PointerInside event is also dispatched here
                 let result = root.accept(visitor, &parent_size.into());
+
                 if result.inside != self.last_inside {
                     outside_target = std::mem::replace(&mut self.last_inside, result.inside);
-                    in_res = result.result();
+                    if result.consumed {
+                        notify_consumed(root, Event::PointerInside(true), result.ctx);
+                    }
+                    in_res = result.consumed;
                 }
             }
             Event::PointerInside(false) => {
@@ -288,20 +249,25 @@ impl EventDispatcher {
             }
             _ => (),
         };
+
         // dispatch "outside changed" event
-        let out_res = outside_target.and_then(|target| {
+        let out_res = outside_target.map_or(false, |target| {
             let visitor = TargetedDispatchVisitor {
                 target,
                 event: Event::PointerInside(false),
                 ctx,
                 consumed: false,
             };
-            root.accept(visitor, &Default::default()).result()
+            let result = root.accept(visitor, &Default::default());
+            if result.consumed {
+                notify_consumed(root, Event::PointerInside(false), result.ctx)
+            }
+            result.consumed
         });
 
         // dispatch other events
         // TODO: keyboard focus, mouse grab
-        let res = match event {
+        let ev_res = match event {
             // position independant events
             Event::Keyboard { .. }
             | Event::Character(_)
@@ -313,37 +279,34 @@ impl EventDispatcher {
             | Event::Created
             | Event::Destroyed => {
                 let visitor = EventDispatchVisitor {
-                    event: event.clone(),
+                    event,
                     ctx,
                     consumed: false,
                 };
-                root.accept(visitor, &Default::default()).result()
+                let result = root.accept(visitor, &Default::default());
+                if result.consumed {
+                    notify_consumed(root, result.event, result.ctx);
+                }
+                result.consumed
             }
             // position dependant events
             Event::MouseMoved(_) | Event::MouseButton(_, _) | Event::FileDropped(_) => {
                 let visitor = PositionDispatchVisitor {
-                    event: event.clone(),
+                    event: event,
                     ctx,
                     consumed: false,
                 };
-                root.accept(visitor, &parent_size.into()).result()
+                let result = root.accept(visitor, &parent_size.into());
+                if result.consumed {
+                    notify_consumed(root, result.event, result.ctx);
+                }
+                result.consumed
             }
             // already handled
-            Event::PointerInside(_) => None,
+            Event::PointerInside(_) => false,
         };
 
-        // send the event consumed notification
-        if let Some(ctx) = in_res {
-            notify_consumed(root, Event::PointerInside(true), ctx)
-        }
-        if let Some(ctx) = out_res {
-            notify_consumed(root, Event::PointerInside(false), ctx)
-        }
-        if let Some(ctx) = res {
-            notify_consumed(root, event, ctx)
-        }
-
-        res.or(in_res).or(out_res).is_some()
+        ev_res | in_res | out_res
     }
 
     /// Update input state.
