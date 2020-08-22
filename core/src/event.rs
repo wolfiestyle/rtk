@@ -259,14 +259,20 @@ pub enum EventResult {
     Pass,
     /// Event was consumed, do not propagate. Will trigger a redraw.
     Consumed,
-    /// Event consumed, redraw and trigger a `Widget::event_consumed` broadcast.
-    NotifyConsumed,
+    /// Event consumed. Triggers a `Widget::event_consumed` broadcast.
+    ConsumedNotifyBroadcast,
+    /// Event consumed. Calls `Widget::event_consumed` on a specific widget.
+    ConsumedNotifyTarget(WidgetId),
 }
 
 impl EventResult {
     #[inline]
     pub fn consumed(self) -> bool {
-        matches!(self, EventResult::Consumed | EventResult::NotifyConsumed)
+        matches!(self,
+            EventResult::Consumed
+            | EventResult::ConsumedNotifyBroadcast
+            | EventResult::ConsumedNotifyTarget(_)
+        )
     }
 
     /// Returns `Some(val)` if the event was consumed, or `None` otherwise.
@@ -274,7 +280,7 @@ impl EventResult {
     pub fn then_some<T>(self, val: T) -> Option<T> {
         match self {
             EventResult::Pass => None,
-            EventResult::Consumed | EventResult::NotifyConsumed => Some(val),
+            EventResult::Consumed | EventResult::ConsumedNotifyBroadcast | EventResult::ConsumedNotifyTarget(_) => Some(val),
         }
     }
 
@@ -286,7 +292,7 @@ impl EventResult {
     {
         match self {
             EventResult::Pass => None,
-            EventResult::Consumed | EventResult::NotifyConsumed => Some(f()),
+            EventResult::Consumed | EventResult::ConsumedNotifyBroadcast | EventResult::ConsumedNotifyTarget(_) => Some(f()),
         }
     }
 }

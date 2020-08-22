@@ -8,7 +8,7 @@ struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
-    notify: bool,
+    ev_res: EventResult,
 }
 
 impl Visitor for EventDispatchVisitor {
@@ -20,7 +20,7 @@ impl Visitor for EventDispatchVisitor {
         if ev_res.consumed() {
             self.ctx = ctx;
             self.consumed = true;
-            self.notify = matches!(ev_res, EventResult::NotifyConsumed);
+            self.ev_res = ev_res;
         }
         self
     }
@@ -40,7 +40,7 @@ struct PositionDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
-    notify: bool,
+    ev_res: EventResult,
 }
 
 impl Visitor for PositionDispatchVisitor {
@@ -53,7 +53,7 @@ impl Visitor for PositionDispatchVisitor {
             if ev_res.consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
-                self.notify = matches!(ev_res, EventResult::NotifyConsumed);
+                self.ev_res = ev_res;
             }
         }
         self
@@ -75,7 +75,7 @@ struct InsideCheckVisitor {
     last_inside: WidgetId,
     inside: Option<WidgetId>,
     consumed: bool,
-    notify: bool,
+    ev_res: EventResult,
 }
 
 impl Visitor for InsideCheckVisitor {
@@ -90,7 +90,7 @@ impl Visitor for InsideCheckVisitor {
                 if ev_res.consumed() {
                     self.ctx = ctx;
                     self.consumed = true;
-                    self.notify = matches!(ev_res, EventResult::NotifyConsumed);
+                    self.ev_res = ev_res;
                 }
             }
             self.inside = Some(this.id);
@@ -114,7 +114,7 @@ struct TargetedDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
-    notify: bool,
+    ev_res: EventResult,
 }
 
 impl Visitor for TargetedDispatchVisitor {
@@ -127,7 +127,7 @@ impl Visitor for TargetedDispatchVisitor {
             if ev_res.consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
-                self.notify = matches!(ev_res, EventResult::NotifyConsumed);
+                self.ev_res = ev_res;
             }
         }
         self
@@ -144,12 +144,12 @@ impl Visitor for TargetedDispatchVisitor {
 }
 
 /// Sends an event consumed notification to every widget in the tree.
-struct ConsumedNotifyVisitor {
+struct BroadcastNotifyVisitor {
     event: Event,
     ctx: EventContext,
 }
 
-impl Visitor for ConsumedNotifyVisitor {
+impl Visitor for BroadcastNotifyVisitor {
     type Context = ();
 
     fn visit_before<W: Widget>(self, widget: &mut W, _: &Self::Context) -> Self {
@@ -162,9 +162,46 @@ impl Visitor for ConsumedNotifyVisitor {
     }
 }
 
-fn notify_consumed<W: Widget>(root: &mut W, event: Event, ctx: EventContext) {
-    let visitor = ConsumedNotifyVisitor { event, ctx };
-    root.accept(visitor, &Default::default());
+/// Sends an event consumed notification to a specific widget.
+struct TargetNotifyVisitor {
+    target: WidgetId,
+    event: Event,
+    ctx: EventContext,
+}
+
+impl Visitor for TargetNotifyVisitor {
+    type Context = ();
+
+    fn visit_before<W: Widget>(mut self, widget: &mut W, _: &Self::Context) -> Self {
+        if widget.get_id() == self.target {
+            widget.event_consumed(&self.event, &self.ctx);
+            self.target = WidgetId::EMPTY;
+        }
+        self
+    }
+
+    fn new_context<W: Widget>(&self, _: &W, _: &Self::Context) -> Option<Self::Context> {
+        Some(())
+    }
+
+    #[inline]
+    fn finished(&self) -> bool {
+        self.target == WidgetId::EMPTY
+    }
+}
+
+fn notify_consumed<W: Widget>(root: &mut W, ev_res: EventResult, event: Event, ctx: EventContext) {
+    match ev_res {
+        EventResult::ConsumedNotifyBroadcast => {
+            let visitor = BroadcastNotifyVisitor { event, ctx };
+            root.accept(visitor, &());
+        }
+        EventResult::ConsumedNotifyTarget(target) => {
+            let visitor = TargetNotifyVisitor { target, event, ctx };
+            root.accept(visitor, &());
+        }
+        _ => (),
+    }
 }
 
 /// Helper to dispatch toplevel events into a widget tree.
@@ -191,16 +228,14 @@ impl EventDispatcher {
                     last_inside: self.last_inside.unwrap_or_default(),
                     inside: None,
                     consumed: false,
-                    notify: false,
+                    ev_res: EventResult::Pass,
                 };
                 // the PointerInside event is also dispatched here
                 let result = root.accept(visitor, &parent_size.into());
 
                 if result.inside != self.last_inside {
                     outside_target = std::mem::replace(&mut self.last_inside, result.inside);
-                    if result.notify {
-                        notify_consumed(root, Event::PointerInside(true), result.ctx);
-                    }
+                    notify_consumed(root, result.ev_res, Event::PointerInside(true), result.ctx);
                     in_res = result.consumed;
                 }
             }
@@ -217,12 +252,10 @@ impl EventDispatcher {
                 event: Event::PointerInside(false),
                 ctx,
                 consumed: false,
-                notify: false,
+                ev_res: EventResult::Pass,
             };
             let result = root.accept(visitor, &Default::default());
-            if result.notify {
-                notify_consumed(root, Event::PointerInside(false), result.ctx)
-            }
+            notify_consumed(root, result.ev_res, Event::PointerInside(false), result.ctx);
             result.consumed
         });
 
@@ -243,12 +276,10 @@ impl EventDispatcher {
                     event,
                     ctx,
                     consumed: false,
-                    notify: false,
+                    ev_res: EventResult::Pass,
                 };
                 let result = root.accept(visitor, &Default::default());
-                if result.notify {
-                    notify_consumed(root, result.event, result.ctx);
-                }
+                notify_consumed(root, result.ev_res, result.event, result.ctx);
                 result.consumed
             }
             // position dependant events
@@ -257,12 +288,10 @@ impl EventDispatcher {
                     event: event,
                     ctx,
                     consumed: false,
-                    notify: false,
+                    ev_res: EventResult::Pass,
                 };
                 let result = root.accept(visitor, &parent_size.into());
-                if result.notify {
-                    notify_consumed(root, result.event, result.ctx);
-                }
+                notify_consumed(root, result.ev_res, result.event, result.ctx);
                 result.consumed
             }
             // already handled

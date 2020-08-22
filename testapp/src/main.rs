@@ -89,10 +89,6 @@ impl Widget for TestWidget {
     }
 
     fn event_consumed(&mut self, event: &Event, ctx: &EventContext) {
-        if ctx.parent != self.id {
-            return;
-        }
-
         if let Event::MouseButton(Pressed, _) = event {
             if let Some(child) = self.childs.iter().find(|w| w.get_id() == ctx.widget) {
                 self.color = child.color;
@@ -126,7 +122,7 @@ impl Widget for TestWidget2 {
         match event {
             Event::MouseButton(Pressed, MouseButton::Left) => {
                 println!("TestWidget2({:?}) clicked! ({:?}, {:?})", self.id, self.color, ctx.local_pos);
-                EventResult::NotifyConsumed
+                EventResult::ConsumedNotifyTarget(ctx.parent)
             }
             _ => EventResult::Pass,
         }
