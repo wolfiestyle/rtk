@@ -259,12 +259,14 @@ pub enum EventResult {
     Pass,
     /// Event was consumed, do not propagate. Will trigger a redraw.
     Consumed,
+    /// Event consumed, redraw and trigger a `Widget::event_consumed` broadcast.
+    NotifyConsumed,
 }
 
 impl EventResult {
     #[inline]
     pub fn consumed(self) -> bool {
-        matches!(self, EventResult::Consumed)
+        matches!(self, EventResult::Consumed | EventResult::NotifyConsumed)
     }
 
     /// Returns `Some(val)` if the event was consumed, or `None` otherwise.
@@ -272,7 +274,7 @@ impl EventResult {
     pub fn then_some<T>(self, val: T) -> Option<T> {
         match self {
             EventResult::Pass => None,
-            EventResult::Consumed => Some(val),
+            EventResult::Consumed | EventResult::NotifyConsumed => Some(val),
         }
     }
 
@@ -284,7 +286,7 @@ impl EventResult {
     {
         match self {
             EventResult::Pass => None,
-            EventResult::Consumed => Some(f()),
+            EventResult::Consumed | EventResult::NotifyConsumed => Some(f()),
         }
     }
 }

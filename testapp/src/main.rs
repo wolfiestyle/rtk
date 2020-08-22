@@ -126,7 +126,7 @@ impl Widget for TestWidget2 {
         match event {
             Event::MouseButton(Pressed, MouseButton::Left) => {
                 println!("TestWidget2({:?}) clicked! ({:?}, {:?})", self.id, self.color, ctx.local_pos);
-                EventResult::Consumed
+                EventResult::NotifyConsumed
             }
             _ => EventResult::Pass,
         }

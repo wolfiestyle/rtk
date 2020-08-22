@@ -1,4 +1,4 @@
-use crate::event::{Axis, ButtonState, Event, EventContext, KeyModState, MouseButtonsState};
+use crate::event::{Axis, ButtonState, Event, EventContext, EventResult, KeyModState, MouseButtonsState};
 use crate::geometry::{Point, Position, Rect, Size};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
@@ -8,6 +8,7 @@ struct EventDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
+    notify: bool,
 }
 
 impl Visitor for EventDispatchVisitor {
@@ -15,9 +16,11 @@ impl Visitor for EventDispatchVisitor {
 
     fn visit_after<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
         let ctx = self.ctx.update(this.abs_pos.cast(), this.id, this.parent_id);
-        if widget.handle_event(&self.event, ctx).consumed() {
+        let ev_res = widget.handle_event(&self.event, ctx);
+        if ev_res.consumed() {
             self.ctx = ctx;
             self.consumed = true;
+            self.notify = matches!(ev_res, EventResult::NotifyConsumed);
         }
         self
     }
@@ -37,6 +40,7 @@ struct PositionDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
+    notify: bool,
 }
 
 impl Visitor for PositionDispatchVisitor {
@@ -45,9 +49,11 @@ impl Visitor for PositionDispatchVisitor {
     fn visit_after<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
         if self.ctx.abs_pos.inside(this.abs_bounds) {
             let ctx = self.ctx.update(this.abs_bounds.pos.cast(), this.id, this.parent_id);
-            if widget.handle_event(&self.event, ctx).consumed() {
+            let ev_res = widget.handle_event(&self.event, ctx);
+            if ev_res.consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
+                self.notify = matches!(ev_res, EventResult::NotifyConsumed);
             }
         }
         self
@@ -69,6 +75,7 @@ struct InsideCheckVisitor {
     last_inside: WidgetId,
     inside: Option<WidgetId>,
     consumed: bool,
+    notify: bool,
 }
 
 impl Visitor for InsideCheckVisitor {
@@ -79,9 +86,11 @@ impl Visitor for InsideCheckVisitor {
         if inside {
             if self.last_inside != this.id {
                 let ctx = self.ctx.update(this.abs_bounds.pos.cast(), this.id, this.parent_id);
-                if widget.handle_event(&Event::PointerInside(true), ctx).consumed() {
+                let ev_res = widget.handle_event(&Event::PointerInside(true), ctx);
+                if ev_res.consumed() {
                     self.ctx = ctx;
                     self.consumed = true;
+                    self.notify = matches!(ev_res, EventResult::NotifyConsumed);
                 }
             }
             self.inside = Some(this.id);
@@ -105,6 +114,7 @@ struct TargetedDispatchVisitor {
     event: Event,
     ctx: EventContext,
     consumed: bool,
+    notify: bool,
 }
 
 impl Visitor for TargetedDispatchVisitor {
@@ -113,9 +123,11 @@ impl Visitor for TargetedDispatchVisitor {
     fn visit_before<W: Widget>(mut self, widget: &mut W, this: &Self::Context) -> Self {
         if self.target == this.id {
             let ctx = self.ctx.update(this.abs_pos.cast(), this.id, this.parent_id);
-            if widget.handle_event(&self.event, ctx).consumed() {
+            let ev_res = widget.handle_event(&self.event, ctx);
+            if ev_res.consumed() {
                 self.ctx = ctx;
                 self.consumed = true;
+                self.notify = matches!(ev_res, EventResult::NotifyConsumed);
             }
         }
         self
@@ -179,13 +191,14 @@ impl EventDispatcher {
                     last_inside: self.last_inside.unwrap_or_default(),
                     inside: None,
                     consumed: false,
+                    notify: false,
                 };
                 // the PointerInside event is also dispatched here
                 let result = root.accept(visitor, &parent_size.into());
 
                 if result.inside != self.last_inside {
                     outside_target = std::mem::replace(&mut self.last_inside, result.inside);
-                    if result.consumed {
+                    if result.notify {
                         notify_consumed(root, Event::PointerInside(true), result.ctx);
                     }
                     in_res = result.consumed;
@@ -204,9 +217,10 @@ impl EventDispatcher {
                 event: Event::PointerInside(false),
                 ctx,
                 consumed: false,
+                notify: false,
             };
             let result = root.accept(visitor, &Default::default());
-            if result.consumed {
+            if result.notify {
                 notify_consumed(root, Event::PointerInside(false), result.ctx)
             }
             result.consumed
@@ -229,9 +243,10 @@ impl EventDispatcher {
                     event,
                     ctx,
                     consumed: false,
+                    notify: false,
                 };
                 let result = root.accept(visitor, &Default::default());
-                if result.consumed {
+                if result.notify {
                     notify_consumed(root, result.event, result.ctx);
                 }
                 result.consumed
@@ -242,9 +257,10 @@ impl EventDispatcher {
                     event: event,
                     ctx,
                     consumed: false,
+                    notify: false,
                 };
                 let result = root.accept(visitor, &parent_size.into());
-                if result.consumed {
+                if result.notify {
                     notify_consumed(root, result.event, result.ctx);
                 }
                 result.consumed
