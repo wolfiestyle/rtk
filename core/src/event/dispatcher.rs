@@ -3,59 +3,6 @@ use crate::geometry::{Point, Position, Rect, Size};
 use crate::visitor::Visitor;
 use crate::widget::{Widget, WidgetId};
 
-#[derive(Default)]
-struct PosContext {
-    abs_pos: Position,
-    vp_orig: Position,
-    id: WidgetId,
-    parent_id: WidgetId,
-}
-
-impl PosContext {
-    fn from_parent<W: Widget>(parent: &PosContext, widget: &W) -> Option<Self> {
-        Some(Self {
-            abs_pos: parent.abs_pos - parent.vp_orig + widget.get_position(),
-            vp_orig: widget.viewport_origin(),
-            id: widget.get_id(),
-            parent_id: parent.id,
-        })
-    }
-}
-
-struct BoundsContext {
-    abs_bounds: Rect,
-    vp_orig: Position,
-    id: WidgetId,
-    parent_id: WidgetId,
-}
-
-impl BoundsContext {
-    fn from_parent<W: Widget>(parent: &BoundsContext, widget: &W) -> Option<Self> {
-        widget
-            .get_bounds()
-            .offset(parent.abs_bounds.pos - parent.vp_orig)
-            .clip_inside(parent.abs_bounds)
-            .map(|abs_bounds| Self {
-                abs_bounds,
-                vp_orig: widget.viewport_origin(),
-                id: widget.get_id(),
-                parent_id: parent.id,
-            })
-    }
-}
-
-impl From<Size> for BoundsContext {
-    #[inline]
-    fn from(size: Size) -> Self {
-        Self {
-            abs_bounds: size.into(),
-            vp_orig: Default::default(),
-            id: WidgetId::EMPTY,
-            parent_id: WidgetId::EMPTY,
-        }
-    }
-}
-
 /// Sends an event to all widgets (until consumed).
 struct EventDispatchVisitor {
     event: Event,
@@ -338,6 +285,59 @@ impl EventDispatcher {
             mod_state: self.mod_state,
             widget: WidgetId::EMPTY,
             parent: WidgetId::EMPTY,
+        }
+    }
+}
+
+#[derive(Default)]
+struct PosContext {
+    abs_pos: Position,
+    vp_orig: Position,
+    id: WidgetId,
+    parent_id: WidgetId,
+}
+
+impl PosContext {
+    fn from_parent<W: Widget>(parent: &PosContext, widget: &W) -> Option<Self> {
+        Some(Self {
+            abs_pos: parent.abs_pos - parent.vp_orig + widget.get_position(),
+            vp_orig: widget.viewport_origin(),
+            id: widget.get_id(),
+            parent_id: parent.id,
+        })
+    }
+}
+
+struct BoundsContext {
+    abs_bounds: Rect,
+    vp_orig: Position,
+    id: WidgetId,
+    parent_id: WidgetId,
+}
+
+impl BoundsContext {
+    fn from_parent<W: Widget>(parent: &BoundsContext, widget: &W) -> Option<Self> {
+        widget
+            .get_bounds()
+            .offset(parent.abs_bounds.pos - parent.vp_orig)
+            .clip_inside(parent.abs_bounds)
+            .map(|abs_bounds| Self {
+                abs_bounds,
+                vp_orig: widget.viewport_origin(),
+                id: widget.get_id(),
+                parent_id: parent.id,
+            })
+    }
+}
+
+impl From<Size> for BoundsContext {
+    #[inline]
+    fn from(size: Size) -> Self {
+        Self {
+            abs_bounds: size.into(),
+            vp_orig: Default::default(),
+            id: WidgetId::EMPTY,
+            parent_id: WidgetId::EMPTY,
         }
     }
 }
