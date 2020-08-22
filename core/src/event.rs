@@ -274,27 +274,6 @@ impl EventResult {
             | EventResult::ConsumedNotifyTarget(_)
         )
     }
-
-    /// Returns `Some(val)` if the event was consumed, or `None` otherwise.
-    #[inline]
-    pub fn then_some<T>(self, val: T) -> Option<T> {
-        match self {
-            EventResult::Pass => None,
-            EventResult::Consumed | EventResult::ConsumedNotifyBroadcast | EventResult::ConsumedNotifyTarget(_) => Some(val),
-        }
-    }
-
-    /// Returns `Some(f())` if the event was consumed, or `None` otherwise.
-    #[inline]
-    pub fn then<T, F>(self, f: F) -> Option<T>
-    where
-        F: FnOnce() -> T,
-    {
-        match self {
-            EventResult::Pass => None,
-            EventResult::Consumed | EventResult::ConsumedNotifyBroadcast | EventResult::ConsumedNotifyTarget(_) => Some(f()),
-        }
-    }
 }
 
 impl Default for EventResult {
