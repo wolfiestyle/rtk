@@ -10,7 +10,7 @@ in vec4 v_font_col;
 out vec4 f_color;
 
 void main() {
-    vec4 rect_c = texture(tex, v_texc);
+    vec4 rect_c = texture(tex, v_texc) * v_color_mul + v_color_add;
     vec4 text_c = vec4(1.0, 1.0, 1.0, texture(font_tex, v_texc).r);
-    f_color = rect_c * v_color_mul + v_color_add + text_c * v_font_col;
+    f_color = text_c * v_font_col + rect_c;
 }
