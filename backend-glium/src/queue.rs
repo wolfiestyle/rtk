@@ -184,7 +184,7 @@ impl<'a> DrawQueue<'a> {
                             .draw(
                                 (glium::vertex::EmptyVertexAttributes { len: 4 }, vertices.per_instance().unwrap()),
                                 glium::index::NoIndices(PrimitiveType::TriangleStrip),
-                                &self.shared_res.text_prog,
+                                &self.shared_res.rect_prog,
                                 &uniforms,
                                 &draw_params,
                             )

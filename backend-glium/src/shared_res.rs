@@ -25,7 +25,7 @@ pub struct SharedResources {
     /// Program used to draw triangles.
     pub(crate) program: glium::Program,
     /// Program used to draw text.
-    pub(crate) text_prog: glium::Program,
+    pub(crate) rect_prog: glium::Program,
     /// Default texture (1x1 white pixel).
     pub(crate) default_tex: SrgbTexture2d,
     /// Used to find system fonts.
@@ -46,7 +46,7 @@ impl fmt::Debug for SharedResources {
         f.debug_struct("SharedResources")
             .field("display", &format_args!("..."))
             .field("program", &self.program)
-            .field("text_prog", &self.text_prog)
+            .field("rect_prog", &self.rect_prog)
             .field("default_tex", &self.default_tex)
             .field("font_src", &format_args!("..."))
             .field("texture_map", &self.texture_map)
@@ -68,9 +68,9 @@ impl SharedResources {
         let frag_src = include_str!("standard.frag.glsl");
         let program = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
-        let vert_src = include_str!("text.vert.glsl");
-        let frag_src = include_str!("text.frag.glsl");
-        let text_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
+        let vert_src = include_str!("rect.vert.glsl");
+        let frag_src = include_str!("rect.frag.glsl");
+        let rect_prog = glium::Program::from_source(&display, vert_src, frag_src, None).unwrap();
 
         let image = RawImage2d::from_raw_rgba(vec![255u8; 4], (1, 1));
         let default_tex = SrgbTexture2d::with_mipmaps(&display, image, MipmapsOption::NoMipmap).unwrap();
@@ -84,7 +84,7 @@ impl SharedResources {
             default_tex,
             font_tex,
             program,
-            text_prog,
+            rect_prog,
             font_src: SystemSource::new(),
             texture_map: Default::default(),
             loaded_fonts: Default::default(),
