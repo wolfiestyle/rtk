@@ -1,9 +1,9 @@
 //! TopLevel type that interfaces with the backend.
-use crate::backend::{DrawBackend, Resources};
-use crate::event::Event;
-
 mod window;
 pub use window::*;
+
+use crate::backend::{DrawBackend, Resources};
+use crate::event::Event;
 
 /// Defines an object that can be a top level window.
 pub trait TopLevel {

@@ -1,11 +1,11 @@
 //! Input event definitions.
+mod dispatcher;
+pub use dispatcher::*;
+
 use crate::geometry::{Point, Position, Size};
 use crate::widget::WidgetId;
 use std::path::PathBuf;
 use std::time::Instant;
-
-mod dispatcher;
-pub use dispatcher::*;
 
 pub use ButtonState::*;
 

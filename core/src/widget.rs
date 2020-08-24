@@ -1,14 +1,14 @@
 //! Widget type and definitions.
+mod empty;
+mod id;
+pub use empty::*;
+pub use id::*;
+
 use crate::backend::{DrawBackend, Resources};
 use crate::draw::DrawContext;
 use crate::event::{Event, EventContext, EventResult};
 use crate::geometry::{Bounds, Position, Rect};
 use crate::visitor::Visitable;
-
-mod id;
-pub use id::*;
-mod empty;
-pub use empty::*;
 
 /// Defines an object that can be drawn and viewed inside a window.
 pub trait Widget: ObjectId + Bounds + Visitable {
