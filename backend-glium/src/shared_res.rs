@@ -8,6 +8,7 @@ use glium::glutin::window::WindowBuilder;
 use glium::glutin::{Api, ContextBuilder, GlProfile, GlRequest, NotCurrent, Robustness};
 use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Texture2d, TextureCreationError};
 use glyph_brush::ab_glyph::FontVec;
+use glyph_brush::{BrushAction, BrushError};
 use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
 use std::borrow::Cow;
 use std::collections::{hash_map, HashMap};
@@ -105,6 +106,22 @@ impl SharedResources {
             .with_depth_buffer(0)
             .with_stencil_buffer(0)
             .with_hardware_acceleration(None)
+    }
+
+    pub(crate) fn process_text(&mut self) -> Vec<RectVertex> {
+        let font_tex = &self.font_tex;
+        let action = self
+            .glyph_brush
+            .process_queued(|rect, data| font_tex.update(rect, data), |gvert| gvert.into());
+        match action {
+            Ok(BrushAction::Draw(verts)) => verts,
+            Ok(BrushAction::ReDraw) => unimplemented!(),
+            Err(BrushError::TextureTooSmall { suggested: (w, h) }) => {
+                self.font_tex = FontTex::new(&self.display, (w, h)).unwrap();
+                self.glyph_brush.resize_texture(w, h);
+                self.process_text()
+            }
+        }
     }
 }
 

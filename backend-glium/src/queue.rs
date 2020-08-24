@@ -1,8 +1,7 @@
-use crate::shared_res::{FontTex, SharedResources};
+use crate::shared_res::SharedResources;
 use crate::vertex::{RectVertex, Vertex};
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
-use glyph_brush::{BrushAction, BrushError};
 use std::ops::Range;
 use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{Color, FillMode, TextSection, TextureId};
@@ -95,22 +94,9 @@ impl<'a> DrawQueue<'a> {
     #[inline]
     fn push_text(&mut self, text: TextSection, viewport: Rect) {
         self.shared_res.glyph_brush.queue(text);
-        let font_tex = &self.shared_res.font_tex;
-        let action = self
-            .shared_res
-            .glyph_brush
-            .process_queued(|rect, data| font_tex.update(rect, data), |gvert| gvert.into());
-        match action {
-            Ok(BrushAction::Draw(verts)) => {
-                // font_tex is always bound, it's selected with the font_col attribute
-                self.push_rects(verts.into_iter(), None, viewport)
-            }
-            Ok(BrushAction::ReDraw) => unimplemented!(),
-            Err(BrushError::TextureTooSmall { suggested: (w, h) }) => {
-                self.shared_res.font_tex = FontTex::new(&self.shared_res.display, (w, h)).unwrap();
-                self.shared_res.glyph_brush.resize_texture(w, h);
-            }
-        }
+        let verts = self.shared_res.process_text();
+        // font_tex is always bound, it's selected with the font_col attribute
+        self.push_rects(verts.into_iter(), None, viewport)
     }
 
     /// Runs the stored draw commands by drawing them into the framebuffer.
@@ -118,6 +104,7 @@ impl<'a> DrawQueue<'a> {
         let vertex_buf = glium::VertexBuffer::new(display, &self.vertices).unwrap();
         let index_buf = glium::index::IndexBuffer::new(display, PrimitiveType::TrianglesList, &self.indices).unwrap();
         let rect_buf = glium::VertexBuffer::new(display, &self.rects).unwrap();
+
         let mut draw_params = glium::DrawParameters {
             blend: glium::Blend::alpha_blending(),
             ..Default::default()
