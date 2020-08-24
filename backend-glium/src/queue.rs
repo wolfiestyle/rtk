@@ -7,7 +7,7 @@ use std::ops::Range;
 use widgets::backend::{DrawBackend, Resources, TextureError};
 use widgets::draw::{Color, FillMode, TextSection, TextureId};
 use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
-use widgets::geometry::{Rect, Size};
+use widgets::geometry::{Point, Rect, Size};
 use widgets::image::Image;
 
 /// Buffer with draw commands to be sent to the backend.
@@ -144,7 +144,7 @@ impl<'a> DrawQueue<'a> {
                             .unwrap_or(&self.shared_res.default_tex);
                         // settings for the pipeline
                         let uniforms = uniform! {
-                            vp_size: <[f32; 2]>::from(win_size.as_point()),
+                            vp_scale: <[f32; 2]>::from(Point::new(2.0, -2.0) / win_size.as_point()),
                             tex: texture.sampled()
                                 .wrap_function(glium::uniforms::SamplerWrapFunction::Repeat)
                                 .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)
@@ -168,7 +168,7 @@ impl<'a> DrawQueue<'a> {
                             .unwrap_or(&self.shared_res.default_tex);
                         // settings for the pipeline
                         let uniforms = uniform! {
-                            vp_size: <[f32; 2]>::from(win_size.as_point()),
+                            vp_scale: <[f32; 2]>::from(Point::new(2.0, -2.0) / win_size.as_point()),
                             tex: texture.sampled()
                                 .wrap_function(glium::uniforms::SamplerWrapFunction::Repeat)
                                 .minify_filter(glium::uniforms::MinifySamplerFilter::Nearest)

@@ -1,5 +1,5 @@
 #version 150
-uniform vec2 vp_size;
+uniform vec2 vp_scale;
 
 in vec2 pos;
 in vec4 color_mul;
@@ -11,7 +11,7 @@ out vec4 v_color_add;
 out vec2 v_texc;
 
 void main() {
-    vec2 scaled = vec2(2.0, -2.0) * pos / vp_size + vec2(-1.0, 1.0);
+    vec2 scaled = pos * vp_scale + vec2(-1.0, 1.0);
     gl_Position = vec4(scaled, 0.0, 1.0);
     v_color_mul = color_mul;
     v_color_add = color_add;
