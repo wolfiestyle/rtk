@@ -77,3 +77,15 @@ impl Bounds for Position {
         Default::default()
     }
 }
+
+impl Bounds for () {
+    #[inline]
+    fn get_position(&self) -> Position {
+        Default::default()
+    }
+
+    #[inline]
+    fn get_size(&self) -> Size {
+        Default::default()
+    }
+}

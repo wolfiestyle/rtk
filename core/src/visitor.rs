@@ -25,3 +25,17 @@ pub trait Visitor: Sized {
 pub trait Visitable {
     fn accept<V: Visitor>(&mut self, visitor: V, prev_ctx: &V::Context) -> V;
 }
+
+impl Visitable for () {
+    #[inline]
+    fn accept<V: Visitor>(&mut self, visitor: V, prev_ctx: &V::Context) -> V {
+        if visitor.finished() {
+            return visitor;
+        }
+        if let Some(ctx) = visitor.new_context(self, prev_ctx) {
+            visitor.visit_before(self, &ctx).visit_after(self, &ctx)
+        } else {
+            visitor
+        }
+    }
+}

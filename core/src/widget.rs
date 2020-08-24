@@ -37,3 +37,19 @@ pub trait Widget: ObjectId + Bounds + Visitable {
         true
     }
 }
+
+impl Widget for () {
+    #[inline]
+    fn update_layout<R: Resources>(&mut self, _: Rect, _: &mut R) {}
+
+    #[inline]
+    fn draw<B: DrawBackend>(&self, _: DrawContext<B>) {}
+
+    #[inline]
+    fn handle_event(&mut self, _: &Event, _: EventContext) -> EventResult {
+        EventResult::Pass
+    }
+
+    #[inline]
+    fn event_consumed(&mut self, _: &Event, _: &EventContext) {}
+}
