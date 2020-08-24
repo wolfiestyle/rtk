@@ -9,7 +9,7 @@ use std::ops;
 pub struct DrawContext<'b, B> {
     backend: &'b mut B,
     viewport: Rect,
-    offset: Position,
+    abs_bounds: Rect,
     vp_orig: Position,
 }
 
@@ -20,7 +20,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         DrawContext {
             backend,
             viewport,
-            offset: viewport.pos,
+            abs_bounds: viewport,
             vp_orig: Default::default(),
         }
     }
@@ -31,16 +31,32 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         self.vp_orig
     }
 
+    /// Returns the absolute position of the top-left corner.
+    #[inline]
+    fn offset(&self) -> Position {
+        self.abs_bounds.pos - self.vp_orig
+    }
+
     /// Draws a child widget.
     #[inline]
     pub fn draw_child<W: Widget>(&mut self, child: &W) {
-        let child_vp = child.get_bounds().offset(self.offset);
-        if let Some(viewport) = child_vp.clip_inside(self.viewport) {
-            let vp_orig = child.viewport_origin();
+        let abs_bounds = child.get_bounds().offset(self.offset());
+        let vp_orig = child.viewport_origin();
+        if child.is_clipped() {
+            if let Some(viewport) = abs_bounds.clip_inside(self.viewport) {
+                let dc = DrawContext {
+                    backend: self.backend,
+                    viewport,
+                    abs_bounds,
+                    vp_orig,
+                };
+                child.draw(dc);
+            }
+        } else if abs_bounds.intersects(self.viewport) {
             let dc = DrawContext {
                 backend: self.backend,
-                viewport,
-                offset: child_vp.pos - vp_orig,
+                viewport: self.viewport,
+                abs_bounds,
                 vp_orig,
             };
             child.draw(dc);
@@ -50,7 +66,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
     /// Fills the entire drawing area with a single color.
     #[inline]
     pub fn fill(&mut self, color: impl Into<Color>) {
-        self.backend.draw_rect(self.viewport, color.into().into(), self.viewport)
+        self.backend.draw_rect(self.abs_bounds, color.into().into(), self.viewport)
     }
 
     /// Draws a single triangle.
@@ -58,7 +74,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
     pub fn draw_triangle(
         &mut self, p0: impl Into<Point<f32>>, p1: impl Into<Point<f32>>, p2: impl Into<Point<f32>>, color: impl Into<Color>,
     ) {
-        let offset = self.offset.cast();
+        let offset = self.offset().cast();
         let color = color.into().into();
         let verts = [
             (p0.into() + offset, color, Default::default()).into(),
@@ -77,7 +93,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
         V: IntoIterator<Item = B::Vertex>,
         I: IntoIterator<Item = u32>,
     {
-        let offset = self.offset.cast();
+        let offset = self.offset().cast();
         let verts = vertices.into_iter().map(|v| v + offset);
         self.backend.draw_triangles(verts, indices, texture, self.viewport)
     }
@@ -85,7 +101,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
     /// Draws a rectangle.
     #[inline]
     pub fn draw_rect(&mut self, rect: impl Into<Rect>, fill: impl Into<FillMode>) {
-        let rect = rect.into().offset(self.offset);
+        let rect = rect.into().offset(self.offset());
         self.backend.draw_rect(rect, fill.into(), self.viewport)
     }
 
@@ -102,7 +118,7 @@ impl<'b, B: DrawBackend> DrawContext<'b, B> {
     #[inline]
     pub fn draw_text(&mut self, mut text: TextSection) {
         let pos: Point<f32> = text.screen_position.into();
-        text.screen_position = (pos + self.offset.cast()).into();
+        text.screen_position = (pos + self.offset().cast()).into();
         self.backend.draw_text(text, self.viewport)
     }
 }

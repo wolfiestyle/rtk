@@ -31,4 +31,11 @@ pub trait Widget: ObjectId + Bounds + Visitable {
     fn viewport_origin(&self) -> Position {
         Default::default()
     }
+
+    /// Indicates if this widget's drawing area is clipped against it's bounds.
+    ///
+    /// The default implementation returns `true`.
+    fn is_clipped(&self) -> bool {
+        true
+    }
 }

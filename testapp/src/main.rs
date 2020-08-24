@@ -129,6 +129,10 @@ impl Widget for TestWidget2 {
     }
 
     fn event_consumed(&mut self, _event: &Event, _ctx: &EventContext) {}
+
+    fn is_clipped(&self) -> bool {
+        false
+    }
 }
 /*
 #[derive(Debug, ObjectId, Bounds, Visitable, Widget)]

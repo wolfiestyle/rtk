@@ -53,6 +53,13 @@ pub fn widget_impl(mut input: DeriveInput) -> TokenStream {
                             #(#patterns => #path::Widget::viewport_origin(a),)*
                         }
                     }
+
+                    #[inline]
+                    fn is_clipped(&self) -> bool {
+                        match self {
+                            #(#patterns => #path::Widget::is_clipped(a),)*
+                        }
+                    }
                 }
             }
         }),
