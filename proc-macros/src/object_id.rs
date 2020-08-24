@@ -6,7 +6,7 @@ use syn::{Data, DeriveInput};
 
 pub fn object_id_impl(mut input: DeriveInput) -> TokenStream {
     let name = input.ident;
-    let path = quote!(widgets::widget);
+    let path = quote!(rtk::widget);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::ObjectId)) {
         return err.to_compile_error().into();

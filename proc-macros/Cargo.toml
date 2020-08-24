@@ -1,5 +1,5 @@
 [package]
-name = "widgets-derive"
+name = "rtk-derive"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"
@@ -13,4 +13,4 @@ quote = "1.0.7"
 proc-macro2 = "1.0.18"
 
 [dev-dependencies]
-widgets = { path = "../core" }
+rtk = { path = "../core" }

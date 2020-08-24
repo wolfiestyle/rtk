@@ -1,7 +1,7 @@
-use widgets::prelude::*;
-use widgets::visitor::{Visitable, Visitor};
-use widgets::widget::Empty;
-use widgets_derive::{Bounds, ObjectId, Visitable};
+use rtk::prelude::*;
+use rtk::visitor::{Visitable, Visitor};
+use rtk::widget::Empty;
+use rtk_derive::{Bounds, ObjectId, Visitable};
 
 #[derive(ObjectId, Bounds, Visitable)]
 #[impl_generics(T)]

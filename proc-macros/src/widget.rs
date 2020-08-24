@@ -6,9 +6,9 @@ use syn::{Data, DeriveInput};
 
 pub fn widget_impl(mut input: DeriveInput) -> TokenStream {
     let name = input.ident;
-    let crate_ = quote!(widgets);
-    let path = quote!(widgets::widget);
-    let pevent = quote!(widgets::event);
+    let crate_ = quote!(rtk);
+    let path = quote!(rtk::widget);
+    let pevent = quote!(rtk::event);
 
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Widget)) {
         return err.to_compile_error().into();

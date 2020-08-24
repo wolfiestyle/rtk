@@ -10,7 +10,7 @@ pub trait BackendWindow<R> {
     fn update(&mut self, resources: &mut R);
     fn draw(&mut self, resources: &mut R);
     fn request_redraw(&self);
-    fn push_event(&mut self, event: widgets::event::Event) -> bool;
+    fn push_event(&mut self, event: rtk::event::Event) -> bool;
 }
 
 #[derive(Debug)]
@@ -68,7 +68,7 @@ impl<T: BackendWindow<R> + 'static, R: 'static> MainLoop<T, R> {
                             window.request_redraw();
                         } else if is_close_req {
                             // CloseRequest wasn't consumed, destroy window
-                            window.push_event(widgets::event::Event::Destroyed);
+                            window.push_event(rtk::event::Event::Destroyed);
                             window_map.remove(&window_id);
                         }
                     }

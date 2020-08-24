@@ -1,12 +1,12 @@
-use widgets::draw::{Text, TextLayout, TextSection, TextureId};
-use widgets::event::*;
-use widgets::geometry::{HAlign, VAlign};
-use widgets::image::Image;
-use widgets::layout;
-use widgets::prelude::*;
-use widgets::toplevel::Window;
-use widgets_derive::{Bounds, ObjectId, Visitable};
-use widgets_glium::GliumApplication;
+use rtk::draw::{Text, TextLayout, TextSection, TextureId};
+use rtk::event::*;
+use rtk::geometry::{HAlign, VAlign};
+use rtk::image::Image;
+use rtk::layout;
+use rtk::prelude::*;
+use rtk::toplevel::Window;
+use rtk_derive::{Bounds, ObjectId, Visitable};
+use rtk_glium::GliumApplication;
 
 #[derive(Debug, ObjectId, Bounds, Visitable)]
 struct TestWidget {
@@ -22,7 +22,7 @@ struct TestWidget {
 
 impl Widget for TestWidget {
     fn update_layout<R: Resources>(&mut self, parent_rect: Rect, resources: &mut R) {
-        use widgets::layout::Layout;
+        use rtk::layout::Layout;
 
         for child in &mut self.childs {
             child.update_layout(self.bounds, resources);

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use widgets::widget::WidgetId;
-use widgets_derive::ObjectId;
+use rtk::widget::WidgetId;
+use rtk_derive::ObjectId;
 
 #[derive(ObjectId)]
 struct TestStruct {
@@ -37,7 +37,7 @@ struct TestGeneric<T> {
 
 #[test]
 fn object_id() {
-    use widgets::widget::ObjectId;
+    use rtk::widget::ObjectId;
 
     let s = TestStruct {
         val: 42,

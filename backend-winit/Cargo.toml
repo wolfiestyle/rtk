@@ -1,9 +1,9 @@
 [package]
-name = "widgets-winit"
+name = "rtk-winit"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 winit = "0.22.2"
-widgets = { path = "../core" }
+rtk = { path = "../core" }

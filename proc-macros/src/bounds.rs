@@ -6,7 +6,7 @@ use syn::{Data, DeriveInput};
 
 pub fn bounds_impl(mut input: DeriveInput) -> TokenStream {
     let name = input.ident;
-    let path = quote!(widgets::geometry);
+    let path = quote!(rtk::geometry);
 
     let mut generics_mut = input.generics.clone();
     if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(#path::Bounds)) {

@@ -1,3 +1,3 @@
-# widgets-derive
+# rtk-derive
 
-Derive macros for the widgets library.
+Derive macros for the Rtk library.

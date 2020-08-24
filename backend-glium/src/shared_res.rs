@@ -10,14 +10,14 @@ use glium::texture::{ClientFormat, MipmapsOption, RawImage2d, SrgbTexture2d, Tex
 use glyph_brush::ab_glyph::FontVec;
 use glyph_brush::{BrushAction, BrushError};
 use glyph_brush::{Extra, FontId, GlyphBrush, GlyphBrushBuilder};
+use rtk::backend::{Resources, TextureError};
+use rtk::draw::TextureId;
+use rtk::font::{FontLoadError, FontSource};
+use rtk::image::{Image, ImageData, PixelFormat};
 use std::borrow::Cow;
 use std::collections::{hash_map, HashMap};
 use std::fmt;
 use std::ops::Deref;
-use widgets::backend::{Resources, TextureError};
-use widgets::draw::TextureId;
-use widgets::font::{FontLoadError, FontSource};
-use widgets::image::{Image, ImageData, PixelFormat};
 
 /// Shared OpenGL context and resources used for drawing.
 pub struct SharedResources {

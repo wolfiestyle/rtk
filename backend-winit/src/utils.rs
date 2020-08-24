@@ -1,9 +1,9 @@
-use widgets::toplevel::WindowAttributes;
+use rtk::toplevel::WindowAttributes;
 use winit::dpi::PhysicalSize;
 use winit::window::WindowBuilder;
 
 pub fn make_win_builder(win_attr: &WindowAttributes) -> WindowBuilder {
-    let size = win_attr.size.nonzero_or(widgets::DEFAULT_WINDOW_SIZE);
+    let size = win_attr.size.nonzero_or(rtk::DEFAULT_WINDOW_SIZE);
     let mut win_builder = WindowBuilder::new()
         .with_title(win_attr.title.clone().unwrap_or_else(|| "Window".into()))
         .with_inner_size(PhysicalSize::new(size.w, size.h))

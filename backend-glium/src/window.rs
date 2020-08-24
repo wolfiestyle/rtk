@@ -3,10 +3,10 @@ use crate::shared_res::SharedResources;
 use glium::glutin::dpi::PhysicalPosition;
 use glium::glutin::event_loop::EventLoop;
 use glium::glutin::window::WindowId;
+use rtk::event::Event;
+use rtk::toplevel::{TopLevel, WindowAttributes};
+use rtk_winit::{make_win_builder, BackendWindow};
 use std::fmt;
-use widgets::event::Event;
-use widgets::toplevel::{TopLevel, WindowAttributes};
-use widgets_winit::{make_win_builder, BackendWindow};
 
 pub struct GliumWindow<T> {
     display: glium::Display,

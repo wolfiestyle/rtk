@@ -2,12 +2,12 @@ use crate::shared_res::SharedResources;
 use crate::vertex::{RectVertex, Vertex};
 use glium::index::PrimitiveType;
 use glium::{uniform, Surface};
+use rtk::backend::{DrawBackend, Resources, TextureError};
+use rtk::draw::{Color, FillMode, TextSection, TextureId};
+use rtk::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
+use rtk::geometry::{Point, Rect, Size};
+use rtk::image::Image;
 use std::ops::Range;
-use widgets::backend::{DrawBackend, Resources, TextureError};
-use widgets::draw::{Color, FillMode, TextSection, TextureId};
-use widgets::font::{FontFamily, FontId, FontLoadError, FontProperties, FontSource};
-use widgets::geometry::{Point, Rect, Size};
-use widgets::image::Image;
 
 /// Buffer with draw commands to be sent to the backend.
 pub struct DrawQueue<'a> {
@@ -269,7 +269,7 @@ impl DrawCmdData {
     }
 }
 
-fn to_glium_rect(rect: widgets::geometry::Rect, win_height: u32) -> glium::Rect {
+fn to_glium_rect(rect: rtk::geometry::Rect, win_height: u32) -> glium::Rect {
     glium::Rect {
         left: rect.pos.x as u32,
         bottom: win_height - rect.size.h - rect.pos.y as u32,

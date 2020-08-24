@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use widgets::geometry::{Position, Rect, Size};
-use widgets_derive::Bounds;
+use rtk::geometry::{Position, Rect, Size};
+use rtk_derive::Bounds;
 
 #[derive(Bounds)]
 struct TestStruct1 {
@@ -56,7 +56,7 @@ struct TestGeneric<T> {
 
 #[test]
 fn bounds() {
-    use widgets::geometry::Bounds;
+    use rtk::geometry::Bounds;
 
     let rect = Rect::new([0, 1], [20, 30]);
     let pos = Position::new(12, 34);

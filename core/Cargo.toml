@@ -1,5 +1,5 @@
 [package]
-name = "widgets"
+name = "rtk"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"

@@ -1,4 +1,4 @@
-# Widgets UI toolkit
+# Rtk: The Rusty Toolkit
 
 Prototype user interface library for Rust. It aims to be a simple and efficient UI toolkit
 with fresh ideas that does things in a Rusty way instead of the traditional OOP way.

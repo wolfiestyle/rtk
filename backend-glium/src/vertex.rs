@@ -1,7 +1,7 @@
 use glyph_brush::GlyphVertex;
+use rtk::draw::{Color, ColorOp, TexCoord, TexRect};
+use rtk::geometry::{Point, Rect};
 use std::ops::Add;
-use widgets::draw::{Color, ColorOp, TexCoord, TexRect};
-use widgets::geometry::{Point, Rect};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]

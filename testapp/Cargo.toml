@@ -6,6 +6,6 @@ edition = "2018"
 publish = false
 
 [dependencies]
-widgets = { path = "../core" }
-widgets-glium = { path = "../backend-glium" }
-widgets-derive = { path = "../proc-macros" }
+rtk = { path = "../core" }
+rtk-glium = { path = "../backend-glium" }
+rtk-derive = { path = "../proc-macros" }

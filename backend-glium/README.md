@@ -1,3 +1,3 @@
-# widgets-glium
+# rtk-glium
 
-Glium backend for the widgets library.
+Glium backend for the Rtk library.

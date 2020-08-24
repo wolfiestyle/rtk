@@ -1,5 +1,5 @@
 [package]
-name = "widgets-glium"
+name = "rtk-glium"
 version = "0.1.0"
 authors = ["wolfiestyle <slayerbeast@gmail.com>"]
 edition = "2018"
@@ -8,5 +8,5 @@ edition = "2018"
 glium = "0.27.0"
 font-kit = "0.10.0"
 glyph_brush = "0.7.0"
-widgets = { path = "../core" }
-widgets-winit = { path = "../backend-winit" }
+rtk = { path = "../core" }
+rtk-winit = { path = "../backend-winit" }

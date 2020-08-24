@@ -6,9 +6,9 @@ use syn::{Data, DeriveInput};
 
 pub fn visitable_impl(mut input: DeriveInput) -> TokenStream {
     let name = input.ident;
-    let path = quote!(widgets::visitor);
+    let path = quote!(rtk::visitor);
 
-    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(::widgets::widget::Widget)) {
+    if let Err(err) = parse_impl_generics(&input.attrs, &mut input.generics, parse_quote!(rtk::widget::Widget)) {
         return err.to_compile_error().into();
     }
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();

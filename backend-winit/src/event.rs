@@ -1,10 +1,10 @@
-use widgets::event::{Axis, ButtonState, Event, Key, KeyModState, KeySide};
-use widgets::geometry::{Point, Size};
+use rtk::event::{Axis, ButtonState, Event, Key, KeyModState, KeySide};
+use rtk::geometry::{Point, Size};
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode, WindowEvent};
 
 pub fn translate_event(event: WindowEvent) -> Option<Event> {
-    use widgets::event::Event::*;
+    use rtk::event::Event::*;
 
     Some(match event {
         WindowEvent::Resized(PhysicalSize { width: w, height: h }) => Resized(Size { w, h }),
@@ -50,8 +50,8 @@ fn translate_state(state: ElementState) -> ButtonState {
     }
 }
 
-fn translate_button(button: MouseButton) -> widgets::event::MouseButton {
-    use widgets::event::MouseButton::*;
+fn translate_button(button: MouseButton) -> rtk::event::MouseButton {
+    use rtk::event::MouseButton::*;
 
     match button {
         MouseButton::Left => Left,
