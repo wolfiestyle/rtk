@@ -79,7 +79,7 @@ fn visitable() {
         ],
     };
 
-    let expected = [ids[0], ids[1], WidgetId::EMPTY, ids[2], WidgetId::EMPTY];
+    let expected = [ids[0], ids[1], WidgetId::NONE, ids[2], WidgetId::NONE];
     let visitor = widget.accept(TestVisitor::default(), &());
     assert_eq!(visitor.ids, expected);
 }

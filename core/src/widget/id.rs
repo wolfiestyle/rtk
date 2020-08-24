@@ -7,8 +7,10 @@ static WIDGET_ID: AtomicUsize = AtomicUsize::new(1);
 pub struct WidgetId(usize);
 
 impl WidgetId {
-    /// Id of the Empty widget.
-    pub const EMPTY: WidgetId = WidgetId(0);
+    /// Null widget id.
+    ///
+    /// This is the return value of `WidgetId::default()`, also the id of the Empty widget.
+    pub const NONE: WidgetId = WidgetId(0);
 
     /// Creates a new widget id.
     #[inline]
@@ -27,7 +29,7 @@ pub trait ObjectId {
 impl ObjectId for () {
     #[inline]
     fn get_id(&self) -> WidgetId {
-        WidgetId::EMPTY
+        WidgetId::NONE
     }
 }
 
@@ -41,13 +43,13 @@ impl ObjectId for WidgetId {
 impl<T: ObjectId> ObjectId for Option<T> {
     #[inline]
     fn get_id(&self) -> WidgetId {
-        self.as_ref().map_or(WidgetId::EMPTY, ObjectId::get_id)
+        self.as_ref().map_or(WidgetId::NONE, ObjectId::get_id)
     }
 }
 
 impl<T: ObjectId, E> ObjectId for Result<T, E> {
     #[inline]
     fn get_id(&self) -> WidgetId {
-        self.as_ref().map_or(WidgetId::EMPTY, ObjectId::get_id)
+        self.as_ref().map_or(WidgetId::NONE, ObjectId::get_id)
     }
 }

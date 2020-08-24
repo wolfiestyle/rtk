@@ -175,7 +175,7 @@ impl Visitor for TargetNotifyVisitor {
     fn visit_before<W: Widget>(mut self, widget: &mut W, _: &Self::Context) -> Self {
         if widget.get_id() == self.target {
             widget.event_consumed(&self.event, &self.ctx);
-            self.target = WidgetId::EMPTY;
+            self.target = WidgetId::NONE;
         }
         self
     }
@@ -186,7 +186,7 @@ impl Visitor for TargetNotifyVisitor {
 
     #[inline]
     fn finished(&self) -> bool {
-        self.target == WidgetId::EMPTY
+        self.target == WidgetId::NONE
     }
 }
 
@@ -328,8 +328,8 @@ impl EventDispatcher {
             abs_pos: self.last_pos,
             button_state: self.button_state,
             mod_state: self.mod_state,
-            widget: WidgetId::EMPTY,
-            parent: WidgetId::EMPTY,
+            widget: WidgetId::NONE,
+            parent: WidgetId::NONE,
         }
     }
 }
@@ -381,8 +381,8 @@ impl From<Size> for BoundsContext {
         Self {
             abs_bounds: size.into(),
             vp_orig: Default::default(),
-            id: WidgetId::EMPTY,
-            parent_id: WidgetId::EMPTY,
+            id: WidgetId::NONE,
+            parent_id: WidgetId::NONE,
         }
     }
 }
