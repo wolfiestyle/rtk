@@ -4,5 +4,6 @@ members = [
     "proc-macros",
     "backend-winit",
     "backend-glium",
+    "widgets",
     "testapp",
 ]

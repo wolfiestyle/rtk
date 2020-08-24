@@ -9,3 +9,4 @@ publish = false
 rtk = { path = "../core" }
 rtk-glium = { path = "../backend-glium" }
 rtk-derive = { path = "../proc-macros" }
+rtk-widgets = { path = "../widgets" }

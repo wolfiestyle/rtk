@@ -1,7 +1,5 @@
 //! Widget type and definitions.
-mod empty;
 mod id;
-pub use empty::*;
 pub use id::*;
 
 use crate::backend::{DrawBackend, Resources};

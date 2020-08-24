@@ -1,9 +1,9 @@
-use crate::backend::{DrawBackend, Resources};
-use crate::draw::DrawContext;
-use crate::event::{Event, EventContext, EventResult};
-use crate::geometry::{Bounds, BoundsMut, Position, Rect, Size};
-use crate::visitor::{Visitable, Visitor};
-use crate::widget::{ObjectId, Widget, WidgetId};
+use rtk::backend::{DrawBackend, Resources};
+use rtk::draw::DrawContext;
+use rtk::event::{Event, EventContext, EventResult};
+use rtk::geometry::{Bounds, BoundsMut, Position, Rect, Size};
+use rtk::visitor::{Visitable, Visitor};
+use rtk::widget::{ObjectId, Widget, WidgetId};
 
 /// The empty widget.
 ///
@@ -117,5 +117,3 @@ impl From<Size> for Empty {
         Empty::with_size(size)
     }
 }
-
-impl_from_unit_default!(Empty);

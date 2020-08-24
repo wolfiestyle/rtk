@@ -14,3 +14,4 @@ proc-macro2 = "1.0.18"
 
 [dev-dependencies]
 rtk = { path = "../core" }
+rtk-widgets = { path = "../widgets" }

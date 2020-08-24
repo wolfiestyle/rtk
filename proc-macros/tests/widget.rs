@@ -1,8 +1,8 @@
 use rtk::draw::{DrawContext, Text, TextSection};
 use rtk::prelude::*;
 use rtk::testing::{OwnedSection, TestBackend, TestDrawCmd};
-use rtk::widget::Empty;
 use rtk_derive::{Bounds, ObjectId, Visitable, Widget};
+use rtk_widgets::Empty;
 use std::sync::mpsc::{channel, Sender};
 
 #[derive(ObjectId, Bounds, Visitable, Widget)]
